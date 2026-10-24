@@ -11,6 +11,7 @@ import { initializeBoldText } from "./experiments/boldText";
 import { initializeNoBorders } from "./experiments/noBorders";
 import { initializeSoftEdges } from "./experiments/softEdges";
 import { initializeGlassTheme } from "./experiments/glassTheme";
+import { initializeHalloweenTheme } from "./experiments/halloweenTheme";
 import { initializeAppearance } from "./utils/appearance";
 import { initializeFavicon } from "./utils/favicon";
 import { initializePinchZoom } from "./utils/pinchZoom";
@@ -26,6 +27,7 @@ initializeBoldText();
 initializeNoBorders();
 initializeSoftEdges();
 initializeGlassTheme();
+initializeHalloweenTheme();
 window.addEventListener("storage", (event) => {
   if (event.key === viewerSettingKey("cc.palette.v1") || event.key === null) initializePalette();
 });

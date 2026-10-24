@@ -1,6 +1,14 @@
 import { userFacingError } from "../utils/userFacingError";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { ArrowCounterClockwise, Eye, EyeSlash, LockKey, Palette } from "@phosphor-icons/react";
+import {
+  ArrowCounterClockwise,
+  Eye,
+  EyeSlash,
+  Flask,
+  LockKey,
+  Palette,
+  UserCircle,
+} from "@phosphor-icons/react";
 import { Button } from "./Button";
 import Input, { Textarea } from "./Input";
 import AppearanceControl from "./AppearanceControl";
@@ -10,6 +18,7 @@ import BoldTextControl from "../experiments/boldText";
 import NoBordersControl from "../experiments/noBorders";
 import SoftEdgesControl from "../experiments/softEdges";
 import GlassThemeControl from "../experiments/glassTheme";
+import HalloweenThemeControl from "../experiments/halloweenTheme";
 import { appearanceSnapshot, subscribeAppearance } from "../utils/appearance";
 import { palettesForMode } from "../utils/darkPalettes";
 import { loadPalette, PALETTES, resolvePalette, setPalette } from "../utils/palette";
@@ -256,7 +265,10 @@ export default function SettingsView({
   return (
     <div className="space-y-6">
       <section className="toon-card toon-paper bg-panel rounded-2xl p-6 pt-10 sm:p-8 sm:pt-12">
-        <h2 className="text-2xl font-black">User info</h2>
+        <div className="min-w-0 flex items-center gap-2 *:min-w-0 max-w-full">
+          <UserCircle size={22} weight="duotone" aria-hidden="true" />
+          <h2 className="text-2xl font-black">User info</h2>
+        </div>
         <p className="mt-2 text-sm font-bold text-muted">
           Update the information shown on your public profile.
         </p>
@@ -344,13 +356,21 @@ export default function SettingsView({
       </section>
       <SoundControl />
       <section className="toon-card toon-paper rounded-2xl bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
-        <h2 className="text-2xl font-black">Experimental</h2>
+        <div className="min-w-0 flex items-center gap-2 *:min-w-0 max-w-full">
+          <Flask size={22} weight="duotone" aria-hidden="true" />
+          <h2 className="text-2xl font-black">Experimental</h2>
+        </div>
+        <p className="mt-1 text-sm font-bold text-muted">
+          Some of these settings are experimental and may change or be removed in the future. These
+          settings may also break the app or cause unexpected behavior.
+        </p>
         <div className="mt-3 grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
           <FluidTextControl />
           <BoldTextControl />
           <NoBordersControl />
           <SoftEdgesControl />
           <GlassThemeControl />
+          <HalloweenThemeControl />
         </div>
       </section>
 

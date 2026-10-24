@@ -15,7 +15,7 @@ export default function Info({ label, children }: { label: string; children: Rea
       label={`About ${label}`}
       open={open}
       onOpenChange={setOpen}
-      className="w-72 gap-2 p-4"
+      className="w-48 lg:w-72 gap-2 p-4"
       trigger={
         <Button
           variant="plain"

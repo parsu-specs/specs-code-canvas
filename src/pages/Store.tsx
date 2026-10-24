@@ -1,4 +1,5 @@
 import ErrorNotice from "../components/ErrorNotice";
+import { HalloweenDecorations } from "../experiments/halloweenTheme";
 import { createPortal } from "react-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -39,7 +40,7 @@ export default function Store() {
     const themeColor = document.createElement("meta");
     themeColor.name = "theme-color";
     const syncThemeColor = () => {
-      themeColor.content = getComputedStyle(root).getPropertyValue("--color-primary").trim();
+      themeColor.content = getComputedStyle(root).getPropertyValue("--color-brand-surface").trim();
     };
     syncThemeColor();
     document.head.appendChild(themeColor);
@@ -119,7 +120,7 @@ export default function Store() {
   const myTrophy = myProfile ? trophies.get(myProfile.id) : undefined;
   return (
     <div className="min-h-screen overflow-x-clip">
-      <aside className="fixed inset-x-0 top-0 z-40 h-21.25 border-b-[3px] border-outline bg-brand-surface px-3 py-5 text-brand-foreground sm:px-5 lg:inset-y-0 lg:left-0 lg:right-auto lg:flex lg:h-screen lg:w-70 lg:flex-col lg:overflow-y-auto lg:border-b-0 lg:border-r-[3px] lg:p-7">
+      <aside className="halloween-sidebar fixed inset-x-0 top-0 z-40 h-21.25 border-b-[3px] border-outline bg-brand-surface px-3 py-5 text-brand-foreground sm:px-5 lg:inset-y-0 lg:left-0 lg:right-auto lg:flex lg:h-screen lg:w-70 lg:flex-col lg:overflow-y-auto lg:border-b-0 lg:border-r-[3px] lg:p-7">
         <div className="hidden min-w-0 items-center justify-between *:min-w-0 max-w-full lg:flex">
           <Brand light text className="text-2xl!" />
         </div>
@@ -205,6 +206,7 @@ export default function Store() {
             </ButtonLink>
           </nav>
         </div>
+        <HalloweenDecorations placement="sidebar" />
       </aside>
 
       {confirmPromptDismissal && (

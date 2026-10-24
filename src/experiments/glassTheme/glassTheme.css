@@ -1,22 +1,39 @@
 /* Glass belongs to foreground surfaces; leave the page canvas unchanged. */
-@supports ((backdrop-filter: blur(6px)) or (-webkit-backdrop-filter: blur(6px))) {
+@supports ((backdrop-filter: blur(16px)) or (-webkit-backdrop-filter: blur(16px))) {
   :root[data-glass-theme="enabled"] :is(.toon-card, header.fixed, aside.fixed) {
     --glass-tint: var(--color-panel);
-    background-color: color-mix(in srgb, var(--glass-tint) 32%, transparent);
-    -webkit-backdrop-filter: blur(6px) saturate(125%);
-    backdrop-filter: blur(6px) saturate(125%);
+    background-color: color-mix(in srgb, var(--glass-tint) 42%, transparent);
+    -webkit-backdrop-filter: blur(16px) saturate(125%);
+    backdrop-filter: blur(16px) saturate(125%);
   }
 
   /* Retain brand tint behind the navigation's contrasting text. */
   :root[data-glass-theme="enabled"] :is(header.fixed, aside.fixed) {
     --glass-tint: var(--color-brand-surface);
-    background-color: color-mix(in srgb, var(--glass-tint) 52%, transparent);
+    background-color: color-mix(in srgb, var(--glass-tint) 75%, transparent);
   }
 
   @media (min-width: 64rem) {
     :root[data-glass-theme="enabled"] header.fixed[class~="lg:bg-panel"] {
       --glass-tint: var(--color-panel);
-      background-color: color-mix(in srgb, var(--glass-tint) 32%, transparent);
+      background-color: color-mix(in srgb, var(--glass-tint) 42%, transparent);
+    }
+  }
+
+  @media (width < 64rem) {
+    /* A blurred ancestor captures fixed descendants. Keep the bottom bar
+       anchored to the viewport and frost the navigation itself instead. */
+    :root[data-glass-theme="enabled"] aside.fixed {
+      background-color: transparent;
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+
+    :root[data-glass-theme="enabled"] aside.fixed > nav.fixed {
+      --glass-tint: var(--color-brand-surface);
+      background-color: color-mix(in srgb, var(--glass-tint) 75%, transparent);
+      -webkit-backdrop-filter: blur(16px) saturate(125%);
+      backdrop-filter: blur(16px) saturate(125%);
     }
   }
 
@@ -34,6 +51,18 @@
       backdrop-filter: none;
     }
 
+    @media (width < 64rem) {
+      :root[data-glass-theme="enabled"] aside.fixed {
+        background-color: transparent;
+      }
+
+      :root[data-glass-theme="enabled"] aside.fixed > nav.fixed {
+        background-color: var(--color-brand-surface);
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+      }
+    }
+
     :root[data-glass-theme="enabled"]
       [aria-modal="true"]
       .bg-surface:not(.toon-card, input, textarea, select, button) {
@@ -41,4 +70,3 @@
     }
   }
 }
-

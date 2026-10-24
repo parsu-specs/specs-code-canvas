@@ -46,6 +46,17 @@ body:has([data-dropdown-portal]) {
 }
 
 @theme {
+  --color-halloween-orange: #ffad52;
+  --color-halloween-night: #211729;
+  --color-halloween-purple: #513565;
+  --color-halloween-lilac: #cfb4e4;
+  --color-halloween-peach: #f5d0b3;
+  --color-halloween-paper: #f5e6d4;
+  --color-halloween-cream: #fff5e6;
+  --color-halloween-muted: #78617e;
+  --color-halloween-dark-panel: #2c2035;
+  --color-halloween-dark-surface: #38283f;
+  --color-halloween-dark-outline: #866891;
   --color-black: #000000;
   --color-google-button: #1e1e1e;
   --color-google-yellow: #ffc107;

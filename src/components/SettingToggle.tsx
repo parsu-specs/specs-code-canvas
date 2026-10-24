@@ -16,8 +16,8 @@ export default function SettingToggle({
   const descriptionId = useId();
   return (
     <div className="flex min-w-0 items-center justify-between gap-3 py-1">
-      <div className="flex min-w-0 items-center gap-1">
-        <h3 className="min-w-0 text-sm font-black">{label}</h3>
+      <div className="flex min-w-0 items-center gap-1 flex-1">
+        <h3 className="text-sm font-black flex-1">{label}</h3>
         <Info label={label}>{description}</Info>
       </div>
       <span id={descriptionId} className="sr-only">

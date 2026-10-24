@@ -1,0 +1,547 @@
+/* Keep light palette tokens intact so palette changes remain visible. */
+/* Extend the printed doodle texture with the existing oversized graph-paper canvas. */
+:root[data-halloween-theme="enabled"] body::after {
+  content: "";
+  position: fixed;
+  inset: -100vmax;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--color-foreground);
+  opacity: 0.13;
+  mask-image: url("./notebookDoodles.svg");
+  mask-size: 576px 576px;
+  mask-repeat: repeat;
+  mask-position: 100vmax 100vmax;
+}
+
+:root[data-halloween-theme="enabled"][data-mode="dark"] body::after {
+  opacity: 0.11;
+}
+
+@media (width < 40rem) {
+  :root[data-halloween-theme="enabled"] body::after {
+    mask-size: 480px 480px;
+  }
+}
+
+@media print {
+  :root[data-halloween-theme="enabled"] body::after {
+    display: none;
+  }
+}
+
+:root[data-halloween-theme="enabled"][data-halloween-theme] {
+  --color-margin-line: color-mix(in srgb, var(--color-halloween-orange) 35%, transparent);
+  --color-tape: color-mix(in srgb, var(--color-halloween-orange) 65%, transparent);
+}
+
+:root[data-halloween-theme="enabled"][data-mode="dark"] {
+  --color-primary: var(--color-halloween-orange);
+  --color-primary-foreground: var(--color-halloween-night);
+  --color-brand-surface: var(--color-halloween-purple);
+  --color-brand-foreground: var(--color-halloween-cream);
+  --color-brand-accent: var(--color-halloween-orange);
+  --color-paper-line: color-mix(in srgb, var(--color-halloween-purple) 10%, transparent);
+  --color-background: var(--color-halloween-night);
+  --color-panel: var(--color-halloween-dark-panel);
+  --color-surface: var(--color-halloween-dark-surface);
+  --color-foreground: var(--color-halloween-cream);
+  --color-body: var(--color-halloween-paper);
+  --color-muted: var(--color-halloween-lilac);
+  --color-outline: var(--color-halloween-dark-outline);
+  --color-secondary: var(--color-halloween-purple);
+  --color-accent: var(--color-halloween-dark-surface);
+  --color-tertiary: var(--color-halloween-purple);
+}
+
+.halloween-decorations {
+  display: none;
+}
+
+:root[data-halloween-theme="enabled"] .halloween-decorations {
+  display: block;
+  position: relative;
+  isolation: isolate;
+  height: 180px;
+  flex-shrink: 0;
+  margin: 24px auto 0;
+  width: min(100%, 420px);
+  border-bottom: 6px solid var(--color-halloween-purple);
+  border-radius: 0 0 12px 12px;
+  pointer-events: none;
+  user-select: none;
+  overflow: clip;
+  color: var(--color-halloween-orange);
+}
+
+/* Keep the artwork on the viewport edges and give each silhouette a crisp outline. */
+.halloween-web {
+  position: absolute;
+  top: 0;
+  width: 132px;
+  height: 132px;
+  opacity: 0.8;
+  color: var(--color-halloween-lilac);
+  filter: drop-shadow(0 1px 1px var(--color-halloween-night));
+  background:
+    repeating-radial-gradient(
+      circle at top left,
+      transparent 0 22px,
+      currentColor 23px 24px,
+      transparent 25px 28px
+    ),
+    conic-gradient(
+      from 90deg at top left,
+      transparent 21deg,
+      currentColor 22deg 23deg,
+      transparent 24deg 44deg,
+      currentColor 45deg 46deg,
+      transparent 47deg 66deg,
+      currentColor 67deg 68deg,
+      transparent 69deg
+    );
+  mask-image: radial-gradient(circle at top left, black 65%, transparent 71%);
+}
+.halloween-web-left {
+  left: 0;
+}
+.halloween-web-right {
+  right: 0;
+  transform: scaleX(-1);
+}
+.halloween-spider {
+  position: absolute;
+  top: 0;
+  right: 18px;
+  width: 48px;
+  height: 180px;
+  color: var(--color-halloween-purple);
+  filter: drop-shadow(0 1px 1px var(--color-halloween-cream));
+}
+.halloween-ghost {
+  position: absolute;
+  color: var(--color-halloween-cream);
+  fill: var(--color-halloween-purple);
+  filter: drop-shadow(0 0 2px var(--color-halloween-purple))
+    drop-shadow(0 3px 5px var(--color-halloween-lilac));
+  animation: halloween-float 6s ease-in-out infinite;
+}
+.halloween-ghost-one {
+  right: 12px;
+  top: 44%;
+}
+.halloween-ghost-two {
+  left: 10px;
+  top: 34%;
+  animation-delay: -3s;
+}
+.halloween-skull {
+  position: absolute;
+  left: 15px;
+  bottom: 174px;
+  color: var(--color-halloween-purple);
+  background: var(--color-halloween-cream);
+  border-radius: 50%;
+  transform: rotate(-14deg);
+}
+.halloween-pumpkin {
+  position: absolute;
+  overflow: visible;
+  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--color-halloween-orange) 60%, transparent));
+}
+.halloween-pumpkin-main {
+  bottom: 92px;
+  right: 12px;
+  width: 108px;
+  height: 101px;
+  transform: rotate(6deg);
+}
+.halloween-pumpkin-small {
+  bottom: 96px;
+  left: 12px;
+  width: 72px;
+  height: 67px;
+  transform: rotate(-10deg);
+}
+.halloween-rind {
+  fill: var(--color-halloween-orange);
+  stroke: var(--color-halloween-purple);
+  stroke-width: 3;
+}
+.halloween-ribs {
+  stroke: var(--color-halloween-purple);
+  stroke-width: 2;
+  opacity: 0.35;
+}
+.halloween-stem {
+  fill: var(--color-halloween-purple);
+  stroke: var(--color-halloween-night);
+  stroke-width: 2;
+}
+.halloween-leaf {
+  fill: var(--color-halloween-lilac);
+  stroke: var(--color-halloween-purple);
+  stroke-width: 2;
+}
+.halloween-carving {
+  fill: var(--color-halloween-night);
+  stroke: var(--color-halloween-peach);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+.halloween-bat {
+  position: absolute;
+  width: 56px;
+  height: 28px;
+  background: var(--color-halloween-purple);
+  opacity: 0.9;
+  clip-path: polygon(
+    0 0,
+    30% 28%,
+    38% 0,
+    50% 25%,
+    62% 0,
+    70% 28%,
+    100% 0,
+    87% 72%,
+    68% 60%,
+    50% 100%,
+    32% 60%,
+    13% 72%
+  );
+}
+:root[data-mode="dark"] .halloween-bat {
+  background: var(--color-halloween-lilac);
+}
+.halloween-bat-one {
+  top: 112px;
+  left: 14px;
+  transform: rotate(-15deg);
+}
+.halloween-bat-two {
+  top: 206px;
+  right: 12px;
+  transform: rotate(18deg) scale(0.75);
+}
+.halloween-bat-three {
+  top: 176px;
+  left: 40px;
+  transform: rotate(12deg) scale(0.65);
+}
+.halloween-bat-four {
+  top: 280px;
+  right: 14px;
+  transform: rotate(-18deg) scale(0.6);
+}
+.halloween-moon {
+  position: absolute;
+  left: 14px;
+  top: 228px;
+  color: var(--color-halloween-orange);
+  filter: drop-shadow(0 0 5px var(--color-halloween-purple));
+  transform: rotate(-18deg);
+}
+.halloween-candy {
+  position: absolute;
+  color: var(--color-halloween-purple);
+  background: var(--color-halloween-peach);
+  border-radius: 50%;
+}
+.halloween-candy-one {
+  right: 18px;
+  bottom: 216px;
+  transform: rotate(24deg);
+}
+.halloween-candy-two {
+  left: 18px;
+  bottom: 240px;
+  transform: rotate(-20deg);
+}
+.halloween-star {
+  position: absolute;
+  color: var(--color-halloween-orange);
+  filter: drop-shadow(0 1px 1px var(--color-halloween-purple));
+}
+.halloween-star-one {
+  right: 28px;
+  top: 36%;
+}
+.halloween-star-two {
+  left: 58px;
+  top: 310px;
+}
+.halloween-star-three {
+  right: 70px;
+  bottom: 204px;
+}
+@keyframes halloween-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-8deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(8deg);
+  }
+}
+@media (width < 40rem) {
+  .halloween-web {
+    width: 78px;
+    height: 78px;
+  }
+  .halloween-spider {
+    width: 30px;
+    height: 140px;
+    right: 6px;
+  }
+  .halloween-ghost-one {
+    width: 40px;
+    right: 4px;
+  }
+  .halloween-ghost-two {
+    width: 28px;
+    left: 3px;
+  }
+  .halloween-pumpkin-main {
+    width: 72px;
+    height: 67px;
+    right: 5px;
+    bottom: 90px;
+  }
+  .halloween-pumpkin-small {
+    width: 48px;
+    height: 45px;
+    left: 5px;
+    bottom: 90px;
+  }
+  .halloween-bat {
+    width: 38px;
+    height: 20px;
+  }
+  .halloween-bat-three {
+    left: 12px;
+  }
+  .halloween-moon {
+    width: 36px;
+    left: 5px;
+  }
+  .halloween-skull {
+    width: 28px;
+    left: 5px;
+    bottom: 150px;
+  }
+  .halloween-candy-one {
+    width: 26px;
+    right: 6px;
+    bottom: 174px;
+  }
+  .halloween-candy-two,
+  .halloween-star-two,
+  .halloween-bat-four {
+    display: none;
+  }
+  .halloween-star-one {
+    right: 9px;
+  }
+  .halloween-star-three {
+    right: 22px;
+    bottom: 220px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .halloween-ghost {
+    animation: none;
+  }
+}
+@media print {
+  :root[data-halloween-theme="enabled"] .halloween-decorations {
+    display: none;
+  }
+}
+
+/* A small shelf scene belongs to document flow, never to the viewport. */
+.halloween-sidebar-background {
+  display: none;
+}
+.halloween-decorations .halloween-pumpkin-main {
+  bottom: 0;
+  right: 20px;
+}
+.halloween-decorations .halloween-pumpkin-small {
+  bottom: 0;
+  left: 16px;
+}
+.halloween-decorations .halloween-skull {
+  bottom: 2px;
+  left: 43%;
+  width: 30px;
+}
+.halloween-decorations .halloween-candy-one {
+  bottom: 0;
+  right: 3px;
+  width: 28px;
+}
+.halloween-decorations .halloween-candy-two {
+  bottom: 0;
+  left: 2px;
+  width: 24px;
+}
+.halloween-decorations .halloween-ghost-one {
+  top: 25px;
+  right: 78px;
+  width: 40px;
+}
+.halloween-decorations .halloween-ghost-two {
+  top: 65px;
+  left: 90px;
+  width: 28px;
+}
+.halloween-decorations .halloween-moon {
+  top: 12px;
+  left: 65px;
+  width: 40px;
+}
+.halloween-decorations .halloween-spider {
+  top: 0;
+  right: 4px;
+  width: 30px;
+  height: 105px;
+}
+.halloween-decorations .halloween-bat-one {
+  top: 20px;
+  left: 40%;
+  width: 36px;
+}
+.halloween-decorations .halloween-bat-two {
+  top: 70px;
+  right: 25px;
+  width: 32px;
+}
+.halloween-decorations .halloween-bat-three {
+  top: 90px;
+  left: 8px;
+  width: 30px;
+}
+.halloween-decorations .halloween-bat-four {
+  display: none;
+}
+.halloween-decorations .halloween-star-one {
+  top: 15px;
+  right: 60px;
+}
+.halloween-decorations .halloween-star-two {
+  top: 70px;
+  left: 65px;
+}
+.halloween-decorations .halloween-star-three {
+  bottom: 70px;
+  right: 50%;
+}
+:root[data-halloween-theme="enabled"] .toon-paper::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 64px;
+  height: 64px;
+  pointer-events: none;
+  color: var(--color-halloween-purple);
+  opacity: 0.45;
+  background:
+    repeating-radial-gradient(
+      circle at top left,
+      transparent 0 12px,
+      currentColor 13px 14px,
+      transparent 15px 17px
+    ),
+    conic-gradient(
+      from 90deg at top left,
+      transparent 29deg,
+      currentColor 30deg 31deg,
+      transparent 32deg 59deg,
+      currentColor 60deg 61deg,
+      transparent 62deg
+    );
+  mask-image: radial-gradient(circle at top left, black 65%, transparent 71%);
+}
+:root[data-halloween-theme="enabled"][data-mode="dark"] .toon-paper::after {
+  color: var(--color-halloween-lilac);
+}
+:root[data-halloween-theme="enabled"] .toon-paper::before {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 8px,
+    color-mix(in srgb, var(--color-halloween-purple) 35%, transparent) 8px 12px
+  );
+  border-style: dashed;
+}
+@media (min-width: 64rem) {
+  .halloween-sidebar {
+    isolation: isolate;
+  }
+  :root[data-halloween-theme="enabled"] .halloween-sidebar-background {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: clip;
+    pointer-events: none;
+    user-select: none;
+    color: var(--color-brand-foreground);
+    opacity: 0.18;
+  }
+  .halloween-sidebar-background svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+  :root:has(aside.fixed)[data-halloween-theme="enabled"] .halloween-scene-footer {
+    display: none;
+  }
+}
+@media (width < 64rem) {
+  /* Compact layouts carry the theme in their paper and navigation backgrounds. */
+  :root[data-halloween-theme="enabled"] .halloween-scene-footer {
+    display: none;
+  }
+
+  :root[data-halloween-theme="enabled"]
+    :is(header.fixed, .halloween-sidebar > nav[aria-label="Main navigation"]) {
+    isolation: isolate;
+  }
+
+  :root[data-halloween-theme="enabled"] header.fixed::after,
+  :root[data-halloween-theme="enabled"]
+    .halloween-sidebar
+    > nav[aria-label="Main navigation"]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: var(--color-brand-foreground);
+    opacity: 0.12;
+    mask-image: url("./notebookDoodles.svg");
+    mask-size: 320px 320px;
+    mask-repeat: repeat;
+    mask-position: right -30px top -24px;
+  }
+
+  :root[data-halloween-theme="enabled"]
+    .halloween-sidebar
+    > nav[aria-label="Main navigation"]::before {
+    mask-position: left -18px bottom -16px;
+  }
+}
+
+@media (width < 40rem) {
+  :root[data-halloween-theme="enabled"] .toon-paper::after {
+    width: 36px;
+    height: 36px;
+    opacity: 0.3;
+  }
+
+  :root[data-halloween-theme="enabled"] .toon-paper::before {
+    width: 56px;
+    height: 18px;
+  }
+}
