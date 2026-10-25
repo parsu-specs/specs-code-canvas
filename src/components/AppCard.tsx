@@ -17,6 +17,8 @@ import { profileForApp } from "../data/profileLinks";
 import type { AppItem, Profile, User } from "../data/types";
 import { isSafeHttpUrl } from "../utils/urls";
 import { Button, ButtonChip, ButtonLink } from "./Button";
+import ShareButton from "./ShareButton";
+import ProjectPlaceholder from "./ProjectPlaceholder";
 
 type AppCardProps = {
   app: AppItem;
@@ -92,13 +94,13 @@ export default function AppCard({
         pressPos.current = { x: e.clientX, y: e.clientY };
       }}
       onClick={openFromCard}
-      className="toon-card toon-paper bg-panel flex h-full w-full min-w-0 max-w-sm cursor-pointer flex-col rounded-2xl p-4 *:min-w-0"
+      className="app-card toon-card toon-paper bg-panel flex w-full min-w-0 max-w-sm flex-[1_1_18rem] cursor-pointer flex-col rounded-2xl p-4 *:min-w-0"
     >
       <Button
         variant="plain"
         onClick={() => onOpenApp(app.id)}
         aria-label={`Open ${app.title} details`}
-        className="block w-full"
+        className="block w-full shrink-0"
       >
         {app.screenshots?.[0] ? (
           <span className="relative block h-48 w-full overflow-hidden rounded-xl border-[3px] border-outline bg-inverse">
@@ -110,20 +112,24 @@ export default function AppCard({
             />
           </span>
         ) : (
-          <div
-            style={{ backgroundColor: `var(--color-${app.color})` }}
-            className="min-w-0 bg-[repeating-linear-gradient(-45deg,transparent_0,transparent_12px,var(--color-cover-stripe)_12px,var(--color-cover-stripe)_24px)] flex h-48 items-center justify-center rounded-xl border-[3px] border-outline *:min-w-0 max-w-full"
-          >
-            <span className="rotate-[-4deg] text-4xl font-black">{app.title.charAt(0)}</span>
-          </div>
+          <ProjectPlaceholder
+            title={app.title}
+            color={app.color}
+            className="h-48 rounded-xl border-[3px] border-outline"
+          />
         )}
       </Button>
-      <div className="min-w-0 flex flex-1 flex-col *:min-w-0 max-w-full">
-        <div className="min-w-0 mt-2 flex flex-col items-start gap-3 *:min-w-0 max-w-full">
+      <div className="min-h-0 min-w-0 flex flex-1 flex-col *:min-w-0 max-w-full">
+        <div className="min-w-0 mt-2 flex shrink-0 flex-col items-start gap-3 *:min-w-0 max-w-full">
           <span className="text-[10px] font-black uppercase text-primary">{app.category}</span>
           <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-2 *:min-w-0 max-w-full">
             <div className="flex min-w-0 items-center gap-1 *:min-w-0 max-w-full">
-              <h3 className="min-w-0 wrap-anywhere text-xl font-black">{app.title} </h3>
+              <h3
+                className="min-w-0 line-clamp-2 wrap-anywhere text-xl font-black"
+                title={app.title}
+              >
+                {app.title}
+              </h3>
               {projectRank !== undefined &&
                 (trophyPlace !== undefined ? (
                   <TrophyMark minimal place={trophyPlace} size={24} />
@@ -136,8 +142,8 @@ export default function AppCard({
             {app.createdAt && <PostTimestamp createdAt={app.createdAt} subject="project" />}
           </div>
         </div>
-        <div className="mt-2 text-xs leading-5">
-          <p className="wrap-anywhere">
+        <div className="mt-2 shrink-0 text-xs leading-5">
+          <p className="line-clamp-2 wrap-anywhere">
             <UserIcon
               size={15}
               weight="duotone"
@@ -177,7 +183,7 @@ export default function AppCard({
             )}
           </p>
         </div>
-        <p className="my-4 line-clamp-4 flex-1 text-xs text-left text-pretty leading-6 text-muted/75">
+        <p className="my-4 min-h-0 line-clamp-4 flex-1 text-xs text-left text-pretty leading-6 text-muted/75">
           <MentionText
             text={app.description}
             mentions={app.mentions ?? []}
@@ -185,7 +191,7 @@ export default function AppCard({
             onOpenProfile={onOpenProfile}
           />
         </p>
-        <div className="min-w-0 flex min-h-8 flex-wrap items-center gap-3 border-t-2 border-dashed border-divider pt-4 *:min-w-0 max-w-full">
+        <div className="min-w-0 mt-auto flex min-h-8 shrink-0 flex-wrap items-center gap-3 border-t-2 border-dashed border-divider pt-4 *:min-w-0 max-w-full">
           <span className="min-w-0 flex items-center gap-2 *:min-w-0 max-w-full">
             <Button
               variant="vote"
@@ -214,6 +220,7 @@ export default function AppCard({
             </Button>
           </span>
           <span className="min-w-0 ml-auto flex items-center gap-2 *:min-w-0 max-w-full">
+            <ShareButton app={app} size="compact" />
             {isOwner && (
               <Button
                 variant="outline-flat"

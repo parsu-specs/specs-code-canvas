@@ -4,6 +4,7 @@ import Avatar from "../../components/Avatar";
 import { Button, ButtonLink } from "../../components/Button";
 import Input from "../../components/Input";
 import TrophyMark from "../../components/TrophyMark";
+import ShareButton from "../../components/ShareButton";
 import { developerProfilePath } from "../routes";
 import type { StoreController } from "./useStoreController";
 
@@ -76,7 +77,7 @@ export default function DevelopersPage({
                 >
                   <ButtonLink
                     variant="plain"
-                    href={developerProfilePath(p.id)}
+                    href={developerProfilePath(p.name)}
                     onClick={(e) => {
                       e.preventDefault();
                       openProfile(p.id);
@@ -96,7 +97,7 @@ export default function DevelopersPage({
                   >
                     <ButtonLink
                       variant="text"
-                      href={developerProfilePath(p.id)}
+                      href={developerProfilePath(p.name)}
                       onClick={(e) => {
                         e.preventDefault();
                         openProfile(p.id);
@@ -107,6 +108,7 @@ export default function DevelopersPage({
                     </ButtonLink>
                   </h3>
                   {place !== undefined && <TrophyMark minimal place={place as 1 | 2 | 3} />}
+                  <ShareButton profile={p} size="compact" />
                 </div>
                 <p
                   className={`min-w-0 wrap-break-word text-muted ${layout === "grid" ? "mt-2 text-sm" : "text-xs"}`}

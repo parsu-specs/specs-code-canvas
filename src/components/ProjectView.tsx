@@ -29,6 +29,8 @@ import MarkdownTextarea from "./MarkdownTextarea";
 import PagedMarkdown from "./PagedMarkdown";
 import UploadStamp from "./UploadStamp";
 import VotersDialog from "./VotersDialog";
+import ShareButton from "./ShareButton";
+import ProjectPlaceholder from "./ProjectPlaceholder";
 import { Button, ButtonLabel, ButtonLink } from "./Button";
 import Input, { Select, FileInput, Checkbox } from "./Input";
 import { getAppRepo, getProfileRepo } from "../data/factory";
@@ -527,23 +529,26 @@ export default function ProjectView({
             </span>
           </Button>
         ) : (
-          <div
-            style={{ backgroundColor: `var(--color-${app.color})` }}
-            className="min-w-0 bg-[repeating-linear-gradient(-45deg,transparent_0,transparent_12px,var(--color-cover-stripe)_12px,var(--color-cover-stripe)_24px)] flex h-48 items-center justify-center border-b-[3px] border-outline *:min-w-0 max-w-full"
-          >
-            <span className="rotate-[-4deg] text-6xl font-black">{app.title.charAt(0)}</span>
-          </div>
+          <ProjectPlaceholder
+            title={app.title}
+            color={app.color}
+            className="h-48 border-b-[3px] border-outline"
+            letterClassName="text-6xl"
+          />
         )}
         <div className="p-8 lg:py-8 lg:px-2">
           <div className="min-w-0 flex flex-wrap items-start justify-between gap-4 *:min-w-0 max-w-full">
             <p className="min-w-0 inline-flex -rotate-2 items-center gap-2 border-2 border-dashed border-primary px-3 py-1 text-xs font-black uppercase text-primary bg-surface *:min-w-0 max-w-full">
               {app.category}
             </p>
-            {isOwner && !editing && (
-              <Button variant="secondary" size="small" onClick={beginEdit}>
-                <PencilSimple size={18} weight="bold" /> Edit project
-              </Button>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <ShareButton app={app} />
+              {isOwner && !editing && (
+                <Button variant="secondary" size="small" onClick={beginEdit}>
+                  <PencilSimple size={18} weight="bold" /> Edit project
+                </Button>
+              )}
+            </div>
           </div>
           <h2 className="mt-4 flex min-w-0 max-w-full flex-wrap items-center gap-2 text-3xl font-black sm:text-4xl *:min-w-0">
             <span className="min-w-0 max-w-full wrap-anywhere">{app.title}</span>

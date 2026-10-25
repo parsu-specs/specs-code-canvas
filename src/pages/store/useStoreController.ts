@@ -74,13 +74,20 @@ const routeTail = (pathname: string, route: string) =>
 function parsePath(path: string): {
   view: StoreView;
   profileId: string | null;
+  profileName?: string;
   appId: string | null;
 } {
   const clean = normalizePathname(path || ROUTES.discover);
   if (clean === ROUTES.profile) return { view: "profile", profileId: "__me__", appId: null };
   if (clean === ROUTES.developers) return { view: "developers", profileId: null, appId: null };
-  const profileId = routeTail(clean, ROUTES.developers);
-  if (profileId) return { view: "profile", profileId: decodeURIComponent(profileId), appId: null };
+  const profileName = routeTail(clean, ROUTES.developers);
+  if (profileName)
+    return {
+      view: "profile",
+      profileId: null,
+      profileName: decodeURIComponent(profileName),
+      appId: null,
+    };
   const appId = routeTail(clean, ROUTES.apps) ?? routeTail(clean, ROUTES.discover);
   if (appId) return { view: "project", profileId: null, appId: decodeURIComponent(appId) };
   if (clean === ROUTES.feeds) return { view: "feeds", profileId: null, appId: null };
@@ -185,6 +192,9 @@ export default function useStoreController() {
   const initial = parsePath(window.location.pathname);
   const [view, setView] = useState<StoreView>(initial.view);
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>(initial.profileId);
+  const [selectedProfileName, setSelectedProfileName] = useState<string | null>(
+    initial.profileName ?? null,
+  );
   const [selectedAppId, setSelectedAppId] = useState<string | null>(initial.appId);
   const [projectEdit, setProjectEdit] = useState(false);
 
@@ -243,6 +253,7 @@ export default function useStoreController() {
       const parsed = parsePath(window.location.pathname);
       setView(parsed.view);
       setSelectedProfileId(parsed.profileId);
+      setSelectedProfileName(parsed.profileName ?? null);
       setSelectedAppId(parsed.appId);
     };
     window.addEventListener("popstate", onPopState);
@@ -1043,14 +1054,22 @@ export default function useStoreController() {
     setSelectedAppId(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
-  const openProfile = useCallback((profileId: string) => {
-    const path = profileId === "__me__" ? ROUTES.profile : developerProfilePath(profileId);
-    window.history.pushState({}, "", path);
-    setSelectedProfileId(profileId);
-    setSelectedAppId(null);
-    setView("profile");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
+  const openProfile = useCallback(
+    (profileId: string) => {
+      const profile =
+        profilesLookup.get(profileId) ??
+        profilesLookup.get(`name:${profileId.trim().toLowerCase()}`);
+      const path =
+        profileId === "__me__" ? ROUTES.profile : developerProfilePath(profile?.name ?? profileId);
+      window.history.pushState({}, "", path);
+      setSelectedProfileId(profile?.id ?? profileId);
+      setSelectedProfileName(null);
+      setSelectedAppId(null);
+      setView("profile");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [profilesLookup],
+  );
   const openMyProfile = useCallback(
     (e?: React.MouseEvent) => {
       e?.preventDefault();
@@ -1058,6 +1077,7 @@ export default function useStoreController() {
       setAccountMenuOpen(false);
       window.history.pushState({}, "", ROUTES.profile);
       setSelectedProfileId(user.id);
+      setSelectedProfileName(null);
       setView("profile");
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
@@ -1095,7 +1115,11 @@ export default function useStoreController() {
   const profileForCrumb =
     selectedProfileId === "__me__" || (user && selectedProfileId === user.id)
       ? (myProfile ?? profiles.find((p) => user && p.id === user.id))
-      : profiles.find((p) => p.id === selectedProfileId);
+      : profiles.find(
+          (p) =>
+            p.id === selectedProfileId ||
+            p.name.toLowerCase() === selectedProfileName?.toLowerCase(),
+        );
   const appForCrumb =
     fullApps.find((a) => a.id === selectedAppId) ?? apps.find((a) => a.id === selectedAppId);
   const crumbs: Crumb[] = (() => {
@@ -1547,6 +1571,7 @@ export default function useStoreController() {
     seenAt,
     selectedAppId,
     selectedProfileId,
+    selectedProfileName,
     selectedRepositoryFiles,
     setAccountMenuOpen,
     setApps,
@@ -1577,6 +1602,7 @@ export default function useStoreController() {
     setScreenshots,
     setSelectedAppId,
     setSelectedProfileId,
+    setSelectedProfileName,
     setSelectedRepositoryFiles,
     setShowForm,
     setTitle,

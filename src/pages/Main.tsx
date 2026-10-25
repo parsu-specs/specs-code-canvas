@@ -2,6 +2,7 @@ import React, { Suspense, useEffect, useState } from "react";
 import { lazyPage } from "../utils/lazyPage";
 import { useAuth } from "../auth/authContext";
 import { ROUTES, isProtectedRoute, normalizePathname, resolveRoute } from "./routes";
+import { consumeSharedDestination, rememberSharedDestination } from "../utils/sharedDestination";
 
 // Route-split: each page (and its heavy deps like markdown/GitHub readers)
 // loads on demand instead of inflating the first paint.
@@ -43,7 +44,12 @@ export default function Main() {
     if (loading) return;
 
     const current = window.location.pathname;
-    const destination = resolveRoute(current, Boolean(user));
+    if (!user) rememberSharedDestination(current);
+    const sharedDestination = user ? consumeSharedDestination() : null;
+    const destination =
+      sharedDestination && (current === ROUTES.signin || current === ROUTES.discover)
+        ? sharedDestination
+        : resolveRoute(current, Boolean(user));
 
     if (destination !== current) {
       window.history.replaceState(
@@ -51,6 +57,7 @@ export default function Main() {
         "",
         `${destination}${window.location.search}${window.location.hash}`,
       );
+      window.dispatchEvent(new PopStateEvent("popstate"));
     }
     if (destination !== path) setPath(destination);
   }, [loading, path, user]);

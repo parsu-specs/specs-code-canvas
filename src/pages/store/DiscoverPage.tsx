@@ -145,7 +145,7 @@ export default function DiscoverPage(props: Props) {
             </Button>
           </div>
         ) : apps.length ? (
-          <div className="min-w-0 grid *:min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-6 max-w-full">
+          <div className="min-w-0 flex flex-wrap justify-center gap-6 *:min-w-0 max-w-full">
             {apps.map((app) => (
               <AppCard
                 key={app.id}

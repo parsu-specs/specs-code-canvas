@@ -1,0 +1,253 @@
+.share-photo-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 24px;
+  container-type: inline-size;
+}
+.share-photo-preview::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: 3px solid var(--color-outline);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.share-photo {
+  width: 1080px;
+  min-width: 1080px;
+  max-width: 1080px;
+  height: 1080px;
+  min-height: 1080px;
+  max-height: 1080px;
+  flex: none;
+  isolation: isolate;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+  overflow: hidden;
+  background: #fbfaf6;
+  font-family: "Nunito", sans-serif;
+  text-align: left;
+  line-height: 1.35;
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color-scheme: light;
+}
+.share-photo-preview > .share-photo-scale {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1080px;
+  height: 1080px;
+  transform: scale(calc(100cqw / 1080px));
+  transform-origin: top left;
+}
+.share-photo,
+.share-photo * {
+  box-sizing: border-box;
+}
+.share-photo-header {
+  height: 140px;
+  padding: 32px 45px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 8px solid #21143d;
+}
+.share-photo-org {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 16px;
+  line-height: 1.2;
+}
+.share-photo-seal {
+  display: block;
+  flex-shrink: 0;
+  width: 70px;
+  height: 70px;
+  overflow: hidden;
+  border: 4px solid;
+  border-radius: 50%;
+}
+.share-photo-seal > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: scale(1.12);
+}
+.share-photo-monogram {
+  font-family: "Fredoka", sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+}
+.share-photo-paper {
+  height: 650px;
+  display: flex;
+  flex-direction: column;
+  padding: 35px 70px 8px;
+  background-color: #fbfaf6;
+  background-image:
+    linear-gradient(90deg, transparent 123px, #ecacc3 123px, #ecacc3 127px, transparent 127px),
+    repeating-linear-gradient(0deg, transparent, transparent 85px, #eeede9 85px, #eeede9 89px),
+    repeating-linear-gradient(90deg, transparent, transparent 85px, #eeede9 85px, #eeede9 89px);
+}
+.share-photo-frame {
+  --share-photo-frame-radius: 38px;
+  --share-photo-frame-border: 8px;
+  position: relative;
+  height: 535px;
+  border-radius: var(--share-photo-frame-radius);
+  background: currentColor;
+  box-shadow: 10px 10px 0 #21143d33;
+}
+.share-photo-image {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.share-photo-frame-border {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  border: var(--share-photo-frame-border) solid;
+  border-color: inherit;
+  border-radius: inherit;
+}
+.share-photo-image > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #f2f0eb;
+}
+.share-photo-tape {
+  position: absolute;
+  top: -24px;
+  left: 41%;
+  width: 150px;
+  height: 48px;
+  transform: rotate(-5deg);
+  clip-path: polygon(2% 8%, 97% 0, 95% 24%, 100% 35%, 97% 64%, 100% 94%, 0 100%, 2% 72%, 0 43%);
+  z-index: 2;
+}
+.share-photo-placeholder {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  text-align: center;
+}
+.share-photo-placeholder > span {
+  font-family: "Fredoka", sans-serif;
+  font-size: 200px;
+  line-height: 1.2;
+}
+.share-photo-placeholder > strong {
+  font-size: 35px;
+  overflow-wrap: anywhere;
+}
+.share-photo-url {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 16px;
+  text-align: center;
+  font-size: 22px;
+  line-height: 1.25;
+}
+.share-photo-url > svg {
+  flex-shrink: 0;
+}
+.share-photo-url > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.share-photo-footer {
+  height: 290px;
+  padding: 36px 42px 22px;
+  border-top: 8px solid;
+}
+.share-photo-info {
+  display: grid;
+  grid-template-columns: 36% 1fr;
+  gap: 38px;
+  align-items: center;
+}
+.share-photo-name {
+  position: relative;
+  background: #fbfaf6;
+  border: 5px solid;
+  border-radius: 24px;
+  padding: 16px;
+  min-width: 0;
+  height: 170px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.share-photo-name > small {
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+.share-photo-name > .share-photo-tape {
+  left: 50%;
+  transform: translateX(-50%) rotate(-5deg);
+}
+.share-photo-name > strong {
+  font-family: "Fredoka", sans-serif;
+  font-size: 31px;
+  font-weight: 700;
+  line-height: 1.1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.share-photo-name > .share-photo-long-title {
+  font-size: 20px;
+  -webkit-line-clamp: 3;
+}
+.share-photo-name > span:not(.share-photo-tape) {
+  font-size: 16px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.share-photo-info > .share-photo-description {
+  margin: 0;
+  text-align: justify;
+  font-size: 20px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.share-photo-credits {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  align-items: center;
+  font-size: 18px;
+}

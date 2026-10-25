@@ -17,8 +17,8 @@ export function appDetailsPath(appId: string) {
   return `${ROUTES.apps}/${encodeURIComponent(appId)}`;
 }
 
-export function developerProfilePath(profileId: string) {
-  return `${ROUTES.developers}/${encodeURIComponent(profileId)}`;
+export function developerProfilePath(username: string) {
+  return `${ROUTES.developers}/${encodeURIComponent(username)}`;
 }
 
 export function normalizePathname(pathname: string) {

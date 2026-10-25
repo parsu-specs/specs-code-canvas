@@ -1,4 +1,6 @@
 import VotersDialog from "./VotersDialog";
+import ShareButton from "./ShareButton";
+import ProjectPlaceholder from "./ProjectPlaceholder";
 import { userFacingError } from "../utils/userFacingError";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -25,6 +27,8 @@ import { confirmDisplayNameChange } from "../utils/displayName";
 import DisplayNameInput from "./DisplayNameInput";
 import { useDisplayNameConfirmation } from "./useDisplayNameConfirmation";
 import { PROFILE_THEMES } from "../data/types";
+import { NotFoundError } from "../data/repositories";
+import { ROUTES, developerProfilePath, normalizePathname } from "../pages/routes";
 import type { AppItem, Profile, User } from "../data/types";
 
 type RankSummary = {
@@ -35,6 +39,7 @@ type RankSummary = {
 
 type ProfileViewProps = {
   profileId: string;
+  profileName?: string;
   currentUser: User | null;
   trophies: Map<string, 1 | 2 | 3>;
   projectTrophies: Map<string, 1 | 2 | 3>;
@@ -45,13 +50,14 @@ type ProfileViewProps = {
   onOpenProfile: (profileId: string) => void;
   onSubmitProject: () => void;
   /** Refresh shared profile surfaces (sidebar, comments) after a save. */
-  onProfileUpdated?: () => void;
+  onProfileUpdated?: (profile: Profile) => void;
 };
 
 const AVATAR_COLORS = ["pink", "yellow", "mint", "sky", "lavender", "purple"] as const;
 
 export default function ProfileView({
   profileId,
+  profileName,
   currentUser,
   trophies,
   projectTrophies,
@@ -87,7 +93,7 @@ export default function ProfileView({
   const editFormRef = useRef<HTMLFormElement>(null);
   useScrollToForm(editing, editFormRef);
 
-  const isSelf = currentUser ? profileId === currentUser.id : false;
+  const isSelf = currentUser ? (profile?.id ?? profileId) === currentUser.id : false;
 
   useEffect(() => {
     let cancelled = false;
@@ -96,16 +102,28 @@ export default function ProfileView({
     (async () => {
       try {
         const repo = getProfileRepo();
-        const p =
-          profileId === "__me__" && currentUser
-            ? await repo.ensureUserProfile(currentUser)
-            : await repo.getProfile(profileId);
+        let p: Profile;
+        if (profileName) {
+          // Keep previously shared ID URLs working while publishing username URLs.
+          const named = await repo.getProfileByName(profileName);
+          p = named ?? (await repo.getProfile(profileName));
+          if (p.name.trim().toLowerCase() !== profileName.trim().toLowerCase() && named)
+            throw new NotFoundError("Developer not found.");
+        } else {
+          p =
+            profileId === "__me__" && currentUser
+              ? await repo.ensureUserProfile(currentUser)
+              : await repo.getProfile(profileId);
+        }
         // Self-heal: ensure the signed-in user always has a row.
         if (currentUser && p.id !== currentUser.id) {
           await repo.ensureUserProfile(currentUser).catch(() => undefined);
         }
         const all = await getAppRepo().listApps({ limit: 200, userId: currentUser?.id });
         if (cancelled) return;
+        if (normalizePathname(window.location.pathname).startsWith(`${ROUTES.developers}/`)) {
+          window.history.replaceState({}, "", developerProfilePath(p.name));
+        }
         setProfile(p);
         if (p.id === currentUser?.id) updateCachedProfile(p);
         if (!editingRef.current) {
@@ -130,7 +148,7 @@ export default function ProfileView({
     return () => {
       cancelled = true;
     };
-  }, [profileId, currentUser]);
+  }, [profileId, profileName, currentUser]);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,7 +182,10 @@ export default function ProfileView({
       setEditing(false);
       // Push color/photo/bio changes to shared surfaces (sidebar, comment
       // avatars), which otherwise keep the old profile until a reload.
-      onProfileUpdated?.();
+      if (normalizePathname(window.location.pathname).startsWith(`${ROUTES.developers}/`)) {
+        window.history.replaceState({}, "", developerProfilePath(updated.name));
+      }
+      onProfileUpdated?.(updated);
     } catch (e) {
       setTheme(profile.theme ?? "");
       setSaveError(e instanceof Error ? e.message : "Could not save profile.");
@@ -249,8 +270,9 @@ export default function ProfileView({
               </p>
             )}
           </div>
-          {isSelf && (
-            <div className="w-full sm:w-auto">
+          <div className="flex w-full flex-wrap justify-center gap-2 sm:w-auto">
+            <ShareButton profile={profile} />
+            {isSelf && (
               <Button
                 variant="secondary"
                 size="small"
@@ -259,8 +281,8 @@ export default function ProfileView({
               >
                 <PencilSimple size={18} weight="bold" /> {editing ? "Close" : "Edit profile"}
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {isSelf && editing && (
@@ -441,14 +463,14 @@ export default function ProfileView({
           {userFacingError(error)}
         </p>
       ) : apps.length ? (
-        <div className="min-w-0 grid *:min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-6 max-w-full">
+        <div className="min-w-0 flex flex-wrap justify-center gap-6 lg:justify-start *:min-w-0 max-w-full">
           {apps.map((app) => (
             <article
               key={app.id}
-              className="toon-card toon-paper bg-panel flex h-full w-full min-w-0 max-w-sm flex-col rounded-2xl p-5 pt-9 text-left *:min-w-0"
+              className="app-card toon-card toon-paper bg-panel flex w-full min-w-0 max-w-sm flex-[1_1_18rem] flex-col rounded-2xl p-4 text-left *:min-w-0"
             >
               {app.screenshots?.[0] ? (
-                <span className="relative block h-24 w-full overflow-hidden rounded-xl border-[3px] border-outline bg-inverse">
+                <span className="relative block h-48 w-full shrink-0 overflow-hidden rounded-xl border-[3px] border-outline bg-inverse">
                   <img
                     src={app.screenshots[0]}
                     alt=""
@@ -464,16 +486,17 @@ export default function ProfileView({
                   />
                 </span>
               ) : (
-                <div
-                  style={{ backgroundColor: `var(--color-${app.color})` }}
-                  className="min-w-0 bg-[repeating-linear-gradient(-45deg,transparent_0,transparent_12px,var(--color-cover-stripe)_12px,var(--color-cover-stripe)_24px)] flex h-24 items-center justify-center rounded-xl border-[3px] border-outline *:min-w-0 max-w-full"
-                >
-                  <span className="rotate-[-4deg] text-3xl font-black">{app.title.charAt(0)}</span>
-                </div>
+                <ProjectPlaceholder
+                  title={app.title}
+                  color={app.color}
+                  className="h-48 shrink-0 rounded-xl border-[3px] border-outline"
+                />
               )}
-              <p className="mt-4 text-[10px] font-black uppercase text-primary">{app.category}</p>
-              <h4 className="flex min-w-0 max-w-full flex-wrap items-center gap-2 text-lg font-black *:min-w-0">
-                <span className="min-w-0 max-w-full wrap-anywhere">
+              <p className="mb-3 mt-2 shrink-0 text-[10px] font-black uppercase text-primary">
+                {app.category}
+              </p>
+              <h4 className="flex min-w-0 max-w-full shrink-0 flex-wrap items-center gap-2 text-xl font-black *:min-w-0">
+                <span className="min-w-0 max-w-full line-clamp-2 wrap-anywhere" title={app.title}>
                   <Button variant="text" onClick={() => onOpenApp(app.id)}>
                     {app.title}
                   </Button>
@@ -482,7 +505,7 @@ export default function ProfileView({
                   <TrophyMark minimal place={projectTrophies.get(app.id) as 1 | 2 | 3} size={20} />
                 )}
               </h4>
-              <p className="mt-1 text-sm leading-6 text-muted">
+              <p className="my-4 min-h-0 line-clamp-4 flex-1 text-xs text-left text-pretty leading-6 text-muted/75">
                 <MentionText
                   text={app.description}
                   mentions={app.mentions ?? []}
@@ -490,8 +513,7 @@ export default function ProfileView({
                   onOpenProfile={onOpenProfile}
                 />
               </p>
-              <div aria-hidden="true" className="flex-1" />
-              <p className="min-w-0 mt-3 flex flex-wrap items-center gap-4 text-sm font-black max-w-full">
+              <div className="min-w-0 mt-auto flex min-h-8 shrink-0 flex-wrap items-center gap-3 border-t-2 border-dashed border-divider pt-4 text-sm font-black max-w-full">
                 <span className="min-w-0 flex items-center gap-1 *:min-w-0 max-w-full">
                   <Heart size={18} weight="duotone" />
                   <VotersDialog
@@ -504,8 +526,9 @@ export default function ProfileView({
                 <span className="min-w-0 flex items-center gap-1 *:min-w-0 max-w-full">
                   <ChatCircleDots size={18} weight="duotone" /> {app.comments}
                 </span>
-              </p>
-              <div className="mt-1">
+                <ShareButton app={app} size="compact" className="ml-auto" />
+              </div>
+              <div className="mt-1 shrink-0">
                 <UploadStamp createdAt={app.createdAt} />
               </div>
             </article>

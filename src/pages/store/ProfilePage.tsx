@@ -10,8 +10,10 @@ type Props = Pick<
   | "projectTrophies"
   | "rankedDevelopers"
   | "selectedProfileId"
+  | "selectedProfileName"
   | "setProfileTick"
   | "setSelectedProfileId"
+  | "setSelectedProfileName"
   | "setShowForm"
   | "setView"
   | "trophies"
@@ -25,8 +27,10 @@ export default function ProfilePage({
   projectTrophies,
   rankedDevelopers,
   selectedProfileId,
+  selectedProfileName,
   setProfileTick,
   setSelectedProfileId,
+  setSelectedProfileName,
   setShowForm,
   setView,
   trophies,
@@ -34,18 +38,24 @@ export default function ProfilePage({
 }: Props) {
   return (
     <>
-      {selectedProfileId && (
+      {(selectedProfileId || selectedProfileName) && (
         <section>
           <ProfileView
-            key={selectedProfileId}
-            profileId={selectedProfileId === "__me__" ? (user?.id ?? "__me__") : selectedProfileId}
+            key={selectedProfileId ?? selectedProfileName}
+            profileId={
+              selectedProfileId === "__me__" ? (user?.id ?? "__me__") : (selectedProfileId ?? "")
+            }
+            profileName={selectedProfileName ?? undefined}
             currentUser={user ?? null}
             trophies={trophies}
             projectTrophies={projectTrophies}
             profiles={profilesLookup}
             rankSummary={(() => {
               const resolvedId =
-                selectedProfileId === "__me__" ? (user?.id ?? "__me__") : selectedProfileId;
+                selectedProfileId === "__me__"
+                  ? (user?.id ?? "__me__")
+                  : (selectedProfileId ??
+                    profilesLookup.get(`name:${selectedProfileName?.trim().toLowerCase()}`)?.id);
               const rank = rankedDevelopers.findIndex((r) => r.profile.id === resolvedId);
               if (rank === -1) return undefined;
               return {
@@ -58,6 +68,7 @@ export default function ProfilePage({
               window.history.pushState({}, "", ROUTES.developers);
               setView("developers");
               setSelectedProfileId(null);
+              setSelectedProfileName(null);
             }}
             onOpenApp={openAppFromProfile}
             onOpenProfile={openProfile}
@@ -65,9 +76,16 @@ export default function ProfilePage({
               window.history.pushState({}, "", ROUTES.discover);
               setView("discover");
               setSelectedProfileId(null);
+              setSelectedProfileName(null);
               setShowForm(true);
             }}
-            onProfileUpdated={() => setProfileTick((t) => t + 1)}
+            onProfileUpdated={(profile) => {
+              if (selectedProfileName) {
+                setSelectedProfileId(profile.id);
+                setSelectedProfileName(null);
+              }
+              setProfileTick((t) => t + 1);
+            }}
           />
         </section>
       )}

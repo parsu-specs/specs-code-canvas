@@ -16,7 +16,7 @@ describe("routes", () => {
 
   it("builds encoded application and developer paths", () => {
     expect(appDetailsPath("app / one")).toBe("/apps/app%20%2F%20one");
-    expect(developerProfilePath("profile / one")).toBe("/developers/profile%20%2F%20one");
+    expect(developerProfilePath("Alex / One")).toBe("/developers/Alex%20%2F%20One");
   });
 
   it("recognizes protected routes and the legacy community route", () => {
