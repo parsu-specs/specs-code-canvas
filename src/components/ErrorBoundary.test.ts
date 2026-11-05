@@ -13,6 +13,8 @@ it("offers document refresh for a failed page import instead of an ineffective r
     .fn()
     .mockRejectedValue(new TypeError("Failed to fetch dynamically imported module"));
   const Page = lazyPage(load);
+  // A failed speculative download must keep the same refresh-only recovery.
+  await Page.preload().catch(() => undefined);
   const container = document.createElement("div");
   const root = createRoot(container);
   try {
@@ -35,7 +37,7 @@ it("offers document refresh for a failed page import instead of an ineffective r
 
 it("offers only document refresh after a section render crash", async () => {
   const log = vi.spyOn(console, "error").mockImplementation(() => {});
-  function Section() {
+  function Section(): never {
     throw new Error("Section render failure");
   }
   const container = document.createElement("div");
@@ -56,5 +58,24 @@ it("offers only document refresh after a section render crash", async () => {
   } finally {
     await act(async () => root.unmount());
     log.mockRestore();
+  }
+});
+
+it("shares an early route download with the subsequent lazy render", async () => {
+  const load = vi.fn(async () => ({ default: () => createElement("p", null, "Ready") }));
+  const Page = lazyPage(load);
+  const first = Page.preload();
+  expect(Page.preload()).toBe(first);
+  await first;
+  const container = document.createElement("div");
+  const root = createRoot(container);
+  try {
+    await act(async () =>
+      root.render(createElement(Suspense, { fallback: "Loading" }, createElement(Page))),
+    );
+    expect(container.textContent).toBe("Ready");
+    expect(load).toHaveBeenCalledOnce();
+  } finally {
+    await act(async () => root.unmount());
   }
 });

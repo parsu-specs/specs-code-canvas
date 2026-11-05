@@ -5,6 +5,7 @@ import "@fontsource/nunito/latin-400.css";
 import "@fontsource/nunito/latin-700.css";
 import "@fontsource/nunito/latin-900.css";
 import App from "./App";
+import { preloadInitialPage } from "./pages/Main";
 import "./styles/style.css";
 import { initializeFluidText } from "./experiments/fluidText";
 import { initializeBoldText } from "./experiments/boldText";
@@ -14,20 +15,19 @@ import { initializeGlassTheme } from "./experiments/glassTheme";
 import { initializeHalloweenTheme } from "./experiments/halloweenTheme";
 import { initializeAppearance } from "./utils/appearance";
 import { initializeFavicon } from "./utils/favicon";
-import { initializePinchZoom } from "./utils/pinchZoom";
 import { initializePalette } from "./utils/palette";
 import { viewerSettingKey } from "./utils/viewerCache";
 
 initializePalette();
 initializeAppearance();
 initializeFavicon();
-initializePinchZoom();
 initializeFluidText();
 initializeBoldText();
 initializeNoBorders();
 initializeSoftEdges();
 initializeGlassTheme();
 initializeHalloweenTheme();
+preloadInitialPage();
 window.addEventListener("storage", (event) => {
   if (event.key === viewerSettingKey("cc.palette.v1") || event.key === null) initializePalette();
 });
@@ -43,19 +43,23 @@ const fontTimeout = new Promise<void>((resolve) => {
   window.setTimeout(resolve, 1500);
 });
 
-async function startApp() {
-  await Promise.race([Promise.all(fontRequests), fontTimeout]);
+function startApp() {
+  const fontReadiness = Promise.race([Promise.all(fontRequests), fontTimeout]).catch(
+    () => undefined,
+  );
 
   createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
-      <App />
+      <App fontReadiness={fontReadiness} />
     </React.StrictMode>,
   );
 
   if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      void navigator.serviceWorker.register("/font-cache-worker.js");
-    });
+    const register = () => {
+      void navigator.serviceWorker.register("/font-cache-worker.js").catch(() => undefined);
+    };
+    if (document.readyState === "complete") register();
+    else window.addEventListener("load", register, { once: true });
   }
 }
 

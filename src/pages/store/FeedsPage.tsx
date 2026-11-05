@@ -1,4 +1,5 @@
 import { userFacingError } from "../../utils/userFacingError";
+import { FeedSkeleton } from "../../components/Skeleton";
 import { CloseButton } from "../../components/CloseButton";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -207,7 +208,7 @@ export default function FeedsPage({
           </label>
 
           {feedPostsLoading ? (
-            <p className="mt-6 font-bold text-muted">Loading feeds...</p>
+            <FeedSkeleton />
           ) : feedPostsError ? (
             <div className="toon-card bg-surface mt-4 rounded-2xl p-8 text-center">
               <h3 className="text-xl font-black">Could not load the feed</h3>
@@ -217,7 +218,7 @@ export default function FeedsPage({
               </Button>
             </div>
           ) : filteredFeedPosts.length ? (
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-4 space-y-3 motion-safe:[&>*:nth-child(-n+6)]:animate-content-in">
               {filteredFeedPosts.map((m) => {
                 const p = profilesLookup.get(m.authorId);
                 const linked = m.appId ? fullApps.find((a) => a.id === m.appId) : undefined;

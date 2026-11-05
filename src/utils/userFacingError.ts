@@ -62,6 +62,8 @@ const safeMessages = new Set([
   "Comment not found.",
   "Update not found.",
   "Images are too large. Pick smaller files.",
+  "Could not upload images. Please try again.",
+  "Could not process that image.",
   "Storage is full. Remove an image and try again.",
   "That file is empty. Pick a file with content.",
   "That doesn't look like a text file. Pick a Markdown or README file.",

@@ -63,6 +63,7 @@ async function click(text: string) {
   );
   expect(button, `Button: ${text}`).toBeTruthy();
   await act(async () => button!.click());
+  await act(async () => vi.dynamicImportSettled());
 }
 async function openProject(value = app) {
   await act(async () => root.render(<ShareButton app={value} />));

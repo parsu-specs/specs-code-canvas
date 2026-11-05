@@ -1,9 +1,10 @@
+import ProjectImage from "./ProjectImage";
 import { useState } from "react";
 import { CaretLeft, CaretRight, DotsSixVertical, X } from "@phosphor-icons/react";
 import { Button } from "./Button";
 
 export type SortableThumbnailsProps = {
-  /** Data URLs of the uploaded thumbnails, in display order (first is the cover). */
+  /** Stored image URLs or pending upload previews, in order (first is the cover). */
   images: string[];
   /** Called with the full reordered array whenever the order changes. */
   onReorder: (next: string[]) => void;
@@ -80,7 +81,7 @@ export default function SortableThumbnails({
               isDragging ? "opacity-40" : ""
             }`}
           >
-            <img
+            <ProjectImage
               src={src}
               alt={`Upload preview ${i + 1}`}
               className={`h-24 w-full rounded-xl border-[3px] object-cover transition-transform ${

@@ -1,10 +1,5 @@
 @import "tailwindcss";
 
-html[data-pinch-zoom="disabled"],
-html[data-pinch-zoom="disabled"] * {
-  touch-action: pan-x pan-y;
-}
-
 @utility scrollbar-minimal {
   scrollbar-width: thin;
   scrollbar-color: var(--color-primary) transparent;
@@ -118,6 +113,28 @@ body:has([data-dropdown-portal]) {
   --font-sans: "Nunito", system-ui, sans-serif;
   --font-display: "Fredoka", "Nunito", sans-serif;
   --animate-loader-bounce: loader-bounce 600ms ease-in-out infinite alternate;
+  --animate-content-in: content-in 140ms ease-out both;
+  --animate-placeholder-in: placeholder-in 120ms ease-out both;
+
+  @keyframes content-in {
+    from {
+      opacity: 0.6;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes placeholder-in {
+    from {
+      opacity: 0;
+      visibility: hidden;
+    }
+    to {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
 
   @keyframes loader-bounce {
     to {
@@ -128,6 +145,54 @@ body:has([data-dropdown-portal]) {
 
 /* Shared card surfaces stay below utilities so component variants can override them. */
 @layer components {
+  [data-startup-shell] [data-startup-view],
+  :root:not([data-startup-signin="true"]) [data-startup-signin],
+  :root[data-startup-signin="true"] [data-startup-hero] {
+    display: none;
+  }
+  :root[data-startup-view="discover"] [data-startup-view="discover"],
+  :root[data-startup-view="developers"] [data-startup-view="developers"],
+  :root[data-startup-view="leaderboard"] [data-startup-view="leaderboard"],
+  :root[data-startup-view="feeds"] [data-startup-view="feeds"],
+  :root[data-startup-view="profile"] [data-startup-view="profile"],
+  :root[data-startup-view="project"] [data-startup-view="project"],
+  :root[data-startup-view="settings"] [data-startup-view="settings"] {
+    display: block;
+  }
+  :root:not([data-startup-store="true"]) [data-startup-store],
+  :root[data-startup-store="true"] [data-startup-public],
+  :root[data-startup-prompt-hidden="true"]
+    [data-startup-shell]
+    [aria-label="Loading project reminder"] {
+    display: none;
+  }
+  .discovery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+    gap: 1.5rem;
+    justify-items: center;
+  }
+
+  @container content (min-width: 37.5rem) {
+    .discovery-grid {
+      justify-items: start;
+    }
+  }
+
+  .discovery-grid:has(> :only-child) {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .startup-placeholder {
+    animation: placeholder-in 120ms ease-out 180ms both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .startup-placeholder {
+      animation-duration: 0s;
+    }
+  }
   .app-card {
     height: 32rem;
   }

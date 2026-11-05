@@ -1,5 +1,7 @@
+import ProjectImage from "./ProjectImage";
 import { userFacingError } from "../utils/userFacingError";
 import ErrorNotice from "./ErrorNotice";
+import { ProjectSkeleton, RowsSkeleton } from "./Skeleton";
 import { debouncedVotes, VOTE_RATE_LIMIT_ENABLED } from "../utils/debouncedVotes";
 import React, { useEffect, useRef, useState } from "react";
 
@@ -35,7 +37,6 @@ import { Button, ButtonLabel, ButtonLink } from "./Button";
 import Input, { Select, FileInput, Checkbox } from "./Input";
 import { getAppRepo, getProfileRepo } from "../data/factory";
 import { profileIdForApp } from "../data/profileLinks";
-import { fileToThumbnailDataUrl } from "../utils/images";
 import { optimisticVote } from "../utils/optimisticVote";
 import { enqueueVote } from "../utils/voteQueue";
 import { formatCountdown } from "../utils/time";
@@ -441,7 +442,9 @@ export default function ProjectView({
     try {
       const room = 3 - eShots.length;
       const chosen = Array.from(files).slice(0, Math.max(0, room));
-      const compressed = await Promise.all(chosen.map((f) => fileToThumbnailDataUrl(f)));
+      const { fileToProjectImageDataUrl } = await import("../utils/images");
+      const compressed: string[] = [];
+      for (const file of chosen) compressed.push(await fileToProjectImageDataUrl(file));
       setEShots((prev) => [...prev, ...compressed].slice(0, 3));
     } catch (e) {
       setEImgError(e instanceof Error ? e.message : "Could not read those images.");
@@ -486,7 +489,7 @@ export default function ProjectView({
     }
   };
 
-  if (loading) return <p className="font-bold text-muted">Loading project…</p>;
+  if (loading) return <ProjectSkeleton />;
   if (error || !app) {
     return (
       <div className="toon-card toon-paper bg-panel rounded-2xl p-10 text-center">
@@ -505,7 +508,7 @@ export default function ProjectView({
   const rest = (app.screenshots ?? []).slice(1);
 
   return (
-    <div className="@container/content min-w-0 max-w-full wrap-anywhere">
+    <div className="@container/content min-w-0 max-w-full wrap-anywhere motion-safe:animate-content-in">
       <Button variant="surface" size="small" onClick={onBack}>
         <ArrowLeft size={18} weight="bold" /> Go Back
       </Button>
@@ -520,10 +523,13 @@ export default function ProjectView({
             className="block w-full cursor-zoom-in rounded-2xl toon-card"
           >
             <span className="relative block h-80 w-full overflow-hidden md:h-96 rounded-xl">
-              <img
+              <ProjectImage
                 src={cover}
+                variant="cover"
                 alt={`${app.title} thumbnail`}
-                loading="lazy"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
                 className="relative h-full w-full object-cover"
               />
             </span>
@@ -1062,14 +1068,14 @@ export default function ProjectView({
                 className="toon-card bg-surface block w-full cursor-zoom-in overflow-hidden rounded-2xl p-0 text-left"
               >
                 <span className="relative block aspect-video w-full overflow-hidden bg-inverse">
-                  <img
+                  <ProjectImage
                     src={src}
                     alt=""
                     aria-hidden="true"
                     loading="lazy"
                     className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
                   />
-                  <img
+                  <ProjectImage
                     src={src}
                     alt={`${app.title} screenshot ${i + 1}`}
                     loading="lazy"
@@ -1110,7 +1116,7 @@ export default function ProjectView({
             <BookOpen size={22} weight="duotone" />
             <h3 className="text-2xl font-black">Loading repository README…</h3>
           </div>
-          <p className="font-bold text-muted">Checking GitHub for README.md.</p>
+          <RowsSkeleton label="Loading repository README" />
         </section>
       ) : repositoryReadme ? (
         <DocsSection text={repositoryReadme} source="README.md from GitHub" />

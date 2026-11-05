@@ -257,7 +257,11 @@ function toAppRow(row: Record<string, unknown>): AppRow {
     color: String(row["color"] ?? "sky"),
     url: (row["url"] as string | null) ?? null,
     repo_url: (row["repo_url"] as string | null) ?? null,
-    screenshots: (row["screenshots"] as string[] | null) ?? [],
+    screenshots: Array.isArray(row["screenshots"])
+      ? (row["screenshots"] as unknown[]).filter((src): src is string => typeof src === "string")
+      : typeof row["screenshots"] === "string"
+        ? [row["screenshots"]]
+        : [],
     docs: (row["docs"] as string | null) ?? null,
     collaborators: (row["collaborators"] as string[] | null) ?? [],
     created_at: String(row["created_at"] ?? new Date().toISOString()),
@@ -299,7 +303,13 @@ export function createSupabaseAppRepo(): AppRepo {
       const safeLimit = Math.min(200, Math.max(1, Math.floor(limit) || 100));
       const safeOffset = Math.max(0, Math.floor(offset) || 0);
       const supabase = getSupabase();
-      let request = supabase.from("apps").select("*").order("created_at", { ascending: false });
+      // Browse/ranking cards need one preview, not every screenshot and the docs.
+      let request = supabase
+        .from("apps")
+        .select(
+          "id,title,description,mentions,creator,creator_id,category,votes,color,url,repo_url,screenshots:screenshots->0,collaborators,created_at",
+        )
+        .order("created_at", { ascending: false });
       const q = query.trim();
       if (q) {
         // Strip PostgREST `or=` metacharacters (,%_()") alongside wildcards so
@@ -313,7 +323,9 @@ export function createSupabaseAppRepo(): AppRepo {
       if (error) throw new Error(error.message);
       const rows = (data ?? []).map(toAppRow);
       const ids = rows.map((r) => r.id);
-      const uid = (await authUid()) ?? userId ?? null;
+      // Viewer flags describe public likes; the restored viewer avoids an extra
+      // Auth round trip here. PostgREST still authenticates every data request.
+      const uid = userId || (await authUid());
       const [votes, counts] = await Promise.all([viewerVotes(ids, uid), commentCounts(ids)]);
       return rows.map((row) =>
         toApp({ ...row, viewer_has_voted: votes.get(row.id) }, counts.get(row.id) ?? 0),
@@ -325,7 +337,7 @@ export function createSupabaseAppRepo(): AppRepo {
       const { data, error } = await supabase.from("apps").select("*").eq("id", id).single();
       if (error || !data) throw new NotFoundError("Project not found.");
       const row = toAppRow(data as Record<string, unknown>);
-      const uid = (await authUid()) ?? userId ?? null;
+      const uid = userId || (await authUid());
       const [votes, counts] = await Promise.all([
         viewerVotes([row.id], uid),
         commentCounts([row.id]),
@@ -353,28 +365,34 @@ export function createSupabaseAppRepo(): AppRepo {
         if (src.length > 500_000) throw new Error("Images are too large. Pick smaller files.");
       }
       const uid = (await authUid()) ?? author.id;
-      const { data, error } = await getSupabase()
-        .from("apps")
-        .insert({
-          id: newId(),
-          title,
-          description,
-          mentions: captureMentions(description, await createSupabaseProfileRepo().listProfiles()),
-          creator: author.name,
-          creator_id: uid,
-          category: input.category,
-          votes: 0,
-          color: COLORS[Math.floor(Math.random() * COLORS.length)],
-          url: url || null,
-          repo_url: repoUrl || null,
-          screenshots,
-          docs: docs || null,
-          collaborators: (input.collaborators ?? []).filter(Boolean).slice(0, 10),
-        })
-        .select()
-        .single();
-      if (error || !data) throw new Error(error?.message ?? "Could not publish project.");
-      return toApp(toAppRow(data as Record<string, unknown>), 0);
+      const { withStoredProjectImages } = await import("./projectImages");
+      return withStoredProjectImages(screenshots, uid, async (storedScreenshots) => {
+        const { data, error } = await getSupabase()
+          .from("apps")
+          .insert({
+            id: newId(),
+            title,
+            description,
+            mentions: captureMentions(
+              description,
+              await createSupabaseProfileRepo().listProfiles(),
+            ),
+            creator: author.name,
+            creator_id: uid,
+            category: input.category,
+            votes: 0,
+            color: COLORS[Math.floor(Math.random() * COLORS.length)],
+            url: url || null,
+            repo_url: repoUrl || null,
+            screenshots: storedScreenshots,
+            docs: docs || null,
+            collaborators: (input.collaborators ?? []).filter(Boolean).slice(0, 10),
+          })
+          .select()
+          .single();
+        if (error || !data) throw new Error(error?.message ?? "Could not publish project.");
+        return toApp(toAppRow(data as Record<string, unknown>), 0);
+      });
     },
 
     async updateApp(appId: string, author: User, patch: AppUpdate) {
@@ -416,27 +434,38 @@ export function createSupabaseAppRepo(): AppRepo {
         patch.collaborators !== undefined
           ? patch.collaborators.filter(Boolean).slice(0, 10)
           : current.collaborators;
-      const { data, error } = await supabase
-        .from("apps")
-        .update({
-          title,
-          description,
-          url: url || null,
-          repo_url: repoUrl || null,
-          mentions: captureMentions(
-            description,
-            await createSupabaseProfileRepo().listProfiles(),
-            current.mentions,
-          ),
-          category: patch.category ?? current.category,
-          screenshots,
-          docs: docs || null,
-          collaborators,
-        })
-        .eq("id", appId)
-        .select()
-        .single();
-      if (error || !data) throw new Error(error?.message ?? "Could not save changes.");
+      const { withStoredProjectImages, cleanupProjectImages } = await import("./projectImages");
+      const storedScreenshots = await withStoredProjectImages(
+        screenshots,
+        author.id,
+        async (images) => {
+          const { data, error } = await supabase
+            .from("apps")
+            .update({
+              title,
+              description,
+              url: url || null,
+              repo_url: repoUrl || null,
+              mentions: captureMentions(
+                description,
+                await createSupabaseProfileRepo().listProfiles(),
+                current.mentions,
+              ),
+              category: patch.category ?? current.category,
+              screenshots: images,
+              docs: docs || null,
+              collaborators,
+            })
+            .eq("id", appId)
+            .select()
+            .single();
+          if (error || !data) throw new Error(error?.message ?? "Could not save changes.");
+          return images;
+        },
+      );
+      await cleanupProjectImages(current.screenshots, storedScreenshots, author.id).catch(
+        () => undefined,
+      );
       return this.getApp(appId, author.id);
     },
 
@@ -444,11 +473,15 @@ export function createSupabaseAppRepo(): AppRepo {
       const supabase = getSupabase();
       const { data: existing, error: fetchError } = await supabase
         .from("apps")
-        .select("creator,creator_id")
+        .select("creator,creator_id,screenshots")
         .eq("id", appId)
         .single();
       if (fetchError || !existing) throw new NotFoundError("Project not found.");
-      const row = existing as { creator: string; creator_id: string | null };
+      const row = existing as {
+        creator: string;
+        creator_id: string | null;
+        screenshots?: string[];
+      };
       const owned = row.creator_id
         ? row.creator_id === author.id
         : row.creator.toLowerCase() === author.name.toLowerCase();
@@ -456,6 +489,8 @@ export function createSupabaseAppRepo(): AppRepo {
       // Counter/row cleanup runs inside the function (RLS forbids direct edits).
       const { error } = await supabase.rpc("delete_project", { p_app_id: appId });
       if (error) throw new Error(error.message);
+      const { cleanupProjectImages } = await import("./projectImages");
+      await cleanupProjectImages(row.screenshots ?? [], [], author.id).catch(() => undefined);
     },
 
     async setVote(appId, _userId, liked) {

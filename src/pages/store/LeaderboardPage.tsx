@@ -4,6 +4,8 @@ import TrophyMark from "../../components/TrophyMark";
 import Avatar from "../../components/Avatar";
 import { Button } from "../../components/Button";
 import type { StoreController } from "./useStoreController";
+import { LeaderboardSkeleton } from "../../components/Skeleton";
+import { userFacingError } from "../../utils/userFacingError";
 
 type Props = Pick<
   StoreController,
@@ -16,6 +18,10 @@ type Props = Pick<
   | "rankedProjects"
   | "setBoardTab"
   | "trophies"
+  | "appsLoading"
+  | "appsError"
+  | "profilesLoading"
+  | "profilesError"
 >;
 
 export default function LeaderboardPage({
@@ -26,6 +32,10 @@ export default function LeaderboardPage({
   rankedDevelopers,
   rankedProjects,
   setBoardTab,
+  appsLoading,
+  appsError,
+  profilesLoading,
+  profilesError,
 }: Props) {
   const developers = boardTab === "developers";
   const entries = developers
@@ -115,14 +125,20 @@ export default function LeaderboardPage({
           ))}
         </div>
       </div>
-      {entries.length ? (
+      {appsLoading || profilesLoading ? (
+        <LeaderboardSkeleton />
+      ) : appsError || profilesError ? (
+        <p role="alert" className="font-bold text-muted">
+          {userFacingError(appsError || profilesError)}
+        </p>
+      ) : entries.length ? (
         <>
           <ol aria-label="Top three" className="grid grid-cols-3 items-end gap-2 pt-4 sm:gap-5">
             {entries.slice(0, 3).map((entry, index) => (
               <li
                 key={entry.id}
                 value={index + 1}
-                className={`toon-card relative flex min-w-0 flex-col items-center rounded-2xl px-2 py-5 text-center sm:px-4 sm:py-7 ${index === 0 ? "col-start-2 row-start-1 bg-podium-gold" : index === 1 ? "col-start-1 row-start-1 bg-podium-silver" : "col-start-3 row-start-1 bg-podium-bronze"}`}
+                className={`toon-card motion-safe:animate-content-in relative flex min-w-0 flex-col items-center rounded-2xl px-2 py-5 text-center sm:px-4 sm:py-7 ${index === 0 ? "col-start-2 row-start-1 bg-podium-gold" : index === 1 ? "col-start-1 row-start-1 bg-podium-silver" : "col-start-3 row-start-1 bg-podium-bronze"}`}
               >
                 <span className="mb-3 inline-flex">
                   <TrophyMark
@@ -160,7 +176,7 @@ export default function LeaderboardPage({
               {entries.slice(3).map((entry, index) => (
                 <li
                   key={entry.id}
-                  className="toon-card flex min-w-0 items-center gap-3 rounded-2xl bg-surface p-3 sm:gap-4 sm:p-5"
+                  className="toon-card motion-safe:animate-content-in flex min-w-0 items-center gap-3 rounded-2xl bg-surface p-3 sm:gap-4 sm:p-5"
                 >
                   <span
                     aria-label={`Rank ${index + 4}`}

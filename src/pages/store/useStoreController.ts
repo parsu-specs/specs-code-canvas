@@ -19,7 +19,6 @@ import {
 } from "../../utils/notifications";
 import { getAppRepo, getAuthRepo, getProfileRepo } from "../../data/factory";
 import { indexProfiles } from "../../data/profileLinks";
-import { fileToThumbnailDataUrl } from "../../utils/images";
 import { optimisticVote } from "../../utils/optimisticVote";
 import { enqueueVote } from "../../utils/voteQueue";
 import { cacheHasPassword, loadCachedHasPassword } from "../../utils/viewerCache";
@@ -48,6 +47,7 @@ import type {
   Profile,
 } from "../../data/types";
 import { ROUTES, appDetailsPath, developerProfilePath, normalizePathname } from "../routes";
+import { loadCatalog } from "../../utils/loadCatalog";
 
 const categories: { label: CategoryFilter; Icon: typeof SquaresFour }[] = [
   { label: "All", Icon: SquaresFour },
@@ -128,6 +128,8 @@ export default function useStoreController() {
       : app.creator.toLowerCase() === user?.name.toLowerCase(),
   );
   const [profiles, setProfiles] = useState<Profile[]>(() => (myProfile ? [myProfile] : []));
+  const [profilesLoading, setProfilesLoading] = useState(true);
+  const [profilesError, setProfilesError] = useState<string | null>(null);
   const [profileTick, setProfileTick] = useState(0);
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
   const [feedPostsLoading, setFeedPostsLoading] = useState(true);
@@ -262,14 +264,20 @@ export default function useStoreController() {
 
   useEffect(() => {
     let cancelled = false;
+    setProfilesLoading(true);
+    setProfilesError(null);
     (async () => {
       try {
+        // Ensure a newly signed-in viewer exists before reading the directory.
         await refreshProfile().catch(() => undefined);
         const list = await getProfileRepo().listProfiles();
         if (cancelled) return;
         setProfiles(list);
-      } catch {
-        if (!cancelled) setProfiles([]);
+      } catch (error) {
+        if (!cancelled)
+          setProfilesError(error instanceof Error ? error.message : "Could not load developers.");
+      } finally {
+        if (!cancelled) setProfilesLoading(false);
       }
     })();
     return () => {
@@ -309,9 +317,16 @@ export default function useStoreController() {
     [user?.id],
   );
 
+  const feedIsVisible = view === "feeds";
   useEffect(() => {
-    void loadFeedPosts(pollTick > 0);
-  }, [loadFeedPosts, pollTick]);
+    if (feedIsVisible || pollTick > 0) {
+      void loadFeedPosts(pollTick > 0);
+      return;
+    }
+    // Let the catalog and its first image paint before competing background requests.
+    const timer = window.setTimeout(() => void loadFeedPosts(), 350);
+    return () => window.clearTimeout(timer);
+  }, [loadFeedPosts, pollTick, feedIsVisible]);
 
   const postFeedPost = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -411,23 +426,24 @@ export default function useStoreController() {
     }
   };
 
+  const appsRequest = useRef(0);
   const loadApps = useCallback(
     async (quiet = false) => {
+      const request = ++appsRequest.current;
       if (!quiet) {
         setAppsLoading(true);
         setAppsError(null);
       }
       try {
-        const [filtered, all] = await Promise.all([
-          getAppRepo().listApps({ query, category, userId: user?.id }),
-          getAppRepo().listApps({ limit: 200, userId: user?.id }),
-        ]);
+        const [filtered, all] = await loadCatalog(getAppRepo(), query, category, user?.id);
+        if (request !== appsRequest.current) return;
         setApps(filtered.map((app) => debouncedVotes.project(app, user?.id)));
         setFullApps(all.map((app) => debouncedVotes.project(app, user?.id)));
       } catch (e) {
-        if (!quiet) setAppsError(e instanceof Error ? e.message : "Could not load projects.");
+        if (!quiet && request === appsRequest.current)
+          setAppsError(e instanceof Error ? e.message : "Could not load projects.");
       } finally {
-        if (!quiet) setAppsLoading(false);
+        if (request === appsRequest.current) setAppsLoading(false);
       }
     },
     [query, category, user?.id],
@@ -435,6 +451,9 @@ export default function useStoreController() {
 
   useEffect(() => {
     void loadApps();
+    return () => {
+      appsRequest.current++;
+    };
   }, [loadApps]);
 
   // Quiet background refresh (signed in, tab visible): picks up other
@@ -570,43 +589,46 @@ export default function useStoreController() {
         )
         .map((a) => a.id),
     );
-    void (async () => {
-      const entries = await Promise.all(
-        scanApps.map(async (app): Promise<[string, Comment[]]> => {
-          try {
-            return [app.id, await getAppRepo().listComments(app.id, user.id)];
-          } catch {
-            return [app.id, []];
-          }
-        }),
-      );
-      if (!cancelled) {
-        setThreads(new Map(entries));
-        setThreadsLoading(false);
-      }
-    })();
-    void (async () => {
-      // Voter presence for owned apps only. Failures keep prior sets (merge,
-      // never replace), so a failed fetch never looks like a mass unvote.
-      const results = await Promise.all(
-        [...mineIds].map(async (id) => {
-          try {
-            return [id, await getAppRepo().listVoters(id)] as const;
-          } catch {
-            return null;
-          }
-        }),
-      );
-      if (cancelled) return;
-      setVotersByApp((prev) => {
-        const next = new Map(prev);
-        for (const r of results) if (r) next.set(r[0], r[1]);
-        for (const id of [...next.keys()]) if (!mineIds.has(id)) next.delete(id);
-        return next;
-      });
-    })();
+    const notificationTimer = window.setTimeout(() => {
+      void (async () => {
+        const entries = await Promise.all(
+          scanApps.map(async (app): Promise<[string, Comment[]]> => {
+            try {
+              return [app.id, await getAppRepo().listComments(app.id, user.id)];
+            } catch {
+              return [app.id, []];
+            }
+          }),
+        );
+        if (!cancelled) {
+          setThreads(new Map(entries));
+          setThreadsLoading(false);
+        }
+      })();
+      void (async () => {
+        // Voter presence for owned apps only. Failures keep prior sets (merge,
+        // never replace), so a failed fetch never looks like a mass unvote.
+        const results = await Promise.all(
+          [...mineIds].map(async (id) => {
+            try {
+              return [id, await getAppRepo().listVoters(id)] as const;
+            } catch {
+              return null;
+            }
+          }),
+        );
+        if (cancelled) return;
+        setVotersByApp((prev) => {
+          const next = new Map(prev);
+          for (const r of results) if (r) next.set(r[0], r[1]);
+          for (const id of [...next.keys()]) if (!mineIds.has(id)) next.delete(id);
+          return next;
+        });
+      })();
+    }, 350);
     return () => {
       cancelled = true;
+      window.clearTimeout(notificationTimer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, scanKey, pollTick]);
@@ -1370,7 +1392,9 @@ export default function useStoreController() {
     try {
       const room = 3 - screenshots.length;
       const chosen = Array.from(files).slice(0, Math.max(0, room));
-      const compressed = await Promise.all(chosen.map((f) => fileToThumbnailDataUrl(f)));
+      const { fileToProjectImageDataUrl } = await import("../../utils/images");
+      const compressed: string[] = [];
+      for (const file of chosen) compressed.push(await fileToProjectImageDataUrl(file));
       if (version !== submissionVersion.current) return;
       setScreenshots((prev) => [...prev, ...compressed].slice(0, 3));
     } catch (e) {
@@ -1492,6 +1516,8 @@ export default function useStoreController() {
     appsError,
     appsLoading,
     boardTab,
+    profilesLoading,
+    profilesError,
     categories,
     category,
     categoryInput,

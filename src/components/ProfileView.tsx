@@ -1,7 +1,9 @@
+import ProjectImage from "./ProjectImage";
 import VotersDialog from "./VotersDialog";
 import ShareButton from "./ShareButton";
 import ProjectPlaceholder from "./ProjectPlaceholder";
 import { userFacingError } from "../utils/userFacingError";
+import { AppCardsSkeleton, ProfileSkeleton } from "./Skeleton";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
@@ -20,7 +22,6 @@ import { Button, ButtonLabel } from "./Button";
 import UploadStamp from "./UploadStamp";
 import { useAuth } from "../auth/authContext";
 import { getAppRepo, getProfileRepo } from "../data/factory";
-import { fileToThumbnailDataUrl } from "../utils/images";
 import { useScrollToForm } from "../utils/scroll";
 import { loadCachedProfile } from "../utils/viewerCache";
 import { confirmDisplayNameChange } from "../utils/displayName";
@@ -194,7 +195,7 @@ export default function ProfileView({
     }
   };
 
-  if (loading && !profile) return <p className="font-bold text-muted">Loading developer…</p>;
+  if (loading && !profile) return <ProfileSkeleton />;
   if (!profile) {
     return (
       <div className="toon-card toon-paper bg-panel rounded-2xl p-10 text-center">
@@ -218,7 +219,7 @@ export default function ProfileView({
     : undefined;
 
   return (
-    <div className="@container/content min-w-0 max-w-full wrap-anywhere">
+    <div className="@container/content min-w-0 max-w-full wrap-anywhere motion-safe:animate-content-in">
       <Button variant="surface" size="small" onClick={onBack}>
         <ArrowLeft size={18} weight="bold" /> Back to developers
       </Button>
@@ -382,7 +383,8 @@ export default function ProfileView({
                       if (!file) return;
                       setPhotoBusy(true);
                       setSaveError(null);
-                      fileToThumbnailDataUrl(file, 256)
+                      import("../utils/images")
+                        .then(({ fileToThumbnailDataUrl }) => fileToThumbnailDataUrl(file, 256))
                         .then((dataUrl) => setImageUrl(dataUrl))
                         .catch((err) =>
                           setSaveError(
@@ -455,9 +457,7 @@ export default function ProfileView({
         )}
       </div>
       {loading ? (
-        <p role="status" className="font-bold text-muted">
-          Loading projects?
-        </p>
+        <AppCardsSkeleton count={3} />
       ) : error ? (
         <p role="alert" className="font-bold text-muted">
           {userFacingError(error)}
@@ -471,14 +471,14 @@ export default function ProfileView({
             >
               {app.screenshots?.[0] ? (
                 <span className="relative block h-48 w-full shrink-0 overflow-hidden rounded-xl border-[3px] border-outline bg-inverse">
-                  <img
+                  <ProjectImage
                     src={app.screenshots[0]}
                     alt=""
                     aria-hidden="true"
                     loading="lazy"
                     className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-xl"
                   />
-                  <img
+                  <ProjectImage
                     src={app.screenshots[0]}
                     alt={`${app.title} thumbnail`}
                     loading="lazy"

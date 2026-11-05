@@ -1,4 +1,5 @@
 import { userFacingError } from "../utils/userFacingError";
+import { FormSkeleton, PasswordSkeleton } from "./Skeleton";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   ArrowCounterClockwise,
@@ -23,7 +24,6 @@ import { appearanceSnapshot, subscribeAppearance } from "../utils/appearance";
 import { palettesForMode } from "../utils/darkPalettes";
 import { loadPalette, PALETTES, resolvePalette, setPalette } from "../utils/palette";
 import { getAuthRepo, getProfileRepo } from "../data/factory";
-import { resetLocalData } from "../data/local/localApps";
 import { useAuth } from "../auth/authContext";
 import type { Profile } from "../data/types";
 import { confirmDisplayNameChange } from "../utils/displayName";
@@ -257,13 +257,14 @@ export default function SettingsView({
     }
   };
 
-  const resetDemo = () => {
+  const resetDemo = async () => {
+    const { resetLocalData } = await import("../data/local/localApps");
     resetLocalData();
     window.location.reload();
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 motion-safe:*:animate-content-in">
       <section className="toon-card toon-paper bg-panel rounded-2xl p-6 pt-10 sm:p-8 sm:pt-12">
         <div className="min-w-0 flex items-center gap-2 *:min-w-0 max-w-full">
           <UserCircle size={22} weight="duotone" aria-hidden="true" />
@@ -274,10 +275,10 @@ export default function SettingsView({
         </p>
         {profile && profile.id === user?.id ? (
           <UserInfoForm key={profile.id} profile={profile} onChanged={onChanged} />
+        ) : user ? (
+          <FormSkeleton label="Loading user info" />
         ) : (
-          <p role="status" className="mt-4 text-sm font-bold text-muted">
-            {user ? "Loading user info…" : "Sign in to edit your user info."}
-          </p>
+          <p className="mt-4 text-sm font-bold text-muted">Sign in to edit your user info.</p>
         )}
       </section>
       <section className="toon-card toon-paper bg-panel rounded-2xl p-6 pt-10 sm:p-8 sm:pt-12">
@@ -286,7 +287,7 @@ export default function SettingsView({
           <h2 className="text-2xl font-black">Sign-in & password</h2>
         </div>
         {hasPassword === null ? (
-          <p className="mt-2 text-sm font-bold text-muted">Checking sign-in methods…</p>
+          <PasswordSkeleton />
         ) : (
           <PasswordForm mode={hasPassword ? "change" : "add"} onSaved={onPasswordUpdated} />
         )}

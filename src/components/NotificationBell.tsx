@@ -1,4 +1,5 @@
 import { CloseButton } from "./CloseButton";
+import { RowsSkeleton } from "./Skeleton";
 import { useId } from "react";
 import {
   ArrowRight,
@@ -163,7 +164,7 @@ export default function NotificationBell({
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3">
         {loading ? (
-          <p className="p-3 text-sm font-bold text-muted">Checking for updates…</p>
+          <RowsSkeleton label="Checking for updates" />
         ) : items.length === 0 ? (
           <div className="p-5 text-center">
             <Bell size={28} weight="duotone" className="mx-auto text-muted" />

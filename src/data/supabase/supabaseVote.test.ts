@@ -59,6 +59,33 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+describe("public project viewer flags", () => {
+  it("uses the restored viewer for public like flags without delaying the cover on another Auth call", async () => {
+    mockToggleVote(null);
+    const app = await createSupabaseAppRepo().getApp("a1", "u1");
+    expect(app.viewerHasVoted).toBe(true);
+    expect(getSupabase().auth.getUser).not.toHaveBeenCalled();
+  });
+
+  it("resolves a viewer when no session identity was supplied", async () => {
+    mockToggleVote(null);
+    const app = await createSupabaseAppRepo().getApp("a1");
+    expect(app.viewerHasVoted).toBe(true);
+    expect(getSupabase().auth.getUser).toHaveBeenCalledOnce();
+  });
+
+  it("keeps anonymous project reads available without viewer flags", async () => {
+    mockToggleVote(null);
+    vi.mocked(getSupabase().auth.getUser).mockResolvedValue({
+      data: { user: null },
+      error: null,
+    } as never);
+    const app = await createSupabaseAppRepo().getApp("a1");
+    expect(app.viewerHasVoted).toBeFalsy();
+    expect(getSupabase().from).not.toHaveBeenCalledWith("app_votes");
+  });
+});
+
 describe("supabase toggleVote spam-guard mapping", () => {
   it("surfaces pauseStarted and pausedSeconds when the guard trips", async () => {
     mockToggleVote({

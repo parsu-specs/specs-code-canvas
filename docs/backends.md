@@ -2,6 +2,8 @@
 
 The default backend is browser localStorage. Supabase Auth/PostgREST and custom HTTP adapters are also implemented; select one with `VITE_DATA_SOURCE`. These instructions describe configuration, not the live deployment state.
 
+Vite selects the backend through `@data-backend` at build time, keeping unused SDKs and demo data out of startup. Restart the dev server or rebuild after changing `VITE_DATA_SOURCE`. Vitest shares the same resolver; TypeScript checks the common repository contract through the local adapter mapping.
+
 ## What is already backend-shaped
 
 - UI code only touches `AuthRepo` / `AppRepo` / `ProfileRepo` (`src/data/repositories.ts`).
@@ -22,8 +24,11 @@ The default backend is browser localStorage. Supabase Auth/PostgREST and custom 
    Note: Supabase Auth issues fresh UUID identities, so the cloud database starts
    empty — prototype ids (`user-1`, `google-<sub>`) do not transfer. Migrate rows
    to the new ids at finalize time using an explicit migration.
-3. Images: prototype screenshots are ~500KB data URLs. Move them to a Supabase
-   Storage bucket and store public URLs in `screenshots` / `image_url`.
+3. Images: new project screenshots use separate compressed thumbnail/cover objects
+   in the public `project-images` Storage bucket. Existing databases must apply
+   `supabase/migrations/20261103000100_project_images.sql`; fresh setups include
+   it in `schema.sql`. See [image optimization](image-optimization.md) for sizing,
+   migration, caching, and the compact inline fallback while setup is pending.
 4. Implement the endpoint contract (thin server or Supabase Edge Functions):
    - `GET /auth/session` → `{ user }` (401 when signed out)
    - `POST /auth/signin {email, password}` → `{ user, token }`

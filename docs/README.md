@@ -5,6 +5,7 @@
 | [Setup](setup.md)                 | Install, configure, and run locally               |
 | [Architecture](architecture.md)   | Understand routes, features, and data flow        |
 | [Backends](backends.md)           | Configure Supabase or implement the HTTP contract |
+| [Images](image-optimization.md)   | Configure image variants, encoding, and storage   |
 | [Runbook](runbook.md)             | Recover a release or handle an incident           |
 | [UI audit](ui-audit.md)           | Reuse controls and maintain responsive grids      |
 | [Design](../design.md)            | Visual and interaction decisions                  |

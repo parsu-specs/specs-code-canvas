@@ -9,9 +9,10 @@ export class PageLoadError extends Error {
 
 /** Failed imports stay cached by React; recovery requires a new document. */
 export function lazyPage<T extends ComponentType<any>>(load: () => Promise<{ default: T }>) {
-  return lazy(() =>
-    load().catch((cause: unknown) => {
+  let request: Promise<{ default: T }> | undefined;
+  const preload = () =>
+    (request ??= load().catch((cause: unknown) => {
       throw new PageLoadError(cause);
-    }),
-  );
+    }));
+  return Object.assign(lazy(preload), { preload });
 }

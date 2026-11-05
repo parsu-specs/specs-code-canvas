@@ -2,6 +2,7 @@ import { userFacingError } from "../../utils/userFacingError";
 import { LockKey, MagnifyingGlass } from "@phosphor-icons/react";
 import ProjectSubmissionPrompt from "./ProjectSubmissionPrompt";
 import AppCard from "../../components/AppCard";
+import { AppCardsSkeleton } from "../../components/Skeleton";
 import { PostTimeProvider } from "../../components/PostTimestamp";
 import NoticeBanner from "../../components/NoticeBanner";
 import { Button } from "../../components/Button";
@@ -73,13 +74,14 @@ export default function DiscoverPage(props: Props) {
   } = props;
   return (
     <PostTimeProvider>
-      {user && !appsLoading && !appsError && !props.promptDismissed && (
+      {user && !appsError && !props.promptDismissed && (
         <ProjectSubmissionPrompt
           hasSubmittedProject={hasSubmittedProject}
           showForm={showForm}
           onSubmit={() => setShowForm(true)}
           onDismiss={props.onDismissPrompt}
           className="mb-5 lg:hidden"
+          loading={appsLoading && apps.length === 0}
         />
       )}
       {showForm && <SubmitProjectModal {...props} />}
@@ -134,8 +136,8 @@ export default function DiscoverPage(props: Props) {
             </Button>
           ))}
         </div>
-        {appsLoading ? (
-          <p className="font-bold text-muted">Loading projects…</p>
+        {appsLoading && apps.length === 0 ? (
+          <AppCardsSkeleton />
         ) : appsError ? (
           <div className="toon-card toon-paper bg-panel rounded-2xl p-10 text-center">
             <h3 className="mt-3 text-xl font-black">Could not load projects</h3>
@@ -145,11 +147,16 @@ export default function DiscoverPage(props: Props) {
             </Button>
           </div>
         ) : apps.length ? (
-          <div className="min-w-0 flex flex-wrap justify-center gap-6 *:min-w-0 max-w-full">
-            {apps.map((app) => (
+          <div
+            aria-busy={appsLoading}
+            className="discovery-grid min-w-0 max-w-full *:min-w-0 motion-safe:[&>*:nth-child(-n+6)]:animate-content-in"
+          >
+            {apps.map((app, index) => (
               <AppCard
                 key={app.id}
                 app={app}
+                priority={index === 0}
+                eager={index < 3}
                 voted={Boolean(app.viewerHasVoted)}
                 onVote={(id) => void vote(id)}
                 user={user ?? null}

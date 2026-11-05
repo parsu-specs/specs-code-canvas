@@ -1,3 +1,5 @@
+import React from "react";
+
 type BrandProps = {
   /** Lockup sits on a `--color-brand-surface` background (sidebar, footer). */
   light?: boolean;
@@ -29,9 +31,7 @@ export default function Brand({
   const accent = onPrimary ? "text-secondary" : light ? "text-brand-accent" : "text-primary";
   if (text) {
     return (
-      <span
-        className={`font-display text-base sm:text-xl font-bold ${base} ${className}`}
-      >
+      <span className={`font-display text-base sm:text-xl font-bold ${base} ${className}`}>
         Code<span className={accent}>Canvas</span>
       </span>
     );
@@ -91,16 +91,10 @@ export default function Brand({
       </svg>
       {!compact && (
         <div className="min-w-0 flex flex-col gap-0 *:min-w-0 max-w-full">
-          <span
-            className={`font-display text-base sm:text-xl font-bold ${base}`}
-          >
+          <span className={`font-display text-base sm:text-xl font-bold ${base}`}>
             Code<span className={accent}>Canvas</span>
           </span>
-          <span
-            className={`-mt-1 text-xs font-black ${accent}`}
-          >
-            by SPECS
-          </span>
+          <span className={`-mt-1 text-xs font-black ${accent}`}>by SPECS</span>
         </div>
       )}
     </span>

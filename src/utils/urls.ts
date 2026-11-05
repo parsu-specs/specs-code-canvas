@@ -17,7 +17,7 @@ export function isSafeHttpUrl(value: string | null | undefined): boolean {
   }
 }
 
-/** Images may additionally be canvas-produced JPEG data URLs (see images.ts). */
+/** Images may additionally be inline image data URLs; new uploads are rasterized. */
 export function isSafeImageUrl(value: string | null | undefined): boolean {
   if (!value) return false;
   const clean = value.trim();

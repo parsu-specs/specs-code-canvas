@@ -1,7 +1,9 @@
 import ErrorNotice from "../components/ErrorNotice";
 import { HalloweenDecorations } from "../experiments/halloweenTheme";
 import { createPortal } from "react-dom";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazyPage } from "../utils/lazyPage";
+import { StoreContentSkeleton } from "../components/Skeleton";
 import {
   Plus,
   Gear,
@@ -27,12 +29,12 @@ import { ROUTES, navigateInternalLink } from "./routes";
 import useStoreController from "./store/useStoreController";
 import ProjectSubmissionPrompt from "./store/ProjectSubmissionPrompt";
 import DiscoverPage from "./store/DiscoverPage";
-import DevelopersPage from "./store/DevelopersPage";
-import FeedsPage from "./store/FeedsPage";
-import LeaderboardPage from "./store/LeaderboardPage";
-import ProfilePage from "./store/ProfilePage";
-import ProjectPage from "./store/ProjectPage";
-import SettingsPage from "./store/SettingsPage";
+const DevelopersPage = lazyPage(() => import("./store/DevelopersPage"));
+const FeedsPage = lazyPage(() => import("./store/FeedsPage"));
+const LeaderboardPage = lazyPage(() => import("./store/LeaderboardPage"));
+const ProfilePage = lazyPage(() => import("./store/ProfilePage"));
+const ProjectPage = lazyPage(() => import("./store/ProjectPage"));
+const SettingsPage = lazyPage(() => import("./store/SettingsPage"));
 
 export default function Store() {
   useEffect(() => {
@@ -175,13 +177,14 @@ export default function Store() {
           </ButtonLink>
         </nav>
         <div className="hidden pt-6 lg:mt-auto lg:block">
-          {view === "discover" && canSubmit && !promptDismissed && (
+          {view === "discover" && user && !store.appsError && !promptDismissed && (
             <ProjectSubmissionPrompt
               hasSubmittedProject={store.hasSubmittedProject}
               showForm={store.showForm}
               onSubmit={() => store.setShowForm(true)}
               onDismiss={() => setConfirmPromptDismissal(true)}
               className="mb-6"
+              loading={store.appsLoading && store.apps.length === 0}
             />
           )}
           <nav
@@ -413,7 +416,7 @@ export default function Store() {
                         <UserIcon size={20} weight="bold" />
                       </span>
                     )}
-                    <span className="hidden min-w-0 max-w-24 truncate text-xs font-black md:block">
+                    <span className="hidden w-24 min-w-0 truncate text-xs font-black md:block">
                       {myProfile?.name ?? "Account"}
                     </span>
                   </Button>
@@ -524,7 +527,7 @@ export default function Store() {
                     <p className="mt-2 hidden max-w-2xl text-muted sm:block">{pageDescription}</p>
                   )}
                 </div>
-                {view === "discover" && canSubmit && promptDismissed && (
+                {view === "discover" && user && !store.appsError && promptDismissed && (
                   <Button
                     variant="primary"
                     size="small"
@@ -534,6 +537,7 @@ export default function Store() {
                     aria-controls="submit-project"
                     ref={submitButtonRef}
                     aria-label="Submit project"
+                    disabled={!canSubmit}
                   >
                     <Plus size={18} weight="bold" aria-hidden="true" />
                     <span className="hidden lg:inline">Submit project</span>
@@ -554,17 +558,19 @@ export default function Store() {
                 />
               )}
 
-              {view === "project" && <ProjectPage {...store} />}
+              <Suspense fallback={<StoreContentSkeleton view={view} />}>
+                {view === "project" && <ProjectPage {...store} />}
 
-              {view === "profile" && <ProfilePage {...store} />}
+                {view === "profile" && <ProfilePage {...store} />}
 
-              {view === "developers" && <DevelopersPage {...store} />}
+                {view === "developers" && <DevelopersPage {...store} />}
 
-              {view === "feeds" && <FeedsPage {...store} />}
+                {view === "feeds" && <FeedsPage {...store} />}
 
-              {view === "leaderboard" && <LeaderboardPage {...store} />}
+                {view === "leaderboard" && <LeaderboardPage {...store} />}
 
-              {view === "settings" && <SettingsPage {...store} />}
+                {view === "settings" && <SettingsPage {...store} />}
+              </Suspense>
             </div>
           </ErrorBoundary>
         </div>

@@ -1,4 +1,5 @@
 import { userFacingError } from "../utils/userFacingError";
+import { RowsSkeleton } from "./Skeleton";
 import React, { useEffect, useMemo, useState } from "react";
 import { ChatCircleDots, Heart, PaperPlaneTilt, User as UserIcon } from "@phosphor-icons/react";
 import VotersDialog from "./VotersDialog";
@@ -477,7 +478,7 @@ export default function Comments({
           }
         >
           {loading ? (
-            <p className="text-sm font-bold text-muted">Loading feedback…</p>
+            <RowsSkeleton label="Loading feedback" />
           ) : topLevel.length ? (
             <ul className="space-y-3">{topLevel.map((c) => renderNode(c, 0))}</ul>
           ) : (

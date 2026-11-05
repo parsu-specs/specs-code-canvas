@@ -1,5 +1,6 @@
+import ProjectImage from "./ProjectImage";
 import { CloseButton } from "./CloseButton";
-import React, { useEffect, useRef } from "react";
+import React, { Suspense, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowRight,
@@ -8,7 +9,8 @@ import {
   PencilSimple,
   User as UserIcon,
 } from "@phosphor-icons/react";
-import Comments from "./Comments";
+import { lazyPage } from "../utils/lazyPage";
+import { RowsSkeleton } from "./Skeleton";
 import MentionText from "./MentionText";
 import TrophyMark from "./TrophyMark";
 import PostTimestamp from "./PostTimestamp";
@@ -19,6 +21,8 @@ import { isSafeHttpUrl } from "../utils/urls";
 import { Button, ButtonChip, ButtonLink } from "./Button";
 import ShareButton from "./ShareButton";
 import ProjectPlaceholder from "./ProjectPlaceholder";
+
+const Comments = lazyPage(() => import("./Comments"));
 
 type AppCardProps = {
   app: AppItem;
@@ -34,6 +38,8 @@ type AppCardProps = {
   onOpenProfile: (profileId: string) => void;
   onOpenApp: (appId: string) => void;
   onEditApp: (appId: string) => void;
+  priority?: boolean;
+  eager?: boolean;
 };
 
 export default function AppCard({
@@ -50,6 +56,8 @@ export default function AppCard({
   onOpenProfile,
   onOpenApp,
   onEditApp,
+  priority = false,
+  eager = false,
 }: AppCardProps) {
   useEffect(() => {
     if (!expanded) return;
@@ -104,10 +112,12 @@ export default function AppCard({
       >
         {app.screenshots?.[0] ? (
           <span className="relative block h-48 w-full overflow-hidden rounded-xl border-[3px] border-outline bg-inverse">
-            <img
+            <ProjectImage
               src={app.screenshots[0]}
               alt={`${app.title} thumbnail`}
-              loading="lazy"
+              loading={priority || eager ? "eager" : "lazy"}
+              fetchPriority={priority ? "high" : "auto"}
+              decoding="async"
               className="relative h-full w-full object-cover"
             />
           </span>
@@ -271,16 +281,18 @@ export default function AppCard({
                   />
                 </div>
                 <div className="flex min-h-0 flex-1 flex-col">
-                  <Comments
-                    appId={app.id}
-                    appTitle={app.title}
-                    currentUser={user}
-                    profiles={profiles}
-                    trophies={trophies}
-                    onOpenProfile={onOpenProfile}
-                    onCommentAdded={onCommentAdded}
-                    stickyForm
-                  />
+                  <Suspense fallback={<RowsSkeleton label="Loading comments" />}>
+                    <Comments
+                      appId={app.id}
+                      appTitle={app.title}
+                      currentUser={user}
+                      profiles={profiles}
+                      trophies={trophies}
+                      onOpenProfile={onOpenProfile}
+                      onCommentAdded={onCommentAdded}
+                      stickyForm
+                    />
+                  </Suspense>
                 </div>
               </div>
             </div>,

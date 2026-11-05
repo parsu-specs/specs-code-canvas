@@ -21,6 +21,13 @@ Navigation/action links use `ButtonLink`, preserving anchor semantics and destin
 
 ## Responsive layout fixes
 
+- Native viewport pinch/trackpad zoom is enabled. The viewport meta has no scale limit, and the document has no pinch-blocking CSS or gesture listeners. Image-viewer pinch/drag handling remains scoped to its image surface.
+
+- Loading placeholders reserve their layout immediately and appear only after 180 ms. Fast responses bypass visible loading. Slow responses use page-specific skeletons and short opacity fades; reduced-motion users receive no fade or pulse.
+- Discovery uses the same auto-fill grid for cards and skeletons: single columns and lone results are centered, while multi-column rows (including incomplete final rows) align left. Browser checks at 320, 390, 600, 768, 1024, and 1440px found no horizontal overflow or layout shift in the delayed-data scenario.
+- The build emits a public branded startup shell and route-specific placeholders into the initial HTML, restoring saved palette/appearance before painting and starting the Store download before the main script executes. No private content is pre-rendered.
+- A local compressed-production check with a mocked backend, 150 ms network latency, 200 KB/s download, and 4x CPU slowdown measured mobile FCP around 1.2 s and LCP around 3.3 s, with CLS 0. These are synthetic checks, not a new Lighthouse measurement of the deployed site; remeasure the deployed URL after publication.
+
 - Project, profile, About, and developer collections use component-owned Tailwind grid utilities: `repeat(auto-fit, minmax(min(100%, 18rem), 1fr))`. Columns adapt to the content container instead of the viewport alone.
 - Discovery app cards and profile project cards fill their grid track up to `max-w-sm` (24rem / 384px at the default root size), preventing sparse results from becoming oversized.
 - Grid children can shrink below their intrinsic text width. Paper cards wrap long unbroken user content; AppCard headings and action rows can wrap.
@@ -41,7 +48,40 @@ Headless Edge checks covered nine application routes at 280, 320, 360, 390, 640,
 
 Component browser checks verified stepped Markdown expansion/collapse, complete final content visibility, detection after resizing, native select changes, textarea growth/shrinkage and capped internal scrolling, and the legacy textarea fallback after both value and width changes. These are functional layout checks in Edge with isolated local data, not measured performance gains or verification on physical iOS/Android devices. External image/provider requests were blocked during the route checks.
 
+## Discover startup performance (2026-11-03)
+
+Store now preloads its static module dependencies together, while share-photo/link
+controls and card comments download when opened. The catalog warmup starts after
+session verification even with cached fonts, before Store's normal loading effect;
+returning to Discover within the same signed-in session does not warm it again.
+
+The Store chunk decreased from 185.0 kB to 131.0 kB before compression. In three
+paired headless Edge mobile fixture runs (390px, DPR 2, 4x CPU slowdown, 150 ms
+latency, 200 kB/s download, gzip, 24 projects, mocked Supabase), median LCP decreased
+from 3.08 s to 2.80 s and initial compressed JavaScript decreased by about 14 kB.
+Median FCP was 1.28 s before and 1.26 s after; measured CLS stayed below 0.0001.
+The baseline assets were re-minified with the installed Rolldown minifier for this
+local comparison. These measurements are synthetic, not a new Lighthouse score
+or a claim about live Supabase/CDN performance.
+
+Browser checks verified one initial catalog request, deferred share/comment
+downloads, working sharing/photo-preview/comment dialogs, and no mobile overflow
+or runtime exceptions. The supplied Lighthouse report also includes browser
+extension JavaScript; its minification warning is entirely extension code.
+
 ## Documentation maintenance
+
+Image delivery checks (2026-11-03) used production output in headless Edge at 390px
+(DPR 2, CPU throttled 4x, simulated 4G) and 1440px, with mocked Supabase responses and
+900 ms image delays. Discover requested only thumbnail objects; detail covers and
+the fullscreen viewer requested cover objects. Card frames retained identical
+dimensions before/after image decode, with zero measured Discover layout shift,
+no viewport overflow, and no runtime exceptions. This verifies fixture behavior,
+not live CDN performance or physical mobile devices. Native browser encoding of a
+473 KB sample PNG produced a 111 KB 1600x900 WebP cover and a 41 KB 768x432 thumbnail;
+portrait and avatar bounds were also checked. The image migration passed disposable
+PostgreSQL checks for owner policies, immutable writes, replay, and shared references;
+the existing comment/vote SQL suites also passed with the Storage fixture.
 
 Maintained documentation now lives under `docs/` with an index and linked root README. Setup distinguishes local, Supabase, and HTTP backends; architecture and companion instructions describe current routes and implemented persistence. Removed stale fixed test counts and claims that a separate admin application's behavior was verified here. The root PDF remains a historical artifact.
 

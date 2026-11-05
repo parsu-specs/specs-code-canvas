@@ -39,6 +39,7 @@ try {
     create function auth.role() returns text language sql as
       'select current_setting(''request.jwt.claim.role'', true)';
   `);
+  await db.exec(await sql("./storage-fixture.sql"));
   // gen_random_uuid is built into PostgreSQL; pgcrypto is unavailable in this engine.
   await db.exec(
     (await sql("../schema.sql")).replace('create extension if not exists "pgcrypto";', ""),

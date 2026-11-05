@@ -1,4 +1,5 @@
 import { userFacingError } from "../utils/userFacingError";
+import { RowsSkeleton } from "./Skeleton";
 import { CloseButton } from "./CloseButton";
 import { Button } from "./Button";
 import { useEffect, useState } from "react";
@@ -133,7 +134,7 @@ export default function VotersDialog({
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
                 {loading ? (
-                  <p className="text-sm font-bold text-muted">Loading likes…</p>
+                  <RowsSkeleton label="Loading likes" />
                 ) : error ? (
                   <div className="text-center">
                     <p role="alert" className="text-sm font-bold">
