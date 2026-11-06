@@ -16,6 +16,7 @@ import AppearanceControl from "./AppearanceControl";
 import SoundControl from "./SoundControl";
 import FluidTextControl from "../experiments/fluidText";
 import BoldTextControl from "../experiments/boldText";
+import FontStyleControl from "../experiments/fontStyle";
 import NoBordersControl from "../experiments/noBorders";
 import SoftEdgesControl from "../experiments/softEdges";
 import GlassThemeControl from "../experiments/glassTheme";
@@ -373,6 +374,7 @@ export default function SettingsView({
           <GlassThemeControl />
           <HalloweenThemeControl />
         </div>
+        <FontStyleControl />
       </section>
 
       {isLocalMode && (

@@ -1,0 +1,90 @@
+/* Local Latin faces; browsers download only families used by the active preset. */
+@import "@fontsource/cormorant-garamond/latin-700.css";
+@import "@fontsource/baloo-2/latin-700.css";
+@import "@fontsource/barlow-condensed/latin-700.css";
+@import "@fontsource/space-mono/latin-400.css";
+@import "@fontsource/space-mono/latin-700.css";
+@import "@fontsource/playfair-display/latin-700.css";
+@import "@fontsource/libre-baskerville/latin-400.css";
+@import "@fontsource/libre-baskerville/latin-700.css";
+@import "@fontsource/space-grotesk/latin-700.css";
+@import "@fontsource/quicksand/latin-400.css";
+@import "@fontsource/quicksand/latin-700.css";
+@import "@fontsource/ibm-plex-serif/latin-700.css";
+@import "@fontsource/righteous/latin-400.css";
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-700.css";
+@import "@fontsource/caveat/latin-700.css";
+@import "@fontsource/lato/latin-400.css";
+@import "@fontsource/lato/latin-700.css";
+@import "@fontsource/source-serif-4/latin-400.css";
+@import "@fontsource/source-serif-4/latin-700.css";
+
+:root[data-font-style="serif"] {
+  --font-sans: "Lato", Arial, sans-serif;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+}
+
+:root[data-font-style="playful"] {
+  --font-sans: "Quicksand", "Nunito", sans-serif;
+  --font-display: "Baloo 2", "Fredoka", sans-serif;
+}
+
+:root[data-font-style="system"] {
+  --font-sans: "Inter", Arial, sans-serif;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+}
+
+:root[data-font-style="courier"] {
+  --font-sans: "Courier New", Courier, monospace;
+  --font-display: "Space Mono", "Courier New", monospace;
+}
+
+:root[data-font-style="editorial"] {
+  --font-sans: "Source Serif 4", Georgia, serif;
+  --font-display: "Playfair Display", Georgia, serif;
+}
+
+:root[data-font-style="classic"] {
+  --font-sans: "Georgia", "Times New Roman", serif;
+  --font-display: "Libre Baskerville", Georgia, serif;
+}
+
+:root[data-font-style="modern"] {
+  --font-sans: "Inter", Arial, sans-serif;
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+}
+
+:root[data-font-style="friendly"] {
+  --font-sans: "Nunito", system-ui, sans-serif;
+  --font-display: "Quicksand", "Nunito", sans-serif;
+}
+
+:root[data-font-style="academic"] {
+  --font-sans: "Libre Baskerville", Georgia, serif;
+  --font-display: "IBM Plex Serif", Georgia, serif;
+}
+
+:root[data-font-style="retro"] {
+  --font-sans: "Space Mono", "Courier New", monospace;
+  --font-display: "Righteous", "Fredoka", sans-serif;
+}
+
+:root[data-font-style="minimal"] {
+  --font-sans: "Lato", Arial, sans-serif;
+  --font-display: "Inter", Arial, sans-serif;
+}
+
+:root[data-font-style="creative"] {
+  --font-sans: "Source Serif 4", Georgia, serif;
+  --font-display: "Caveat", cursive;
+}
+
+:root[data-font-style] :where(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font-display);
+}
+
+/* Righteous is a single-weight display face. */
+:root[data-font-style="retro"] :where(h1, h2, h3, h4, h5, h6, .font-display) {
+  font-weight: 400;
+}

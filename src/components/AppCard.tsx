@@ -132,10 +132,10 @@ export default function AppCard({
       <div className="min-h-0 min-w-0 flex flex-1 flex-col *:min-w-0 max-w-full">
         <div className="min-w-0 mt-2 flex shrink-0 flex-col items-start gap-3 *:min-w-0 max-w-full">
           <span className="text-[10px] font-black uppercase text-primary">{app.category}</span>
-          <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-2 *:min-w-0 max-w-full">
-            <div className="flex min-w-0 items-center gap-1 *:min-w-0 max-w-full">
+          <div className="flex w-full min-w-0 items-center gap-2 max-w-full">
+            <div className="flex min-w-0 flex-1 items-center gap-1">
               <h3
-                className="min-w-0 line-clamp-2 wrap-anywhere text-xl font-black"
+                className="min-w-0 w-fit max-w-full line-clamp-2 wrap-anywhere pr-[0.2em] text-xl font-black"
                 title={app.title}
               >
                 {app.title}
@@ -144,12 +144,16 @@ export default function AppCard({
                 (trophyPlace !== undefined ? (
                   <TrophyMark minimal place={trophyPlace} size={24} />
                 ) : (
-                  <ButtonChip className="ml-2" tone="muted">
+                  <ButtonChip className="ml-2 shrink-0 whitespace-nowrap" tone="muted">
                     #{projectRank} App
                   </ButtonChip>
                 ))}
             </div>
-            {app.createdAt && <PostTimestamp createdAt={app.createdAt} subject="project" />}
+            {app.createdAt && (
+              <div className="max-w-[45%] shrink-0">
+                <PostTimestamp createdAt={app.createdAt} subject="project" />
+              </div>
+            )}
           </div>
         </div>
         <div className="mt-2 shrink-0 text-xs leading-5">
