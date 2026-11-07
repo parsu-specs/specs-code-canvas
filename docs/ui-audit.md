@@ -25,7 +25,7 @@ Navigation/action links use `ButtonLink`, preserving anchor semantics and destin
 
 - Loading placeholders reserve their layout immediately and appear only after 180 ms. Fast responses bypass visible loading. Slow responses use page-specific skeletons and short opacity fades; reduced-motion users receive no fade or pulse.
 - Discovery uses the same auto-fill grid for cards and skeletons: single columns and lone results are centered, while multi-column rows (including incomplete final rows) align left. Browser checks at 320, 390, 600, 768, 1024, and 1440px found no horizontal overflow or layout shift in the delayed-data scenario.
-- The build emits a public branded startup shell and route-specific placeholders into the initial HTML, restoring saved palette/appearance before painting and starting the Store download before the main script executes. No private content is pre-rendered.
+- The build emits a public branded startup shell and route-specific placeholders into the initial HTML, restoring saved palette/appearance before painting. Protected routes with a cached viewer hint start the Store download before the main script executes; session verification still controls access. No private content is pre-rendered.
 - A local compressed-production check with a mocked backend, 150 ms network latency, 200 KB/s download, and 4x CPU slowdown measured mobile FCP around 1.2 s and LCP around 3.3 s, with CLS 0. These are synthetic checks, not a new Lighthouse measurement of the deployed site; remeasure the deployed URL after publication.
 
 - Project, profile, About, and developer collections use component-owned Tailwind grid utilities: `repeat(auto-fit, minmax(min(100%, 18rem), 1fr))`. Columns adapt to the content container instead of the viewport alone.
@@ -38,7 +38,7 @@ Navigation/action links use `ButtonLink`, preserving anchor semantics and destin
 - Dropdown uses the restored styled portal popup, positioned above or below the trigger and constrained to the viewport. Shared Button controls provide the trigger/options; the checkbox variant uses the shared native Checkbox. Escape, outside pointer interaction, external scrolling, and resize dismiss the popup; selection and Escape return focus. Arrow keys and Home/End navigate options; native checkboxes support Space and Tab.
 - Flex/grid containers and direct children have local shrinking constraints; controls and rows have maximum widths and wrap long text/actions. Nested submission, project-edit, and profile-edit forms use the named `content` container at 36rem, including matching column spans.
 - Paper surfaces retain the restored clipped upper-right polygon, tape, and shadows through component-owned Tailwind utilities. Keep controls and focus indicators clear of the cut corner. Discovery cards do not rotate into adjacent tracks.
-- MarkdownTextarea uses native `field-sizing: content` where supported. Its legacy fallback resizes after value or width changes; both paths cap height at `min(60dvh,32rem)` before scrolling internally.
+- MarkdownTextarea delegates to the shared Textarea with native `field-sizing: content`, a three-line minimum, stable scrollbar gutter, and a `min(60dvh,32rem)` cap (using `vh` where `dvh` is unsupported). Browsers without content sizing retain manual vertical resizing.
 - PagedMarkdown observes an unclipped inner wrapper, independently of visible paging height. The final content is fully revealed without the former 24px tolerance.
 - Breadcrumb actions use semantic buttons instead of clickable labels.
 
@@ -89,7 +89,7 @@ Maintained documentation now lives under `docs/` with an index and linked root R
 
 Use 320px, 375px, 768px, 1024px, and 1440px viewports. Browser validation is separate from automated build/type/test checks.
 
-1. Visit Landing, About, Login, Discover, Developers, profile, project detail, Feed, leaderboard, and Settings.
+1. Visit public Home (`/`) and About, Login, Discover, Developers, profile, project detail, Feed (`/feeds`), leaderboard, and Settings. Check legacy `/landing` and `/feed` normalization and return to shared project/profile links after sign-in.
 2. Check one-column mobile cards, container-based column changes, long project/profile names and URLs, and wrapped actions without clipped controls.
 3. Open project submission/editing, add screenshots, and inspect Markdown previews and two-column form transitions.
 4. Confirm mobile top/bottom bars clear content; confirm sidebar/breadcrumb alignment at 1024px.
@@ -111,4 +111,4 @@ The original checked single-select remains the default for existing callers. Use
   options={categoryOptions} />
 ```
 
-The checkbox variant accepts a string array and `(value: string[]) => void` callback. Toggling a checkbox keeps the popup open; the trigger summarizes selected labels. All variants support `placeholder` and `disabled`. The earlier native-select browser checks above describe the previous implementation; the restored popup needs the variant checks listed in the checklist.
+The checkbox variant accepts a string array and `(value: string[]) => void` callback. Toggling a checkbox keeps the popup open; the trigger summarizes selected labels. All variants support `placeholder` and `disabled`. Below `md` (768px), Dropdown renders a centered, labeled dialog with a close action, focus containment, and body scroll locking; larger screens use anchored popups. `mobileIcon` collapses the mobile trigger while retaining an accessible label. The earlier browser measurements are historical checks; use the checklist to validate the current implementation.

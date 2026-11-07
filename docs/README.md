@@ -1,5 +1,7 @@
 # Documentation
 
+Maintained descriptions reviewed against the repository on 2026-11-07. Dated audit measurements record earlier checks and are not fresh deployment validation.
+
 | Document                          | Use it for                                        |
 | --------------------------------- | ------------------------------------------------- |
 | [Setup](setup.md)                 | Install, configure, and run locally               |

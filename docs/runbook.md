@@ -1,41 +1,43 @@
-# Incident runbook — CodeCanvas (one page)
+﻿# Incident runbook — CodeCanvas
 
-## Roll back a bad release (frontend, ~2 min)
+This repository contains the frontend, backend adapters, Supabase SQL, and Vercel routing/security headers. Confirm deployment names, dashboard access, backups, and incident contacts in the team's private operations directory before release. No admin application or `admin_audit`/`admins` schema is supplied here.
 
-1. Vercel → specs-app-store → Deployments → find last good → ⋯ → **Redeploy**
-   (or Instant Rollback). Confirm the live URL loads `/landing` unauthenticated.
-2. If the bad release included a migration, the frontend rollback does NOT undo
-   DB changes — see Restore below. Forward-fix preferred over `git revert`
-   for migrations (every file is re-runnable by design).
+## Roll back a frontend release
 
-## Back up / restore (Supabase Postgres)
+1. In the hosting project's deployment history, restore the last known-good deployment. `npm run build` produces `dist/`; `vercel.json` rewrites direct route requests to the app entry point.
+2. Verify `/` and `/about` while signed out, then sign in and open `/discover`, `/feeds`, a shared project link, and a shared developer link. Test direct URL loads as well as in-app navigation.
+3. A frontend rollback does not undo database migrations or Storage changes. Inspect migration dependencies before choosing a forward fix or database restore; do not assume every SQL file can safely be replayed in any order.
+
+Backend selection and public provider variables are built into the frontend. Rebuild/redeploy after changing environment configuration. Check the CSP when changing provider or custom API origins.
+
+## Back up and restore
+
+For Supabase, verify the target project's configured backups and recovery options. Before manual migrations, take a database backup and test restoration to a separate environment. These example commands use Bash and externally supplied database connection variables:
 
 ```bash
-# Back up (run before every migration, keep 30 days)
-pg_dump "$SUPABASE_DB_URL" -Fc -f specs-backup-$(date +%F).dump
-
-# Restore to a FRESH project (never over prod blindly), then repoint env
-pg_restore -d "$RESTORE_DB_URL" specs-backup-<date>.dump
+pg_dump "$SUPABASE_DB_URL" -Fc -f "codecanvas-backup-$(date +%F).dump"
+pg_restore -d "$RESTORE_DB_URL" codecanvas-backup-<date>.dump
 ```
 
-PITR is available on paid tiers only — know your plan before you need it.
-Free tier: the dump above IS your backup. Test-restore quarterly.
+Restore into a fresh project and verify schema, policies, authentication, and data before repointing the frontend. A database dump does not contain Storage image bytes: back up the public `project-images` objects separately and preserve their paths. Review Auth/provider settings and Storage configuration during recovery. See [image optimization](image-optimization.md) for object layout and cleanup behavior.
 
-## First hour of a breach or outage
+Local demo data resides in the browser, and the Settings reset clears local projects/activity. Custom HTTP servers require their own backup procedure.
 
-| Min   | Action                                                                                                                                                                                                               |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0–10  | **Detect:** check `admin_audit` for `action='denied'` spikes (probing), Vercel Analytics for 5xx, Supabase Auth logs for failed logins. Declare incident + owner.                                                    |
-| 10–25 | **Contain:** suspected account → remove its `admins` row; suspected key leak → rotate anon key / OAuth secret in dashboards, update Vercel env, redeploy; active abuse → enable Supabase Auth CAPTCHA + rate limits. |
-| 25–45 | **Eradicate:** delete forged rows (they carry the attacker's `author_id`/`user_id`); revoke sessions (Supabase → user → Sign out); remove malicious OAuth grants.                                                    |
-| 45–60 | **Recover:** redeploy known-good build; re-run smoke test (signup → post → vote → signout); restore from dump only if data was destroyed.                                                                            |
-| After | **Learn:** write the 5-line postmortem (what, impact, root cause, fix, prevention) and turn it into a checklist item here.                                                                                           |
+## First hour of an incident
 
-## Alerts to configure (Supabase + Vercel dashboards)
+| Phase     | Action                                                                                                                                                                                                                                                                |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Detect    | Assign an incident owner. Inspect browser errors, failed network requests, hosting deployment logs, and Supabase Auth/database/Storage logs. Identify the affected backend and release.                                                                               |
+| Contain   | For a compromised account, use the configured identity provider's session/account controls. For exposed credentials, rotate the affected credentials and update services/build configuration that use them. Review RLS and Auth protection settings for active abuse. |
+| Repair    | Preserve evidence, identify affected rows/objects and policies, and prepare a targeted fix. Validate author-only project/comment/feed deletion and access from unauthorized sessions.                                                                                 |
+| Recover   | Deploy the verified fix or known-good frontend. Restore data after assessing loss and testing restoration. Smoke-test signup/signin, project submission, image loading, feedback/replies, upvotes, Feed posting/deletion, sharing, and signout.                       |
+| Follow up | Record impact, root cause, recovery actions, and prevention. Update the runbook and assign remaining work.                                                                                                                                                            |
 
-- `admin_audit` `denied` rows > 5 / 10 min (probing).
-- `saveResource` 500s / audit-write failures (tamper or outage).
-- Supabase Auth failed-login spike; Postgres 5xx spike; Vercel 5xx spike.
-- Review `admin_audit` tail weekly even with no alerts.
+## Monitoring to configure
 
-Before release, assign an incident owner, contact method, and escalation rotation. Record them in the team?s private operations directory.
+- Hosting deployment failures and availability checks for public and direct app URLs.
+- Supabase Auth failures, database errors, and Storage upload failures.
+- Client errors and failed repository requests through the team's chosen monitoring service. `ErrorBoundary` logs exceptions/component stacks to the console; this repository does not configure a remote error collector.
+- Periodic backup restore drills and authenticated/unauthorized policy checks.
+
+Dashboard configuration and live alert delivery require environment-specific verification. The supplied SQL test runners use disposable PostgreSQL fixtures; they do not verify live provider or CDN state.
