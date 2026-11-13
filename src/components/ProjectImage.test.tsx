@@ -31,6 +31,21 @@ it("requests only the small thumbnail in a card, with intrinsic dimensions", asy
   expect(img.height).toBe(432);
 });
 
+it("preserves fetch priority without React DOM warnings", async () => {
+  const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+  try {
+    for (const priority of ["high", "auto", undefined] as const) {
+      await act(async () =>
+        root.render(<ProjectImage src={src} alt="Screenshot" fetchPriority={priority} />),
+      );
+      expect(container.querySelector("img")?.getAttribute("fetchpriority")).toBe(priority ?? null);
+    }
+    expect(consoleError).not.toHaveBeenCalled();
+  } finally {
+    consoleError.mockRestore();
+  }
+});
+
 it("offers responsive cover sizes and keeps full images available for a viewer", async () => {
   await act(async () => root.render(<ProjectImage src={src} variant="cover" alt="Screenshot" />));
   expect(container.querySelector("img")?.getAttribute("srcset")).toContain("768w");

@@ -77,21 +77,21 @@ export default function MarkdownFileViewer({
             aria-modal="true"
             aria-labelledby={`${inputId}-title`}
             onClick={() => setOpen(false)}
-            className="min-w-0 fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-inverse/80 p-3 sm:p-6 max-w-full"
+            className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-inverse/80 p-3 sm:p-6"
           >
             <section
               onClick={(event) => event.stopPropagation()}
-              className="min-w-0 toon-card toon-paper my-auto flex max-h-[90vh] min-h-[min(28rem,80vh)] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-panel *:min-w-0"
+              className="toon-card toon-paper my-auto flex max-h-[90vh] min-h-[min(28rem,80vh)] w-full max-w-4xl flex-col overflow-hidden bg-panel"
             >
-              <header className="min-w-0 flex shrink-0 items-center justify-between gap-4 border-b-[3px] border-outline bg-surface px-4 py-3 sm:px-6 *:min-w-0 max-w-full">
-                <div className="flex min-w-0 items-center gap-3 *:min-w-0 max-w-full">
+              <header className="min-w-0 flex shrink-0 items-center justify-between gap-4 border-b-[3px] border-outline bg-primary text-primary-foreground px-4 py-3 sm:px-6 max-w-full">
+                <div className="flex min-w-0 items-center gap-3 max-w-full">
                   <BookOpenText size={26} weight="duotone" aria-hidden="true" />
                   <div className="min-w-0">
                     <h2 id={`${inputId}-title`} className="text-lg font-black sm:text-xl">
                       Markdown file viewer
                     </h2>
                     {fileName && (
-                      <p className="truncate text-sm font-bold text-muted" title={fileName}>
+                      <p className="truncate text-sm font-bold text-primary-foreground/85" title={fileName}>
                         {fileName}
                       </p>
                     )}
@@ -105,8 +105,8 @@ export default function MarkdownFileViewer({
                 />
               </header>
 
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-7">
-                <div className="min-w-0 mb-5 flex flex-wrap items-center gap-3 *:min-w-0 max-w-full">
+              <div className="modal-grid min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-7">
+                <div className="min-w-0 mb-5 flex flex-wrap items-center gap-3 max-w-full">
                   <FileInput
                     id={inputId}
                     accept=".md,.markdown,.txt,text/markdown,text/plain"
@@ -141,14 +141,14 @@ export default function MarkdownFileViewer({
 
                 {text ? (
                   <article className="rounded-xl border-2 border-outline bg-surface p-4 sm:p-6">
-                    <div className="min-w-0 mb-4 flex items-center gap-2 border-b-2 border-dashed border-divider pb-3 text-sm font-black uppercase text-muted *:min-w-0 max-w-full">
+                    <div className="min-w-0 mb-4 flex items-center gap-2 border-b-2 border-dashed border-divider pb-3 text-sm font-black uppercase text-muted max-w-full">
                       <FileText size={19} weight="duotone" aria-hidden="true" />
                       Document
                     </div>
                     <Markdown text={text} fullWidth />
                   </article>
                 ) : (
-                  <div className="min-w-0 flex min-h-56 flex-col items-center justify-center rounded-xl border-2 border-dashed border-divider bg-surface/70 px-5 py-10 text-center *:min-w-0 max-w-full">
+                  <div className="min-w-0 flex min-h-56 flex-col items-center justify-center rounded-xl border-2 border-dashed border-divider bg-surface/70 px-5 py-10 text-center max-w-full">
                     <BookOpenText size={40} weight="duotone" aria-hidden="true" />
                     <h3 className="mt-3 text-xl font-black">
                       {loading ? "Reading your file…" : "Your document will appear here"}

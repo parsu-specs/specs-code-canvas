@@ -12,6 +12,7 @@ const author = { id: "author", name: "Author", email: "author@example.com" };
 
 beforeEach(() => {
   store.clear();
+  store.set("cc.profiles.v1", JSON.stringify([{ ...author, role: "Member", color: "sky" }]));
   store.set(
     "cc.milestones.v1",
     JSON.stringify([
@@ -243,6 +244,28 @@ describe("feed upvote previews", () => {
 });
 
 describe("explicit vote state", () => {
+  it("persists a project icon independently of screenshots and rejects invalid icons", async () => {
+    const icon = "data:image/png;base64,aWNvbg==";
+    const repo = createLocalAppRepo();
+    const project = await repo.createApp(
+      { title: "Icon project", description: "Test", category: "Creative", icon },
+      author,
+    );
+    expect((await createLocalAppRepo().getApp(project.id))?.icon).toBe(icon);
+    expect(project.screenshots).toBeUndefined();
+    await expect(
+      repo.createApp(
+        {
+          title: "Invalid",
+          description: "Test",
+          category: "Creative",
+          icon: "javascript:alert(1)",
+        },
+        author,
+      ),
+    ).rejects.toThrow("project icon");
+  });
+
   it("sets and clears project votes idempotently", async () => {
     const repo = createLocalAppRepo();
     const project = await repo.createApp(

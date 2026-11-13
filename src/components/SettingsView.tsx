@@ -17,6 +17,7 @@ import SoundControl from "./SoundControl";
 import FluidTextControl from "../experiments/fluidText";
 import BoldTextControl from "../experiments/boldText";
 import FontStyleControl from "../experiments/fontStyle";
+import ScrollbarsControl from "../experiments/scrollbars";
 import NoBordersControl from "../experiments/noBorders";
 import SoftEdgesControl from "../experiments/softEdges";
 import GlassThemeControl from "../experiments/glassTheme";
@@ -266,8 +267,8 @@ export default function SettingsView({
 
   return (
     <div className="space-y-6 motion-safe:*:animate-content-in">
-      <section className="toon-card toon-paper bg-panel rounded-2xl p-6 pt-10 sm:p-8 sm:pt-12">
-        <div className="min-w-0 flex items-center gap-2 *:min-w-0 max-w-full">
+      <section className="toon-card toon-paper bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
+        <div className="min-w-0 flex items-center gap-2 max-w-full">
           <UserCircle size={22} weight="duotone" aria-hidden="true" />
           <h2 className="text-2xl font-black">User info</h2>
         </div>
@@ -282,8 +283,8 @@ export default function SettingsView({
           <p className="mt-4 text-sm font-bold text-muted">Sign in to edit your user info.</p>
         )}
       </section>
-      <section className="toon-card toon-paper bg-panel rounded-2xl p-6 pt-10 sm:p-8 sm:pt-12">
-        <div className="min-w-0 flex items-center gap-2 *:min-w-0 max-w-full">
+      <section className="toon-card toon-paper bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
+        <div className="min-w-0 flex items-center gap-2 max-w-full">
           <LockKey size={22} weight="duotone" aria-hidden="true" />
           <h2 className="text-2xl font-black">Sign-in & password</h2>
         </div>
@@ -293,8 +294,8 @@ export default function SettingsView({
           <PasswordForm mode={hasPassword ? "change" : "add"} onSaved={onPasswordUpdated} />
         )}
       </section>
-      <section className="toon-card toon-paper bg-panel rounded-2xl p-6 pt-10 sm:p-8 sm:pt-12">
-        <div className="min-w-0 flex items-center gap-2 *:min-w-0 max-w-full">
+      <section className="toon-card toon-paper bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
+        <div className="min-w-0 flex items-center gap-2 max-w-full">
           <Palette size={22} weight="duotone" aria-hidden="true" />
           <h2 className="text-2xl font-black">Website theme</h2>
         </div>
@@ -317,7 +318,7 @@ export default function SettingsView({
           </p>
         )}
         <div
-          className="min-w-0 mt-4 grid *:min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-3 max-w-full"
+          className="min-w-0 mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(100%,16rem),1fr))] gap-3 max-w-full"
           role="group"
           aria-label="Website theme"
         >
@@ -333,10 +334,7 @@ export default function SettingsView({
                 aria-pressed={active}
                 className={`min-w-0 flex flex-wrap items-center gap-3 rounded-xl border-[3px] p-3 text-left ${active ? "border-outline bg-secondary shadow-[3px_3px_0_var(--color-outline)]" : "border-divider bg-surface hover:bg-background"} max-w-full`}
               >
-                <span
-                  className="min-w-0 flex shrink-0 -space-x-1.5 *:min-w-0 max-w-full"
-                  aria-hidden="true"
-                >
+                <span className="min-w-0 flex shrink-0 -space-x-1.5 max-w-full" aria-hidden="true">
                   {p.swatches.map((hex) => (
                     <span
                       key={hex}
@@ -357,8 +355,8 @@ export default function SettingsView({
         </div>
       </section>
       <SoundControl />
-      <section className="toon-card toon-paper rounded-2xl bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
-        <div className="min-w-0 flex items-center gap-2 *:min-w-0 max-w-full">
+      <section className="toon-card toon-paper bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
+        <div className="min-w-0 flex items-center gap-2 max-w-full">
           <Flask size={22} weight="duotone" aria-hidden="true" />
           <h2 className="text-2xl font-black">Experimental</h2>
         </div>
@@ -370,6 +368,7 @@ export default function SettingsView({
           <FluidTextControl />
           <BoldTextControl />
           <NoBordersControl />
+          <ScrollbarsControl />
           <SoftEdgesControl />
           <GlassThemeControl />
           <HalloweenThemeControl />
@@ -378,8 +377,8 @@ export default function SettingsView({
       </section>
 
       {isLocalMode && (
-        <section className="toon-card toon-paper bg-panel rounded-2xl p-6 pt-10 sm:p-8 sm:pt-12">
-          <div className="min-w-0 flex items-center gap-2 *:min-w-0 max-w-full">
+        <section className="toon-card toon-paper bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
+          <div className="min-w-0 flex items-center gap-2 max-w-full">
             <ArrowCounterClockwise size={22} weight="duotone" aria-hidden="true" />
             <h2 className="text-2xl font-black">Demo data</h2>
           </div>
@@ -400,7 +399,7 @@ export default function SettingsView({
           ) : (
             <div role="alert" className="mt-4 rounded-xl border-2 border-dashed border-divider p-3">
               <p className="text-sm font-black">Clear all local projects and activity?</p>
-              <div className="min-w-0 mt-3 flex flex-wrap gap-3 *:min-w-0 max-w-full">
+              <div className="min-w-0 mt-3 flex flex-wrap gap-3 max-w-full">
                 <Button variant="danger" size="small" type="button" onClick={resetDemo}>
                   Yes, reset it
                 </Button>

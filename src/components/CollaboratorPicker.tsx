@@ -49,11 +49,11 @@ export default function CollaboratorPicker({
   return (
     <div className="rounded-2xl border-[3px] border-outline bg-surface p-3">
       {selectedProfiles.length > 0 && (
-        <div className="min-w-0 mb-2 flex flex-wrap gap-2 *:min-w-0 max-w-full">
+        <div className="min-w-0 mb-2 flex flex-wrap gap-2 max-w-full">
           {selectedProfiles.map((p) => (
             <span
               key={p.id}
-              className="min-w-0 inline-flex items-center gap-1.5 rounded-full border-2 border-outline bg-secondary py-0.5 pl-0.5 pr-1.5 text-xs font-black *:min-w-0 max-w-full"
+              className="min-w-0 inline-flex items-center gap-1.5 rounded-full border-2 border-outline bg-secondary py-0.5 pl-0.5 pr-1.5 text-xs font-black max-w-full"
             >
               <Avatar name={p.name} color={p.color} imageUrl={p.imageUrl} size="sm" />
               <span className="min-w-0 wrap-anywhere">{p.name}</span>

@@ -87,6 +87,20 @@ describe("developer username links", () => {
     });
     expect(container.textContent).toContain("Edit profile");
     expect(container.textContent).toContain("Your profile");
+    expect(container.textContent).toContain("Guest");
+    expect(container.textContent).not.toContain("Submit project");
+    await act(async () => {
+      Array.from(container.querySelectorAll("button"))
+        .find((button) => button.textContent?.includes("Edit profile"))!
+        .click();
+    });
+    expect(container.querySelector('input[placeholder="e.g. Frontend development"]')).toBeNull();
+    expect(container.textContent).toContain("Guest");
+    expect(
+      Array.from(container.querySelectorAll("label")).some(
+        (label) => label.textContent?.trim() === "Role",
+      ),
+    ).toBe(false);
   });
 
   it("resolves old ID links and replaces them with the username URL", async () => {

@@ -67,11 +67,11 @@ const variantClasses: Record<ButtonVariant, string> = {
   outline:
     "rounded-2xl border-2 border-outline bg-transparent px-3 py-2 text-foreground transition-colors hover:bg-background disabled:cursor-not-allowed disabled:opacity-60",
   "outline-flat":
-    "min-w-0 max-w-full rounded-2xl border-2 border-outline bg-transparent text-foreground transition-colors aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:hover:bg-primary hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60",
+    "rounded-2xl border-2 border-outline bg-transparent text-foreground transition-colors aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:hover:bg-primary hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60",
   ghost:
     "text-sm decoration-2 transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-60",
   filter:
-    "min-w-0 max-w-full rounded-2xl border-2 border-outline bg-transparent text-foreground transition-colors aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:hover:bg-primary aria-selected:bg-primary aria-selected:text-primary-foreground aria-selected:hover:bg-primary hover:bg-background disabled:cursor-not-allowed disabled:opacity-60",
+    "rounded-2xl border-2 border-outline bg-transparent text-foreground transition-colors aria-pressed:bg-primary aria-pressed:text-primary-foreground aria-pressed:hover:bg-primary aria-selected:bg-primary aria-selected:text-primary-foreground aria-selected:hover:bg-primary hover:bg-background disabled:cursor-not-allowed disabled:opacity-60",
   vote: "gap-1 transition-colors hover:text-primary aria-pressed:text-vote aria-pressed:hover:text-vote disabled:cursor-not-allowed disabled:opacity-60",
   text: "inline border-0 bg-transparent p-0 font-inherit text-inherit transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-60",
 };
@@ -287,19 +287,8 @@ function buttonClassName(
     .join(" ");
 }
 
-function buttonFaceClassName(
-  variant: ButtonVariant,
-  size: ButtonSize,
-  fullWidth: boolean,
-  fullHeight: boolean,
-) {
-  return [
-    raisedFaceClasses,
-    variantClasses[variant],
-    sizeClasses[size],
-    fullWidth ? "w-full" : "",
-    fullHeight ? "h-full" : "",
-  ]
+function buttonFaceClassName(variant: ButtonVariant, size: ButtonSize, fullHeight: boolean) {
+  return [raisedFaceClasses, variantClasses[variant], sizeClasses[size], fullHeight ? "h-full" : ""]
     .filter(Boolean)
     .join(" ");
 }
@@ -307,7 +296,6 @@ function buttonFaceClassName(
 function buttonContents(
   variant: ButtonVariant,
   size: ButtonSize,
-  fullWidth: boolean,
   fullHeight: boolean,
   children: ReactNode,
 ) {
@@ -319,7 +307,7 @@ function buttonContents(
     <>
       <span className={raisedSideClasses} aria-hidden="true" />
 
-      <span className={buttonFaceClassName(variant, size, fullWidth, fullHeight)}>{children}</span>
+      <span className={buttonFaceClassName(variant, size, fullHeight)}>{children}</span>
     </>
   );
 }
@@ -357,7 +345,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
         fullHeight,
       )}
     >
-      {buttonContents(variant, size, fullWidth, fullHeight, children)}
+      {buttonContents(variant, size, fullHeight, children)}
     </button>
   );
 });
@@ -380,7 +368,7 @@ export function ButtonLink({
       href={href}
       className={buttonClassName(variant, size, className, fullWidth, fullHeight)}
     >
-      {buttonContents(variant, size, fullWidth, fullHeight, children)}
+      {buttonContents(variant, size, fullHeight, children)}
     </a>
   );
 }
@@ -407,7 +395,7 @@ export function ButtonLabel({
         fullHeight,
       )}
     >
-      {buttonContents(variant, size, fullWidth, fullHeight, children)}
+      {buttonContents(variant, size, fullHeight, children)}
     </label>
   );
 }

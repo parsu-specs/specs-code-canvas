@@ -138,7 +138,7 @@ export default function Dropdown(props: DropdownProps) {
           style={centered ? undefined : (panel ?? undefined)}
           className={
             centered
-              ? "toon-card flex max-h-[85dvh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-surface"
+              ? "toon-card flex max-h-[85dvh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-panel"
               : "toon-card fixed z-110 overflow-hidden rounded-2xl bg-surface"
           }
           onKeyDown={(event) => {
@@ -161,7 +161,7 @@ export default function Dropdown(props: DropdownProps) {
           }}
         >
           {centered && (
-            <div className="flex shrink-0 items-center justify-between gap-3 border-b-2 border-outline p-3">
+            <div className="flex shrink-0 items-center justify-between gap-3 border-b-2 border-outline bg-primary text-primary-foreground p-3">
               <h3 className="min-w-0 text-sm font-black">{label}</h3>
               <CloseButton
                 aria-label={variant === "checkbox" ? "Done selecting" : "Close selection"}
@@ -175,7 +175,7 @@ export default function Dropdown(props: DropdownProps) {
             aria-label={label}
             tabIndex={-1}
             style={centered ? undefined : { maxHeight: panel?.maxHeight }}
-            className="scrollbar-minimal min-h-0 overflow-y-auto overscroll-contain p-1.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary"
+            className={`scrollbar-minimal min-h-0 overflow-y-auto overscroll-contain p-1.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary ${centered ? "modal-grid" : ""}`}
             onBlur={(event) => {
               if (
                 !centered &&
@@ -216,7 +216,7 @@ export default function Dropdown(props: DropdownProps) {
                   {variant === "checkbox" ? (
                     <label className="flex min-h-11 min-w-0 cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-sm font-black hover:bg-background focus-within:bg-background md:min-h-0">
                       <Checkbox checked={isSelected} onChange={() => pick(option.value)} />
-                      <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                      <span className="flex-1 truncate">{option.label}</span>
                     </label>
                   ) : (
                     <Button
@@ -235,7 +235,7 @@ export default function Dropdown(props: DropdownProps) {
                           {option.icon}
                         </span>
                       )}
-                      <span className="min-w-0 flex-1 truncate">{option.label}</span>
+                      <span className="flex-1 truncate">{option.label}</span>
                       {variant === "check" && isSelected && (
                         <Check size={16} weight="bold" aria-hidden="true" />
                       )}

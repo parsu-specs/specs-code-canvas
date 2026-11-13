@@ -1,4 +1,5 @@
 import { captureMentions } from "../../utils/mentions";
+import { accountRole, rejectRolePatch } from "../accountRoles";
 import { NotFoundError, type ProfileRepo } from "../repositories";
 import {
   AVATAR_COLORS,
@@ -41,7 +42,10 @@ export function loadProfiles(): Profile[] {
         mutated = true;
       }
     }
-    const merged = [...byId.values()];
+    const merged = [...byId.values()].map((profile) => ({
+      ...profile,
+      role: accountRole(profile.role),
+    }));
     if (mutated) localStorage.setItem(PROFILES_KEY, JSON.stringify(merged));
     return merged;
   } catch {
@@ -173,7 +177,7 @@ export function createLocalProfileRepo(): ProfileRepo {
       const created: Profile = {
         id: user.id,
         name: user.name,
-        role: "Community member",
+        role: "Guest",
         bio: "Exploring digital creations across the community.",
         color: "sky",
         createdAt: new Date().toISOString(),
@@ -183,12 +187,12 @@ export function createLocalProfileRepo(): ProfileRepo {
     },
 
     async updateProfile(id, patch, requesterId): Promise<Profile> {
+      rejectRolePatch(patch);
       await delay(100);
       if (id !== requesterId) throw new Error("You can only edit your own profile.");
       const profiles = loadProfiles();
       const target = profiles.find((p) => p.id === id);
       if (!target) throw new NotFoundError("Developer not found.");
-      const role = patch.role?.trim() ?? target.role;
       const bio = patch.bio?.trim() ?? target.bio;
       const color = patch.color?.trim() ?? target.color;
       const imageUrl =
@@ -204,8 +208,6 @@ export function createLocalProfileRepo(): ProfileRepo {
         );
         if (taken) throw new Error("That name is already taken by another developer.");
       }
-      if (!role) throw new Error("Role is required.");
-      if (role.length > 80) throw new Error("Keep role under 80 characters.");
       if (bio.length > 280) throw new Error("Keep bio under 280 characters.");
       if (!ALLOWED_COLORS.has(color)) throw new Error("Pick a valid avatar color.");
       if (!isValidImageUrl(imageUrl)) throw new Error("Image must be a valid http(s) URL.");
@@ -221,7 +223,6 @@ export function createLocalProfileRepo(): ProfileRepo {
       const updated: Profile = {
         ...target,
         name,
-        role,
         bio,
         color,
         imageUrl: imageUrl || undefined,

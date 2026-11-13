@@ -6,7 +6,13 @@ type Props = Omit<
   "src" | "srcSet" | "sizes" | "width" | "height"
 > & { src: string; variant?: "thumbnail" | "cover" | "full" };
 
-export default function ProjectImage({ src, variant = "thumbnail", onError, ...props }: Props) {
+export default function ProjectImage({
+  src,
+  variant = "thumbnail",
+  onError,
+  fetchPriority,
+  ...props
+}: Props) {
   const [failedSource, setFailedSource] = useState<string | null>(null);
   const image = projectImageSources(src);
   if (!image) return null;
@@ -15,6 +21,8 @@ export default function ProjectImage({ src, variant = "thumbnail", onError, ...p
   return (
     <img
       {...props}
+      // React 18 requires the lowercase DOM attribute for fetch priority.
+      {...{ fetchpriority: fetchPriority }}
       src={thumbnail ? image.thumbnail : image.cover}
       srcSet={variant === "cover" && !fallback ? image.srcSet : undefined}
       sizes={

@@ -1,4 +1,10 @@
 import { validateVersion } from "../../utils/projectVersions";
+import {
+  accountRole,
+  canSubmitProjects,
+  MEMBERSHIP_REQUIRED,
+  rejectRolePatch,
+} from "../accountRoles";
 import { captureMentions } from "../../utils/mentions";
 // Supabase implementations of the repo contracts. Active only when
 // VITE_DATA_SOURCE=supabase. Reads work with the anon key under the public
@@ -17,6 +23,7 @@ import {
   type VoteResult,
 } from "../repositories";
 import { isSafeImageUrl } from "../../utils/urls";
+import { validateProjectIcon } from "../../utils/projectIcon";
 import {
   AVATAR_COLORS,
   PROFILE_THEMES,
@@ -247,6 +254,7 @@ async function commentCounts(appIds: string[]): Promise<Map<string, number>> {
 
 function toAppRow(row: Record<string, unknown>): AppRow {
   return {
+    icon: typeof row["icon"] === "string" ? row["icon"] : null,
     stage: (row["stage"] as AppRow["stage"]) || undefined,
     version: (row["version"] as string) || undefined,
     last_published_at: (row["last_published_at"] as string) || undefined,
@@ -312,7 +320,7 @@ export function createSupabaseAppRepo(): AppRepo {
       let request = supabase
         .from("apps")
         .select(
-          "id,title,description,mentions,creator,creator_id,category,votes,color,url,repo_url,screenshots:screenshots->0,collaborators,created_at,stage,version,last_published_at",
+          "id,title,description,mentions,creator,creator_id,category,votes,color,url,repo_url,icon,screenshots:screenshots->0,collaborators,created_at,stage,version,last_published_at",
         )
         .order("created_at", { ascending: false });
       const q = query.trim();
@@ -367,6 +375,7 @@ export function createSupabaseAppRepo(): AppRepo {
     },
 
     async createApp(input: AppInput, author: User) {
+      validateProjectIcon(input.icon);
       validateVersion(input.stage, input.version);
       const title = input.title.trim();
       const description = input.description.trim();
@@ -386,7 +395,10 @@ export function createSupabaseAppRepo(): AppRepo {
       for (const src of screenshots) {
         if (src.length > 500_000) throw new Error("Images are too large. Pick smaller files.");
       }
-      const uid = (await authUid()) ?? author.id;
+      const uid = await authUid();
+      if (!uid || !canSubmitProjects(await createSupabaseProfileRepo().getProfile(uid))) {
+        throw new Error(MEMBERSHIP_REQUIRED);
+      }
       const { withStoredProjectImages } = await import("./projectImages");
       return withStoredProjectImages(screenshots, uid, async (storedScreenshots) => {
         const { data, error } = await getSupabase()
@@ -409,6 +421,7 @@ export function createSupabaseAppRepo(): AppRepo {
             url: url || null,
             repo_url: repoUrl || null,
             screenshots: storedScreenshots,
+            icon: input.icon || null,
             docs: docs || null,
             collaborators: (input.collaborators ?? []).filter(Boolean).slice(0, 10),
           })
@@ -613,7 +626,7 @@ export function createSupabaseAppRepo(): AppRepo {
           toProfile({
             id: String(r["id"]),
             name: String(r["name"] ?? ""),
-            role: String(r["role"] ?? ""),
+            role: accountRole(String(r["role"] ?? "")),
             bio: String(r["bio"] ?? ""),
             color: String(r["color"] ?? "sky"),
             image_url: (r["image_url"] as string | null) ?? null,
@@ -630,7 +643,7 @@ export function createSupabaseAppRepo(): AppRepo {
       if (error) throw new Error(error.message);
       return ((data ?? []) as { name: string; role: string; color: string }[]).map((p) => ({
         name: p.name,
-        role: p.role,
+        role: accountRole(p.role),
         apps: 0,
         color: p.color,
       }));
@@ -762,15 +775,10 @@ export function createSupabaseAppRepo(): AppRepo {
       if (appId) {
         const { data: target, error } = await getSupabase()
           .from("apps")
-          .select("creator,creator_id")
+          .select("id")
           .eq("id", appId)
           .single();
         if (error || !target) throw new NotFoundError("Project not found.");
-        const row = target as { creator: string; creator_id: string | null };
-        const owned = row.creator_id
-          ? row.creator_id === author.id
-          : row.creator.toLowerCase() === author.name.toLowerCase();
-        if (!owned) throw new Error("You can only link your own projects.");
       }
       const { data, error } = await getSupabase()
         .from("milestones")
@@ -835,7 +843,7 @@ export function createSupabaseProfileRepo(): ProfileRepo {
         toProfile({
           id: String(r["id"]),
           name: String(r["name"] ?? ""),
-          role: String(r["role"] ?? ""),
+          role: accountRole(String(r["role"] ?? "")),
           bio: String(r["bio"] ?? ""),
           color: String(r["color"] ?? "sky"),
           image_url: (r["image_url"] as string | null) ?? null,
@@ -858,7 +866,7 @@ export function createSupabaseProfileRepo(): ProfileRepo {
       return toProfile({
         id: String(row["id"]),
         name: String(row["name"] ?? ""),
-        role: String(row["role"] ?? ""),
+        role: accountRole(String(row["role"] ?? "")),
         bio: String(row["bio"] ?? ""),
         color: String(row["color"] ?? "sky"),
         image_url: (row["image_url"] as string | null) ?? null,
@@ -883,7 +891,7 @@ export function createSupabaseProfileRepo(): ProfileRepo {
       return toProfile({
         id: String(row["id"]),
         name: String(row["name"] ?? ""),
-        role: String(row["role"] ?? ""),
+        role: accountRole(String(row["role"] ?? "")),
         bio: String(row["bio"] ?? ""),
         color: String(row["color"] ?? "sky"),
         image_url: (row["image_url"] as string | null) ?? null,
@@ -927,7 +935,7 @@ export function createSupabaseProfileRepo(): ProfileRepo {
         .insert({
           id: user.id,
           name: user.name,
-          role: "Community member",
+          role: "Guest",
           bio: "Exploring digital creations across the community.",
           color: "sky",
         })
@@ -945,6 +953,7 @@ export function createSupabaseProfileRepo(): ProfileRepo {
     },
 
     async updateProfile(id: string, patch, requesterId: string) {
+      rejectRolePatch(patch);
       const supabase = getSupabase();
       // requesterId is caller-supplied and untrusted: verify identity
       // against the server session instead (getUser validates the JWT
@@ -956,7 +965,6 @@ export function createSupabaseProfileRepo(): ProfileRepo {
         throw new Error("You can only edit your own profile.");
       const current = await this.getProfile(id);
       const name = patch.name?.trim() || current.name;
-      const role = patch.role?.trim() ?? current.role;
       const bio = patch.bio?.trim() ?? current.bio;
       const color = patch.color?.trim() ?? current.color;
       const imageUrl =
@@ -979,8 +987,6 @@ export function createSupabaseProfileRepo(): ProfileRepo {
       }
       if (!name) throw new Error("Name is required.");
       if (name.length > 40) throw new Error("Keep your name under 40 characters.");
-      if (!role) throw new Error("Role is required.");
-      if (role.length > 80) throw new Error("Keep role under 80 characters.");
       if (bio.length > 280) throw new Error("Keep bio under 280 characters.");
       // Uniqueness is policed on rename only: palette/theme/bio-only saves
       // must not trip over a legacy same-named row. Display names are UNIQUE
@@ -998,7 +1004,7 @@ export function createSupabaseProfileRepo(): ProfileRepo {
       }
       const { error } = await supabase
         .from("profiles")
-        .update({ name, role, bio, color, image_url: imageUrl || null, theme, palette })
+        .update({ name, bio, color, image_url: imageUrl || null, theme, palette })
         .eq("id", id);
       if (error) throw new Error(error.message);
       return this.getProfile(id);

@@ -7,7 +7,7 @@ import { isSafeHttpUrl } from "../utils/urls";
 export default function ProjectVersionHistory({ versions }: { versions: ProjectVersion[] }) {
   if (!versions.length) return null;
   return (
-    <section className="mt-8 min-w-0">
+    <section className="mt-6 min-w-0 @min-[36rem]/content:mt-8">
       <h3 className="text-xl font-black">Version history</h3>
       <ol className="mt-4 grid gap-4">
         {versions.map((entry) => (

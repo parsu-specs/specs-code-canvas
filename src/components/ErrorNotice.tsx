@@ -16,7 +16,7 @@ export default function ErrorNotice({
     <div className="pointer-events-none fixed inset-x-0 top-[calc(1rem+env(safe-area-inset-top,0px))] z-120 flex justify-center px-4 lg:inset-x-auto lg:top-auto lg:bottom-6 lg:right-6 lg:p-0">
       <div
         role="alert"
-        className="toon-card pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-2xl bg-surface px-5 py-3 text-sm font-black wrap-anywhere"
+        className="toon-card pointer-events-auto flex w-full max-w-md items-center gap-3 bg-surface px-5 py-3 text-sm font-black"
         onTouchStart={(event) => {
           const touch = event.touches[0];
           touchStart.current = { x: touch.clientX, y: touch.clientY };

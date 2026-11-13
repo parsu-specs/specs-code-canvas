@@ -4,6 +4,7 @@ import {
   VOTE_RATE_LIMIT_ENABLED,
 } from "../../utils/debouncedVotes";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { canSubmitProjects, MEMBERSHIP_REQUIRED } from "../../data/accountRoles";
 import { GameController, GraduationCap, Palette, SquaresFour, Wrench } from "@phosphor-icons/react";
 import { useAuth } from "../../auth/authContext";
 import {
@@ -165,6 +166,7 @@ export default function useStoreController() {
   });
   const [feedQuery, setFeedQuery] = useState("");
   const [category, setCategory] = useState<CategoryFilter>("All");
+  const canSubmitProject = canSubmitProjects(myProfile);
   const [showForm, setShowForm] = useState(false);
   const [projectStage, setProjectStage] = useState<import("../../data/types").ProjectStage | "">(
     "",
@@ -177,6 +179,7 @@ export default function useStoreController() {
   const [repoUrl, setRepoUrl] = useState("");
   const [categoryInput, setCategoryInput] = useState<Category>("Productivity");
   const [screenshots, setScreenshots] = useState<string[]>([]);
+  const [icon, setIcon] = useState("");
   const [docs, setDocs] = useState("");
   const [docsTab, setDocsTab] = useState<"write" | "upload" | "repository" | "preview">("write");
   const [docsPreviewReturnTab, setDocsPreviewReturnTab] = useState<
@@ -1126,7 +1129,7 @@ export default function useStoreController() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
   const navClass = (item: Exclude<StoreView, "profile" | "project">) =>
-    `flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border-2 px-1 py-0 text-center text-xs font-black leading-tight lg:w-full lg:flex-row lg:justify-start lg:gap-3 lg:px-4 lg:py-3 lg:text-left lg:text-base ${view === item ? "border-outline bg-secondary text-foreground shadow-[2px_2px_0_var(--color-outline)]" : "border-transparent shadow-[2px_2px_0_transparent] hover:bg-surface/15"}`;
+    `flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border-2 px-1 py-0 text-center text-[10px] font-black leading-tight max-lg:[&>svg]:size-4 lg:w-full lg:flex-row lg:justify-start lg:gap-3 lg:px-4 lg:py-3 lg:text-left lg:text-base ${view === item ? "border-outline bg-secondary text-foreground shadow-[2px_2px_0_var(--color-outline)]" : "border-transparent shadow-[2px_2px_0_transparent] hover:bg-surface/15"}`;
 
   const goPath = (path: string, nextView: StoreView) => {
     window.history.pushState({}, "", path);
@@ -1326,6 +1329,7 @@ export default function useStoreController() {
     setSubmitting(true);
     setSubmitError(null);
     try {
+      if (!canSubmitProject) throw new Error(MEMBERSHIP_REQUIRED);
       if (!projectStage) throw new Error("Choose a valid project stage.");
       const created = await getAppRepo().createApp(
         {
@@ -1338,6 +1342,7 @@ export default function useStoreController() {
           collaborators: [...new Set([...collabIds, ...extractMentionIds(desc, profiles)])],
           category: categoryInput,
           screenshots: screenshots.length ? screenshots : undefined,
+          icon: icon || undefined,
           docs: docs.trim() ? docs.trim() : undefined,
         },
         user,
@@ -1375,6 +1380,7 @@ export default function useStoreController() {
     setRepoUrl("");
     setCategoryInput("Productivity");
     setScreenshots([]);
+    setIcon("");
     setImgError(null);
     setImageBusy(false);
     setSubmitError(null);
@@ -1410,6 +1416,25 @@ export default function useStoreController() {
     } catch (e) {
       if (version !== submissionVersion.current) return false;
       setImgError(e instanceof Error ? e.message : "Could not read those images.");
+      return false;
+    } finally {
+      if (version === submissionVersion.current) setImageBusy(false);
+    }
+  };
+
+  const pickIcon = async (file: File) => {
+    const version = submissionVersion.current;
+    setImageBusy(true);
+    setImgError(null);
+    try {
+      const { encodeImage } = await import("../../utils/images");
+      const image = await encodeImage(file, { maxDimension: 256, maxBytes: 40_000 });
+      if (version !== submissionVersion.current) return false;
+      setIcon(image.dataUrl);
+      return true;
+    } catch (error) {
+      if (version === submissionVersion.current)
+        setImgError(error instanceof Error ? error.message : "Could not read that icon.");
       return false;
     } finally {
       if (version === submissionVersion.current) setImageBusy(false);
@@ -1537,6 +1562,7 @@ export default function useStoreController() {
     cheerPending,
     collabIds,
     closeSubmission,
+    canSubmitProject,
     confirmSignOut,
     copyForView,
     countFor,
@@ -1586,6 +1612,9 @@ export default function useStoreController() {
     openProfile,
     openThreads,
     pickImages,
+    icon,
+    setIcon,
+    pickIcon,
     postFeedPost,
     profiles,
     profilesLookup,

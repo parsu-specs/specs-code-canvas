@@ -42,6 +42,9 @@ export type SubmitProjectModalProps = Pick<
   | "docsTab"
   | "downloadDocumentation"
   | "imageBusy"
+  | "icon"
+  | "setIcon"
+  | "pickIcon"
   | "imgError"
   | "importRepositoryFiles"
   | "loadRepositoryFiles"
@@ -92,6 +95,9 @@ export default function SubmitProjectForm({
   docsTab,
   downloadDocumentation,
   imageBusy,
+  icon,
+  setIcon,
+  pickIcon,
   imgError,
   importRepositoryFiles,
   loadRepositoryFiles,
@@ -125,14 +131,16 @@ export default function SubmitProjectForm({
   url,
 }: SubmitProjectModalProps) {
   const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const [pendingIcon, setPendingIcon] = useState<File | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const editingImage = pendingImages[0];
-  const imageUploadDisabled = submitting || imageBusy || !!editingImage || screenshots.length >= 3;
+  const imageUploadDisabled =
+    submitting || imageBusy || !!editingImage || !!pendingIcon || screenshots.length >= 3;
 
   return (
     <form
       onSubmit={(event) => event.preventDefault()}
-      className="grid min-w-0 max-w-full gap-5 @min-[36rem]/content:grid-cols-2 *:min-w-0 motion-safe:animate-content-in"
+      className="grid min-w-0 max-w-full gap-5 @min-[36rem]/content:grid-cols-2 motion-safe:animate-content-in"
     >
       <ProjectStageFields
         stage={projectStage}
@@ -141,6 +149,59 @@ export default function SubmitProjectForm({
         onVersionChange={setProjectVersion}
         disabled={submitting}
       />
+      <div className="@min-[36rem]/content:col-span-2">
+        <span className="mb-2 block text-xs font-black uppercase">Project icon (optional)</span>
+        <div className="flex flex-wrap items-center gap-4">
+          {icon && (
+            <img
+              src={icon}
+              alt="Project icon preview"
+              className="size-20 rounded-2xl border-2 border-outline bg-surface object-contain"
+            />
+          )}
+          <ButtonLabel variant="surface" size="small" className="cursor-pointer">
+            <Images size={20} weight="duotone" aria-hidden="true" />
+            {icon ? "Replace icon" : "Choose icon"}
+            <FileInput
+              aria-label="Choose project icon"
+              accept={IMAGE_FILE_ACCEPT}
+              disabled={submitting || imageBusy || !!editingImage || !!pendingIcon}
+              onChange={(event) => {
+                setPendingIcon(event.target.files?.[0] ?? null);
+                event.target.value = "";
+              }}
+            />
+          </ButtonLabel>
+          {icon && (
+            <Button
+              type="button"
+              variant="text"
+              size="small"
+              disabled={submitting || imageBusy || !!pendingIcon}
+              onClick={() => setIcon("")}
+            >
+              Remove icon
+            </Button>
+          )}
+        </div>
+        <p className="mt-2 text-xs text-body">
+          Choose an image up to 8MB. Crop it to a square for your project icon.
+        </p>
+        {pendingIcon && (
+          <div className="mt-4">
+            <h3 className="mb-3 text-lg font-black">Edit project icon</h3>
+            <ImageEditor
+              file={pendingIcon}
+              aspectRatio={1}
+              onCancel={() => setPendingIcon(null)}
+              onSave={async (file) => {
+                if (!(await pickIcon(file))) throw new Error("Could not add this icon.");
+                setPendingIcon(null);
+              }}
+            />
+          </div>
+        )}
+      </div>
       <label className="@min-[36rem]/content:col-span-2">
         <span className="mb-2 block text-xs font-black uppercase">Project name</span>
         <Input
@@ -310,7 +371,7 @@ export default function SubmitProjectForm({
         </span>
       </div>
       <div className="@min-[36rem]/content:col-span-2">
-        <div className="min-w-0 mb-3 flex flex-wrap items-center gap-2 *:min-w-0 max-w-full">
+        <div className="min-w-0 mb-3 flex flex-wrap items-center gap-2 max-w-full">
           {(["write", "upload", "repository"] as const).map((tab) => (
             <Button
               key={tab}
@@ -429,11 +490,11 @@ export default function SubmitProjectForm({
                 )}
                 {repositoryFiles.length > 0 && (
                   <>
-                    <div className="min-w-0 mt-4 flex flex-wrap items-center justify-between gap-3 *:min-w-0 max-w-full">
+                    <div className="min-w-0 mt-4 flex flex-wrap items-center justify-between gap-3 max-w-full">
                       <p className="text-sm font-black">
                         {selectedRepositoryFiles.length} of {repositoryFiles.length} selected
                       </p>
-                      <label className="min-w-0 flex items-center gap-2 text-sm font-black *:min-w-0 max-w-full">
+                      <label className="min-w-0 flex items-center gap-2 text-sm font-black max-w-full">
                         <Checkbox
                           checked={selectedRepositoryFiles.length === repositoryFiles.length}
                           onChange={(event) =>
@@ -447,7 +508,7 @@ export default function SubmitProjectForm({
                       {repositoryFiles.map((path) => (
                         <label
                           key={path}
-                          className="min-w-0 flex items-start gap-2 rounded-lg px-2 py-1.5 text-sm font-bold hover:bg-background *:min-w-0 max-w-full"
+                          className="min-w-0 flex items-start gap-2 rounded-lg px-2 py-1.5 text-sm font-bold hover:bg-background max-w-full"
                         >
                           <Checkbox
                             checked={selectedRepositoryFiles.includes(path)}
@@ -493,7 +554,7 @@ export default function SubmitProjectForm({
             {docs.length > 50000 && (
               <div
                 role="status"
-                className="min-w-0 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-outline bg-secondary/40 p-3 *:min-w-0 max-w-full"
+                className="min-w-0 mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-outline bg-secondary/40 p-3 max-w-full"
               >
                 <p className="text-sm font-bold">
                   This document is {docs.length.toLocaleString()} characters. It exceeds the
@@ -538,6 +599,7 @@ export default function SubmitProjectForm({
           submitting ||
           imageBusy ||
           !!editingImage ||
+          !!pendingIcon ||
           repositoryFilesLoading ||
           repositoryFilesImporting
         }

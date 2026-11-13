@@ -172,7 +172,7 @@ export default function MentionInput({
                 }}
                 onClick={() => complete(p.name)}
                 onMouseEnter={() => setHighlight(i)}
-                className={`min-w-0 flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm font-black ${i === activeIndex ? "bg-secondary" : ""} *:min-w-0 max-w-full`}
+                className={`min-w-0 flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm font-black ${i === activeIndex ? "bg-secondary" : ""} max-w-full`}
               >
                 <Avatar name={p.name} color={p.color} imageUrl={p.imageUrl} size="sm" />
                 <span className="min-w-0">

@@ -18,7 +18,10 @@ const input = {
   screenshots: ["https://example.com/first.webp"],
   docs: "Initial docs",
 };
-beforeEach(() => store.clear());
+beforeEach(() => {
+  store.clear();
+  store.set("cc.profiles.v1", JSON.stringify([{ ...owner, role: "Member", color: "sky" }]));
+});
 
 describe("project publications", () => {
   it("rejects an overlapping publication instead of overwriting the winning history", async () => {

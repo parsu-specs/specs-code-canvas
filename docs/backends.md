@@ -57,8 +57,14 @@ Vite selects the backend through `@data-backend` at build time, keeping unused S
    - `GET /profiles` → `{ profiles }` · `GET /profiles/:id` → `{ profile }`
    - `GET /profiles/by-name/:name` → `{ profile }` (404 → null)
    - `POST /profiles/ensure {id, email, name}` → `{ profile }`
-   - `PATCH /profiles/:id` → `{ profile }` (owner only)
+   - `PATCH /profiles/:id` → `{ profile }` (owner only; reject role changes)
    - Errors as `{ message }` with proper HTTP status (404 drives not-found UI).
+
+   New profiles must start as `Guest`. Only `Member` accounts approved through
+   the separate admin console may call `POST /apps`; check the authenticated
+   account in the API, not caller-supplied role data. Guest feed posting remains
+   available. See [account roles](account-roles.md) for the shared database contract.
+
 5. For the custom server option, set `VITE_DATA_SOURCE=http` and `VITE_API_URL=https://<your-api>` in `.env`.
 6. Review the rate-limit, vote-guard, authorship, and constraint migrations in `supabase/`. Configure Auth CAPTCHA and provider settings in the target environment. Verify policies with authenticated and unauthorized requests before releasing.
 

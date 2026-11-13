@@ -9,7 +9,7 @@ import About from "./About";
 
 export default function PublicSite({ page }: { page: "home" | "about" }) {
   return (
-    <div className="flex min-h-screen flex-col pt-27.25 sm:pt-29.25 lg:pt-31.25">
+    <div className="flex min-h-screen flex-col pt-[calc(var(--spacing-header)+1.5rem)] sm:pt-[calc(var(--spacing-header)+2rem)] lg:pt-[calc(var(--spacing-header)+2.5rem)]">
       <SiteHeader />
       <nav aria-label="Site navigation" className="flex flex-wrap justify-center gap-2 px-5 pb-2">
         {(

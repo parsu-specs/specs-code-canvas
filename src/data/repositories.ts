@@ -93,7 +93,6 @@ export type AppRepo = {
 };
 
 export type ProfilePatch = {
-  role?: string;
   bio?: string;
   color?: string;
   imageUrl?: string;

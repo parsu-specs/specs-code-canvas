@@ -15,6 +15,7 @@ type Props = { promptDismissed: boolean; onDismissPrompt: () => void } & SubmitP
   Pick<
     StoreController,
     | "apps"
+    | "canSubmitProject"
     | "appsError"
     | "appsLoading"
     | "categories"
@@ -75,17 +76,22 @@ export default function DiscoverPage(props: Props) {
   } = props;
   return (
     <PostTimeProvider>
-      {user && !appsError && !props.promptDismissed && (
+      {user && props.canSubmitProject && !props.promptDismissed && (
         <ProjectSubmissionPrompt
           hasSubmittedProject={hasSubmittedProject}
           showForm={showForm}
           onSubmit={() => setShowForm(true)}
           onDismiss={props.onDismissPrompt}
           className="mb-5 lg:hidden"
-          loading={appsLoading && apps.length === 0}
         />
       )}
-      {showForm && <SubmitProjectModal {...props} />}
+      {showForm && props.canSubmitProject && <SubmitProjectModal {...props} />}
+      {user && !props.canSubmitProject && (
+        <p className="mb-5 rounded-xl border-2 border-outline bg-surface p-4 text-sm font-bold">
+          Your account is a Guest. You can browse and post in the feed. An admin must approve your
+          account as a Member before you can submit projects.
+        </p>
+      )}
       <section id="apps" className="mt-2 scroll-mt-6">
         {user && hasPassword === false && !pwSnoozed && (
           <NoticeBanner
@@ -115,8 +121,8 @@ export default function DiscoverPage(props: Props) {
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="py-3 pl-11"
-            placeholder="Search projects or developers"
+            className="py-3 pl-11 text-sm truncate"
+            placeholder="Search projects or developers..."
           />
         </label>
         <div className="mb-6 md:hidden">
@@ -136,7 +142,7 @@ export default function DiscoverPage(props: Props) {
           />
         </div>
         <div
-          className="min-w-0 mb-6 hidden flex-wrap gap-2 *:min-w-0 max-w-full md:flex"
+          className="min-w-0 mb-6 hidden flex-wrap gap-2 max-w-full md:flex"
           role="group"
           aria-label="Project categories"
         >
@@ -156,7 +162,7 @@ export default function DiscoverPage(props: Props) {
         {appsLoading && apps.length === 0 ? (
           <AppCardsSkeleton />
         ) : appsError ? (
-          <div className="toon-card toon-paper bg-panel rounded-2xl p-10 text-center">
+          <div className="toon-card toon-paper bg-panel p-10 text-center">
             <h3 className="mt-3 text-xl font-black">Could not load projects</h3>
             <p className="font-bold text-muted">{userFacingError(appsError)}</p>
             <Button variant="secondary" onClick={() => void loadApps()} className="mt-5">
@@ -166,7 +172,7 @@ export default function DiscoverPage(props: Props) {
         ) : apps.length ? (
           <div
             aria-busy={appsLoading}
-            className="discovery-grid min-w-0 max-w-full *:min-w-0 motion-safe:[&>*:nth-child(-n+6)]:animate-content-in"
+            className="discovery-grid min-w-0 max-w-full motion-safe:[&>*:nth-child(-n+6)]:animate-content-in"
           >
             {apps.map((app, index) => (
               <AppCard
@@ -197,7 +203,7 @@ export default function DiscoverPage(props: Props) {
             ))}
           </div>
         ) : (
-          <div className="toon-card toon-paper bg-panel rounded-2xl p-10 text-center">
+          <div className="toon-card toon-paper bg-panel p-10 text-center">
             <MagnifyingGlass size={36} className="mx-auto" />
             <h3 className="mt-3 text-xl font-black">No projects found</h3>
             <p className="font-bold text-muted">Adjust your search or category filter.</p>

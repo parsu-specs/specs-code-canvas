@@ -3,6 +3,7 @@ import ProjectVersionHistory from "./ProjectVersionHistory";
 import { suggestedVersion } from "../utils/projectVersions";
 import { PROJECT_STAGE_LABELS, type ProjectStage } from "../data/types";
 import ProjectImage from "./ProjectImage";
+import ProjectIcon from "./ProjectIcon";
 import { userFacingError } from "../utils/userFacingError";
 import ErrorNotice from "./ErrorNotice";
 import { ProjectSkeleton, RowsSkeleton } from "./Skeleton";
@@ -25,6 +26,7 @@ import {
 } from "@phosphor-icons/react";
 import Avatar from "./Avatar";
 import ImageViewer from "./ImageViewer";
+import ScreenshotCarousel from "./ScreenshotCarousel";
 import SortableThumbnails from "./SortableThumbnails";
 import CollaboratorPicker from "./CollaboratorPicker";
 import Comments from "./Comments";
@@ -81,12 +83,12 @@ function DocsSection({ text, source }: { text: string; source?: string }) {
   };
 
   return (
-    <section className="toon-card toon-paper mt-8 rounded-2xl bg-surface p-6 pt-10 sm:p-8 sm:pt-12">
-      <div className="min-w-0 mb-3 flex items-center gap-2 *:min-w-0 max-w-full">
-        <BookOpen size={22} weight="duotone" />
-        <h3 className="text-2xl font-black">Documentation</h3>
+    <section className="toon-card toon-paper mt-6 min-w-0 bg-surface p-4 pt-10 @min-[36rem]/content:mt-8 @min-[36rem]/content:p-8 @min-[36rem]/content:pt-12">
+      <div className="min-w-0 mb-3 flex items-center gap-2 max-w-full">
+        <BookOpen size={22} weight="duotone" className="shrink-0" />
+        <h3 className="text-xl font-black @min-[36rem]/content:text-2xl">Documentation</h3>
       </div>
-      <div className="min-w-0 mb-4 flex flex-wrap items-center justify-between gap-3 *:min-w-0 max-w-full">
+      <div className="min-w-0 mb-4 flex flex-wrap items-center justify-between gap-3 max-w-full">
         {source && <p className="text-xs font-black uppercase text-muted">{source}</p>}
         <Button variant="surface" size="small" type="button" onClick={download}>
           <DownloadSimple size={19} weight="bold" />
@@ -113,6 +115,7 @@ export default function ProjectView({
   const [app, setApp] = useState<AppItem | null>(null);
   const [developer, setDeveloper] = useState<Profile | null>(null);
   const [feedbackCount, setFeedbackCount] = useState(0);
+  const feedbackRef = useRef<HTMLElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [repositoryReadme, setRepositoryReadme] = useState<string | null>(null);
@@ -518,7 +521,7 @@ export default function ProjectView({
   if (loading) return <ProjectSkeleton />;
   if (error || !app) {
     return (
-      <div className="toon-card toon-paper bg-panel rounded-2xl p-10 text-center">
+      <div className="toon-card toon-paper bg-panel p-10 text-center">
         <h3 className="text-xl font-black">Project not found</h3>
         <p className="font-bold text-muted">
           {error ? userFacingError(error) : "This project does not exist."}
@@ -535,89 +538,88 @@ export default function ProjectView({
 
   return (
     <div className="@container/content min-w-0 max-w-full wrap-anywhere motion-safe:animate-content-in">
-      <Button variant="surface" size="small" onClick={onBack}>
-        <ArrowLeft size={18} weight="bold" /> Go Back
-      </Button>
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <Button variant="surface" size="small" onClick={onBack}>
+          <ArrowLeft size={18} weight="bold" /> Go Back
+        </Button>
+        <ShareButton app={app} variant="vote" />
+      </div>
 
-      <div className="mt-5">
-        {cover ? (
-          <Button
-            variant="plain"
-            type="button"
-            onClick={() => setLightbox(0)}
-            aria-label={`View ${app.title} cover full size`}
-            className="block w-full cursor-zoom-in rounded-2xl toon-card"
-          >
-            <span className="relative block h-80 w-full overflow-hidden md:h-96 rounded-xl">
-              <ProjectImage
-                src={cover}
-                variant="cover"
-                alt={`${app.title} thumbnail`}
-                loading="eager"
-                fetchPriority="high"
-                decoding="async"
-                className="relative h-full w-full object-cover"
-              />
-            </span>
-          </Button>
-        ) : (
-          <ProjectPlaceholder
+      <div className="mt-5 grid min-w-0 items-start gap-5 @min-[36rem]/content:gap-6 @min-[60rem]/content:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] @min-[60rem]/content:gap-8">
+        <div className="min-w-0">
+          {cover ? (
+            <Button
+              variant="plain"
+              type="button"
+              onClick={() => setLightbox(0)}
+              aria-label={`View ${app.title} cover full size`}
+              className="toon-card block w-full cursor-zoom-in overflow-hidden bg-surface p-0"
+            >
+              <span className="relative block aspect-video w-full overflow-hidden rounded-xl">
+                <ProjectImage
+                  src={cover}
+                  variant="cover"
+                  alt={`${app.title} thumbnail`}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  className="relative h-full w-full object-cover"
+                />
+              </span>
+            </Button>
+          ) : (
+            <ProjectPlaceholder
+              title={app.title}
+              color={app.color}
+              className="toon-card aspect-video w-full overflow-hidden"
+              letterClassName="text-6xl"
+            />
+          )}
+          <ScreenshotCarousel
+            key={`${app.id}:${rest.length}`}
             title={app.title}
-            color={app.color}
-            className="h-48 border-b-[3px] border-outline"
-            letterClassName="text-6xl"
+            images={rest}
+            onOpen={(index) => setLightbox(index + 1)}
           />
-        )}
-        <div className="p-8 lg:py-8 lg:px-2">
-          <div className="min-w-0 flex flex-wrap items-start justify-between gap-4 *:min-w-0 max-w-full">
-            <p className="min-w-0 inline-flex -rotate-2 items-center gap-2 border-2 border-dashed border-primary px-3 py-1 text-xs font-black uppercase text-primary bg-surface *:min-w-0 max-w-full">
+        </div>
+        <div className="min-w-0">
+          <div className="min-w-0 flex flex-wrap items-start justify-between gap-4 max-w-full">
+            <p className="min-w-0 inline-flex -rotate-2 items-center gap-2 border-2 border-dashed border-primary px-3 py-1 text-xs font-black uppercase text-primary bg-surface max-w-full">
               {app.category}
               {app.stage && <> · {PROJECT_STAGE_LABELS[app.stage]}</>}
             </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <ShareButton app={app} />
-              {isOwner && !editing && (
-                <Button size="small" onClick={() => beginEdit(true)}>
-                  Publish an update
-                </Button>
-              )}
-              {isOwner && !editing && (
-                <Button variant="secondary" size="small" onClick={() => beginEdit()}>
-                  <PencilSimple size={18} weight="bold" /> Edit project details
-                </Button>
-              )}
-            </div>
           </div>
-          <div className="mt-4 flex min-w-0 items-center justify-between gap-3">
-            <h2 className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-3xl font-black sm:text-4xl *:min-w-0">
+          <div className="mt-4 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+            <ProjectIcon icon={app.icon} className="size-14" />
+            <h2 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-black leading-tight @min-[36rem]/content:text-4xl">
               <span className="min-w-0 max-w-full wrap-anywhere">{app.title}</span>
               {projectTrophies.get(app.id) !== undefined && (
                 <TrophyMark minimal place={projectTrophies.get(app.id) as 1 | 2 | 3} size={30} />
               )}
             </h2>
             {app.version && (
-              <p className="max-w-[40%] shrink-0 text-right text-sm font-black wrap-anywhere">
+              <p className="max-w-full rounded-lg border-2 border-divider bg-surface px-2 py-1 text-xs font-black wrap-anywhere">
                 {app.version}
               </p>
             )}
           </div>
-          <div className="mt-2 grid gap-3 text-xs text-muted">
-            <p className="flex flex-row items-start gap-1">
+          <div className="mt-2 grid text-xs text-muted">
+            <p className="flex flex-wrap items-baseline gap-x-1">
               <span>First published: </span>
               <time dateTime={app.createdAt} className="font-bold">
                 {new Date(app.createdAt).toLocaleString()}
               </time>
             </p>
             {app.lastPublishedAt && (
-              <p className="flex flex-col items-start gap-1">
-                <span>Latest update</span>
+              <p className="flex flex-wrap items-baseline gap-x-1">
+                <span>Latest update: </span>
                 <time dateTime={app.lastPublishedAt} className="font-bold">
                   {new Date(app.lastPublishedAt).toLocaleString()}
                 </time>
               </p>
             )}
           </div>
-          <p className="mt-3 text-lg leading-8 text-body">
+          <p className="mt-4 text-base leading-7 text-body @min-[36rem]/content:text-lg @min-[36rem]/content:leading-8">
             <MentionText
               text={app.description}
               mentions={app.mentions ?? []}
@@ -649,45 +651,71 @@ export default function ProjectView({
             );
           })()}
 
-          <div className="min-w-0 mt-5 flex flex-wrap items-center gap-4 *:min-w-0 max-w-full">
+          {isSafeHttpUrl(app.url) && (
+            <ButtonLink
+              href={app.url as string}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 w-full @min-[36rem]/content:w-auto"
+            >
+              Open app <ArrowRight size={18} weight="bold" />
+            </ButtonLink>
+          )}
+
+          <div className="mt-4 flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 border-y-2 border-divider py-2">
+            <div
+              role="group"
+              aria-label="Project likes"
+              className="inline-flex min-w-0 items-center gap-1"
+            >
+              <Button
+                variant="vote"
+                onClick={() => void vote()}
+                aria-pressed={Boolean(app.viewerHasVoted)}
+                aria-label={app.viewerHasVoted ? "Unlike project" : "Like project"}
+                disabled={!currentUser}
+                className="w-fit min-h-11 shrink-0"
+              >
+                <Heart
+                  size={20}
+                  weight={app.viewerHasVoted ? "fill" : "duotone"}
+                  aria-hidden="true"
+                />
+              </Button>
+              <VotersDialog
+                appId={app.id}
+                appTitle={app.title}
+                totalVotes={app.votes}
+                onOpenProfile={onOpenProfile}
+                size="default"
+              />
+            </div>
             <Button
               variant="vote"
-              onClick={() => void vote()}
-              aria-pressed={Boolean(app.viewerHasVoted)}
-              aria-label={app.viewerHasVoted ? "Unlike project" : "Like project"}
-              disabled={!currentUser}
+              className="min-h-11"
+              aria-label={`View ${feedbackCount} ${feedbackCount === 1 ? "comment" : "comments"}`}
+              onClick={() => {
+                feedbackRef.current?.focus({ preventScroll: true });
+                feedbackRef.current?.scrollIntoView({
+                  behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+                    ? "instant"
+                    : "smooth",
+                  block: "start",
+                });
+              }}
             >
-              <Heart size={20} weight={app.viewerHasVoted ? "fill" : "duotone"} />
-              {app.votes} {app.votes === 1 ? "like" : "likes"}
+              <ChatCircleDots size={20} weight="duotone" aria-hidden="true" />
+              <span className="relative top-[1.4px] leading-none">
+                {feedbackCount} {feedbackCount === 1 ? "comment" : "comments"}
+              </span>
             </Button>
-            <span className="min-w-0 flex items-center gap-1 text-sm font-black *:min-w-0 max-w-full">
-              <ChatCircleDots size={20} weight="duotone" />
-              {app.comments} feedback
-            </span>
-            <VotersDialog
-              appId={app.id}
-              appTitle={app.title}
-              totalVotes={app.votes}
-              onOpenProfile={onOpenProfile}
-            />
-            {isSafeHttpUrl(app.url) && (
-              <ButtonLink
-                href={app.url as string}
-                target="_blank"
-                rel="noreferrer"
-                className="ml-auto"
-                size="small"
-              >
-                Open app <ArrowRight size={16} weight="bold" />
-              </ButtonLink>
-            )}
           </div>
 
           {developer && (
             <Button
               variant="plain"
               onClick={() => onOpenProfile(developer.id)}
-              className="min-w-0 mt-6 flex w-full items-center gap-4 rounded-2xl border-[3px] border-outline bg-surface p-4 text-left shadow-[3px_3px_0_var(--color-outline)] *:min-w-0 max-w-full"
+              className="min-w-0 mt-4 flex w-full items-center gap-3 rounded-2xl border-[3px] border-outline bg-surface p-3 text-left shadow-[3px_3px_0_var(--color-outline)] @min-[36rem]/content:gap-4 @min-[36rem]/content:p-4"
             >
               <Avatar
                 name={developer.name}
@@ -697,7 +725,7 @@ export default function ProjectView({
               />
               <span className="min-w-0 flex-1">
                 <span className="block text-xs font-black uppercase text-primary">Built by</span>
-                <span className="flex min-w-0 max-w-full flex-wrap items-center gap-2 text-lg font-black *:min-w-0">
+                <span className="flex min-w-0 max-w-full flex-wrap items-center gap-2 text-lg font-black">
                   <span className="min-w-0 max-w-full wrap-anywhere">{developer.name}</span>
                   {trophies.get(developer.id) !== undefined && (
                     <TrophyMark minimal place={trophies.get(developer.id) as 1 | 2 | 3} size={22} />
@@ -710,6 +738,16 @@ export default function ProjectView({
               <ArrowRight size={20} weight="bold" className="ml-auto shrink-0" />
             </Button>
           )}
+          {isOwner && !editing && (
+            <div className="mt-5 grid min-w-0 gap-2 @min-[36rem]/content:flex @min-[36rem]/content:flex-wrap">
+              <Button size="small" onClick={() => beginEdit(true)}>
+                Publish an update
+              </Button>
+              <Button variant="secondary" size="small" onClick={() => beginEdit()}>
+                <PencilSimple size={18} weight="bold" /> Edit project details
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -719,7 +757,7 @@ export default function ProjectView({
         <form
           ref={editFormRef}
           onSubmit={(e) => void saveEdit(e)}
-          className="min-w-0 toon-card toon-paper mt-8 grid *:min-w-0 scroll-mt-28 gap-5 rounded-2xl bg-info p-6 pt-10 @min-[36rem]/content:grid-cols-2 max-w-full"
+          className="min-w-0 toon-card toon-paper mt-6 grid scroll-mt-28 gap-5 bg-info p-4 pt-10 @min-[36rem]/content:mt-8 @min-[36rem]/content:grid-cols-2 @min-[36rem]/content:p-6 @min-[36rem]/content:pt-10 max-w-full"
         >
           <div className="@min-[36rem]/content:col-span-2">
             <PencilSimple size={32} weight="duotone" />
@@ -877,7 +915,7 @@ export default function ProjectView({
             <span className="mb-2 block text-xs font-black uppercase">
               Documentation (optional, markdown supported)
             </span>
-            <div className="min-w-0 mb-3 flex flex-wrap items-center gap-2 *:min-w-0 max-w-full">
+            <div className="min-w-0 mb-3 flex flex-wrap items-center gap-2 max-w-full">
               {(["write", "upload", "repository"] as const).map((tab) => (
                 <Button
                   key={tab}
@@ -999,11 +1037,11 @@ export default function ProjectView({
                     )}
                     {eRepositoryFiles.length > 0 && (
                       <>
-                        <div className="min-w-0 mt-4 flex flex-wrap items-center justify-between gap-3 *:min-w-0 max-w-full">
+                        <div className="min-w-0 mt-4 flex flex-wrap items-center justify-between gap-3 max-w-full">
                           <p className="text-sm font-black">
                             {eSelectedRepositoryFiles.length} of {eRepositoryFiles.length} selected
                           </p>
-                          <label className="min-w-0 flex items-center gap-2 text-sm font-black *:min-w-0 max-w-full">
+                          <label className="min-w-0 flex items-center gap-2 text-sm font-black max-w-full">
                             <Checkbox
                               checked={eSelectedRepositoryFiles.length === eRepositoryFiles.length}
                               onChange={(event) =>
@@ -1019,7 +1057,7 @@ export default function ProjectView({
                           {eRepositoryFiles.map((path) => (
                             <label
                               key={path}
-                              className="min-w-0 flex items-start gap-2 rounded-lg px-2 py-1.5 text-sm font-bold hover:bg-background *:min-w-0 max-w-full"
+                              className="min-w-0 flex items-start gap-2 rounded-lg px-2 py-1.5 text-sm font-bold hover:bg-background max-w-full"
                             >
                               <Checkbox
                                 checked={eSelectedRepositoryFiles.includes(path)}
@@ -1074,7 +1112,7 @@ export default function ProjectView({
               {userFacingError(eError)}
             </p>
           )}
-          <div className="min-w-0 flex flex-wrap gap-3 @min-[36rem]/content:col-span-2 *:min-w-0 max-w-full">
+          <div className="min-w-0 flex flex-wrap gap-3 @min-[36rem]/content:col-span-2 max-w-full">
             <Button type="submit" disabled={eSaving || eBusy}>
               {eSaving ? "Saving…" : publishingUpdate ? "Publish update" : "Save changes"}
             </Button>
@@ -1102,7 +1140,7 @@ export default function ProjectView({
             ) : (
               <div
                 role="alert"
-                className="min-w-0 flex w-full flex-wrap items-center gap-3 rounded-2xl border-[3px] border-outline bg-surface p-4 *:min-w-0 max-w-full"
+                className="min-w-0 flex w-full flex-wrap items-center gap-3 rounded-2xl border-[3px] border-outline bg-surface p-4"
               >
                 <p className="w-full text-sm font-black">
                   Delete “{app.title}” forever? Its screenshots, docs, and feedback go with it. This
@@ -1132,43 +1170,6 @@ export default function ProjectView({
         </form>
       )}
 
-      {rest.length > 0 && (
-        <section className="mt-8">
-          <div className="min-w-0 mb-4 flex items-center gap-2 *:min-w-0 max-w-full">
-            <Images size={22} weight="duotone" />
-            <h3 className="text-2xl font-black">Screenshots</h3>
-          </div>
-          <div className="min-w-0 grid *:min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-6 max-w-full">
-            {rest.map((src, i) => (
-              <Button
-                variant="plain"
-                key={src.slice(0, 64) + i}
-                type="button"
-                onClick={() => setLightbox(i + 1)}
-                aria-label={`View ${app.title} screenshot ${i + 1} full size`}
-                className="toon-card bg-surface block w-full cursor-zoom-in overflow-hidden rounded-2xl p-0 text-left"
-              >
-                <span className="relative block aspect-video w-full overflow-hidden bg-inverse">
-                  <ProjectImage
-                    src={src}
-                    alt=""
-                    aria-hidden="true"
-                    loading="lazy"
-                    className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl"
-                  />
-                  <ProjectImage
-                    src={src}
-                    alt={`${app.title} screenshot ${i + 1}`}
-                    loading="lazy"
-                    className="relative h-full w-full object-contain"
-                  />
-                </span>
-              </Button>
-            ))}
-          </div>
-        </section>
-      )}
-
       {lightbox !== null && (
         <ImageViewer
           title={`${app.title} screenshots`}
@@ -1188,9 +1189,9 @@ export default function ProjectView({
       ) : readmeLoading ? (
         <section
           aria-live="polite"
-          className="toon-card toon-paper bg-panel mt-8 rounded-2xl p-6 pt-10 sm:p-8 sm:pt-12"
+          className="toon-card toon-paper bg-panel mt-6 min-w-0 p-4 pt-10 @min-[36rem]/content:mt-8 @min-[36rem]/content:p-8 @min-[36rem]/content:pt-12"
         >
-          <div className="min-w-0 mb-3 flex items-center gap-2 *:min-w-0 max-w-full">
+          <div className="min-w-0 mb-3 flex items-center gap-2 max-w-full">
             <BookOpen size={22} weight="duotone" />
             <h3 className="text-2xl font-black">Loading repository README…</h3>
           </div>
@@ -1201,17 +1202,17 @@ export default function ProjectView({
       ) : readmeError ? (
         <section
           role="status"
-          className="toon-card toon-paper bg-panel mt-8 rounded-2xl p-6 pt-10 sm:p-8 sm:pt-12"
+          className="toon-card toon-paper bg-panel mt-6 min-w-0 p-4 pt-10 @min-[36rem]/content:mt-8 @min-[36rem]/content:p-8 @min-[36rem]/content:pt-12"
         >
-          <div className="min-w-0 mb-3 flex items-center gap-2 *:min-w-0 max-w-full">
+          <div className="min-w-0 mb-3 flex items-center gap-2 max-w-full">
             <BookOpen size={22} weight="duotone" />
             <h3 className="text-2xl font-black">Repository README unavailable</h3>
           </div>
           <p className="font-bold text-muted">{userFacingError(readmeError)}</p>
         </section>
       ) : app.url && isGitHubRepositoryUrl(app.url) ? (
-        <section className="toon-card toon-paper bg-panel mt-8 rounded-2xl p-6 pt-10 sm:p-8 sm:pt-12">
-          <div className="min-w-0 mb-3 flex items-center gap-2 *:min-w-0 max-w-full">
+        <section className="toon-card toon-paper bg-panel mt-6 min-w-0 p-4 pt-10 @min-[36rem]/content:mt-8 @min-[36rem]/content:p-8 @min-[36rem]/content:pt-12">
+          <div className="min-w-0 mb-3 flex items-center gap-2 max-w-full">
             <BookOpen size={22} weight="duotone" />
             <h3 className="text-2xl font-black">No repository README found</h3>
           </div>
@@ -1221,8 +1222,15 @@ export default function ProjectView({
         </section>
       ) : null}
 
-      <section className="toon-card mt-8 rounded-2xl bg-surface p-6 sm:p-8">
-        <h3 className="text-2xl font-black">Feedback ({feedbackCount})</h3>
+      <section
+        ref={feedbackRef}
+        tabIndex={-1}
+        aria-label="Project feedback"
+        className="toon-card mt-6 min-w-0 scroll-mt-28 bg-surface p-4 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary @min-[36rem]/content:mt-8 @min-[36rem]/content:p-8"
+      >
+        <h3 className="text-xl font-black @min-[36rem]/content:text-2xl">
+          Feedback ({feedbackCount})
+        </h3>
         <div className="mt-5">
           <Comments
             appId={app.id}

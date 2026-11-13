@@ -12,6 +12,8 @@
 --
 -- Project screenshots use public Storage cover URLs; older inline images remain valid.
 -- The project-images bucket and owner policies are configured below. Docs remain text.
+-- After this schema, apply migrations/20261113000300_account_roles.sql to
+-- enforce admin-managed Guest/Member roles and Member-only project submission.
 
 create extension if not exists "pgcrypto";
 
@@ -19,7 +21,7 @@ create extension if not exists "pgcrypto";
 create table if not exists profiles (
   id text primary key, -- matches auth user id (mock/google ids during prototype)
   name text not null,
-  role text not null default 'SPECS member',
+  role text not null default 'Guest',
   bio text not null default '',
   color text not null default 'sky',
   image_url text,

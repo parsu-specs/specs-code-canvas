@@ -15,7 +15,7 @@ export default function SoundControl() {
   };
 
   return (
-    <section className="toon-card toon-paper rounded-2xl bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
+    <section className="toon-card toon-paper bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
       <div className="flex min-w-0 items-center gap-2">
         <SpeakerHigh size={22} weight="duotone" aria-hidden="true" />
         <h2 className="text-2xl font-black">Sounds</h2>

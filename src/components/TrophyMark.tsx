@@ -47,7 +47,7 @@ export default function TrophyMark({
       role="img"
       aria-label={tier.label}
       title={tier.label}
-      className={`min-w-0 ml-1 inline-flex shrink-0 items-center align-middle transition-transform duration-150 hover:scale-125 ${minimal ? "" : tier.glowClassName} *:min-w-0 max-w-full`}
+      className={`min-w-0 ml-1 inline-flex shrink-0 items-center align-middle transition-transform duration-150 hover:scale-125 ${minimal ? "" : tier.glowClassName} max-w-full`}
     >
       {minimal ? (
         <span className="relative inline-flex rotate-4 -translate-y-0.5">

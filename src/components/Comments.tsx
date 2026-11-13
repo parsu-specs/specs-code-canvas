@@ -331,7 +331,7 @@ export default function Comments({
                 if (replyTo !== c.id) openReply(c);
               }}
               aria-expanded={replyTo === c.id}
-              className="min-w-0 flex min-h-10 items-center gap-2 rounded-xl px-2 text-xs font-black text-muted transition-colors hover:bg-background hover:text-primary *:min-w-0 max-w-full"
+              className="min-w-0 flex min-h-10 items-center gap-2 rounded-xl px-2 text-xs font-black text-muted transition-colors hover:bg-background hover:text-primary max-w-full"
             >
               <ChatCircleDots size={15} weight="duotone" />
               Reply
@@ -359,7 +359,7 @@ export default function Comments({
         )}
 
         {kids.length > REPLY_INITIAL && (
-          <div className="min-w-0 mt-2 flex flex-wrap items-center gap-2 *:min-w-0 max-w-full">
+          <div className="min-w-0 mt-2 flex flex-wrap items-center gap-2 max-w-full">
             {hidden > 0 && (
               <Button
                 variant="surface"
@@ -387,7 +387,7 @@ export default function Comments({
                   }))
                 }
               >
-                See less
+                Collapse
               </Button>
             )}
             {hidden > 0 ? (
@@ -493,7 +493,7 @@ export default function Comments({
           )}
         </div>
         {stickyForm ? (
-          <div className="shrink-0 border-t-2 border-dashed border-divider/60 bg-surface p-4">
+          <div className="shrink-0 border-t-2 border-dashed border-divider/60 bg-panel modal-grid p-4">
             {form}
           </div>
         ) : (

@@ -48,7 +48,7 @@ export function LoadingRegion({
 export function AppCardsSkeleton({ count = 6 }: { count?: number }) {
   return (
     <LoadingRegion label="Loading projects">
-      <div className="discovery-grid min-w-0 max-w-full *:min-w-0">
+      <div className="discovery-grid min-w-0 max-w-full">
         {Array.from({ length: count }, (_, index) => (
           <div
             key={index}
@@ -65,7 +65,7 @@ export function AppCardsSkeleton({ count = 6 }: { count?: number }) {
               <SkeletonBlock className="h-3 w-full" />
               <SkeletonBlock className="h-3 w-4/5" />
             </div>
-            <div className="mt-auto flex items-center justify-between gap-2 border-t-2 border-dashed border-divider pt-2.5">
+            <div className="flex items-center justify-between gap-2 border-t-2 border-dashed border-divider pt-2.5">
               <SkeletonBlock className="h-8 w-24 max-sm:h-11" />
               <SkeletonBlock className="h-8 w-24 max-sm:h-11" />
             </div>
@@ -103,19 +103,22 @@ export function RowsSkeleton({
 
 export function FeedSkeleton() {
   return (
-    <LoadingRegion label="Loading feeds" className="mt-4">
-      <div className="space-y-3">
+    <LoadingRegion label="Loading feeds" className="mt-3">
+      <div className="space-y-2">
         {Array.from({ length: 3 }, (_, index) => (
-          <div key={index} className="toon-card rounded-2xl bg-surface p-4 sm:p-5">
-            <div className="flex items-center gap-3">
+          <div key={index} className="toon-card min-w-0 bg-surface p-3 pb-1 sm:p-4 sm:pb-2">
+            <div className="flex min-w-0 items-center gap-2">
               <SkeletonBlock className="size-8 rounded-full" />
-              <SkeletonBlock className="h-4 w-32" />
+              <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+                <SkeletonBlock className="h-4 w-32 max-w-full" />
+                <SkeletonBlock className="h-3 w-16" />
+              </div>
             </div>
-            <SkeletonBlock className="mt-3 h-5 w-full" />
-            <SkeletonBlock className="mt-2 h-5 w-3/4" />
-            <div className="mt-4 flex gap-3 border-t-2 border-dashed border-divider pt-4">
-              <SkeletonBlock className="h-8 w-14" />
-              <SkeletonBlock className="h-8 w-14" />
+            <SkeletonBlock className="mt-2 h-4 w-full" />
+            <SkeletonBlock className="mt-2 h-4 w-3/4" />
+            <div className="mt-2 flex gap-3 border-t-2 border-dashed border-divider pt-0.5">
+              <SkeletonBlock className="h-11 w-14" />
+              <SkeletonBlock className="h-11 w-14" />
             </div>
           </div>
         ))}
@@ -181,7 +184,7 @@ export function LeaderboardSkeleton() {
         {[1, 0, 2].map((place) => (
           <div
             key={place}
-            className="toon-card flex min-w-0 flex-col items-center rounded-2xl bg-panel px-2 py-5 sm:px-4 sm:py-7"
+            className="toon-card flex min-w-0 flex-col items-center bg-panel px-2 py-5 sm:px-4 sm:py-7"
           >
             <SkeletonBlock
               className={
@@ -204,7 +207,7 @@ export function LeaderboardSkeleton() {
         {[0, 1, 2].map((index) => (
           <div
             key={index}
-            className="toon-card flex min-w-0 items-center gap-3 rounded-2xl bg-surface p-3 sm:gap-4 sm:p-5"
+            className="toon-card flex min-w-0 items-center gap-3 bg-surface p-3 sm:gap-4 sm:p-5"
           >
             <SkeletonBlock className="size-9 rounded-full" />
             <SkeletonBlock className="size-8 rounded-full" />
@@ -271,7 +274,7 @@ export function ProfileSkeleton() {
   return (
     <LoadingRegion label="Loading developer">
       <SkeletonBlock className="h-10 w-44" />
-      <div className="toon-card toon-paper mt-5 rounded-2xl bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
+      <div className="toon-card toon-paper mt-5 bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
         <div className="flex min-w-0 flex-col items-center gap-5 sm:flex-row sm:items-start">
           <SkeletonBlock className="size-32 rounded-full" />
           <div className="w-full min-w-0 flex-1 space-y-3">
@@ -292,14 +295,23 @@ export function ProfileSkeleton() {
 
 export function ProjectSkeleton() {
   return (
-    <LoadingRegion label="Loading project">
-      <SkeletonBlock className="h-10 w-28" />
-      <SkeletonBlock className="mt-5 h-80 w-full rounded-xl md:h-96" />
-      <div className="p-8 lg:px-2">
-        <SkeletonBlock className="h-6 w-28" />
-        <SkeletonBlock className="mt-4 h-10 w-2/3" />
-        <SkeletonBlock className="mt-3 h-8 w-full" />
-        <SkeletonBlock className="mt-2 h-8 w-4/5" />
+    <LoadingRegion label="Loading project" className="@container/content min-w-0">
+      <div className="flex items-center justify-between gap-3">
+        <SkeletonBlock className="h-10 w-28" />
+        <SkeletonBlock className="size-11 rounded-full" />
+      </div>
+      <div className="mt-5 grid min-w-0 items-start gap-5 @min-[36rem]/content:gap-6 @min-[60rem]/content:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] @min-[60rem]/content:gap-8">
+        <SkeletonBlock className="aspect-video w-full rounded-xl" />
+        <div className="min-w-0">
+          <SkeletonBlock className="h-6 w-28" />
+          <SkeletonBlock className="mt-4 h-10 w-2/3" />
+          <SkeletonBlock className="mt-2 h-8 w-1/2" />
+          <SkeletonBlock className="mt-4 h-7 w-full" />
+          <SkeletonBlock className="mt-2 h-7 w-4/5" />
+          <SkeletonBlock className="mt-5 h-14 w-full @min-[36rem]/content:w-36" />
+          <SkeletonBlock className="mt-4 h-16 w-full" />
+          <SkeletonBlock className="mt-4 h-24 w-full rounded-2xl" />
+        </div>
       </div>
     </LoadingRegion>
   );
@@ -308,7 +320,7 @@ export function ProjectSkeleton() {
 export function SubmissionPromptSkeleton() {
   return (
     <LoadingRegion label="Loading project reminder" className="mb-5 lg:hidden">
-      <div className="toon-card rounded-2xl bg-secondary p-4">
+      <div className="toon-card bg-secondary p-4">
         <div className="flex items-start gap-2">
           <SkeletonBlock className="size-5.5" />
           <div className="min-w-0 flex-1 rounded-lg bg-divider/40 text-base font-black leading-tight text-transparent">
@@ -336,12 +348,12 @@ export function StoreContentSkeleton({
   if (view === "profile") return <ProfileSkeleton />;
   if (view === "feeds")
     return (
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto w-full min-w-0 max-w-2xl">
         <LoadingRegion label="Loading feed composer">
-          <div className="space-y-3">
-            <SkeletonBlock className="h-7 w-64" />
-            <SkeletonBlock className="h-36 w-full" />
-            <SkeletonBlock className="h-12 w-full" />
+          <div>
+            <SkeletonBlock className="h-6 w-64 max-w-full" />
+            <SkeletonBlock className="mt-2 h-37 w-full" />
+            <SkeletonBlock className="mt-3 h-11 w-full" />
           </div>
         </LoadingRegion>
         <FeedSkeleton />
@@ -352,10 +364,7 @@ export function StoreContentSkeleton({
       <div className="space-y-6">
         {["Loading user info", "Checking sign-in methods", "Loading appearance settings"].map(
           (label, index) => (
-            <div
-              key={label}
-              className="toon-card toon-paper rounded-2xl bg-panel p-6 pt-10 sm:p-8 sm:pt-12"
-            >
+            <div key={label} className="toon-card toon-paper bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
               <LoadingRegion label={label}>
                 <SkeletonBlock className="h-8 w-48" />
                 <SkeletonBlock className="mt-2 h-5 w-4/5" />
@@ -378,7 +387,7 @@ export function StoreContentSkeleton({
             </div>
           </div>
         </LoadingRegion>
-        <div className="toon-card toon-paper rounded-2xl bg-panel p-4 pt-10 sm:p-8 sm:pt-12">
+        <div className="toon-card toon-paper bg-panel p-4 pt-10 sm:p-8 sm:pt-12">
           <DeveloperCardsSkeleton />
         </div>
       </>

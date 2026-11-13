@@ -27,18 +27,21 @@ export function startupShell() {
       "aside",
       {
         className:
-          "halloween-sidebar fixed inset-x-0 top-0 h-21.25 border-b-[3px] border-outline bg-brand-surface px-4 py-5 lg:inset-y-0 lg:right-auto lg:h-screen lg:w-70 lg:border-b-0 lg:border-r-[3px] lg:p-7",
+          "halloween-sidebar fixed inset-x-0 top-0 h-header border-b-[3px] border-outline bg-brand-surface px-4 py-5 lg:inset-y-0 lg:right-auto lg:h-screen lg:w-sidebar lg:border-b-0 lg:border-r-[3px] lg:p-7",
       },
       brand,
       bars,
     ),
     el("div", {
       className:
-        "fixed inset-x-0 top-0 hidden h-21.25 border-b-[3px] border-outline bg-panel lg:left-70 lg:block",
+        "fixed inset-x-0 top-0 hidden h-header border-b-[3px] border-outline bg-panel lg:left-sidebar lg:block",
     }),
     el(
       "div",
-      { className: "px-4 pb-24 pt-27.25 sm:px-8 sm:pt-29.25 lg:ml-70 lg:p-10 lg:pt-31.25" },
+      {
+        className:
+          "px-4 pb-24 pt-[calc(var(--spacing-header)+1.5rem)] sm:px-8 sm:pt-[calc(var(--spacing-header)+2rem)] lg:ml-sidebar lg:p-10 lg:pt-[calc(var(--spacing-header)+2.5rem)]",
+      },
       el(
         "div",
         { className: "mx-auto max-w-6xl" },
@@ -69,11 +72,12 @@ export function startupShell() {
     "div",
     {
       "data-startup-public": "",
-      className: "startup-placeholder min-h-screen px-4 pt-27.25 sm:px-8 sm:pt-29.25 lg:pt-31.25",
+      className:
+        "startup-placeholder min-h-screen px-4 pt-[calc(var(--spacing-header)+1.5rem)] sm:px-8 sm:pt-[calc(var(--spacing-header)+2rem)] lg:pt-[calc(var(--spacing-header)+2.5rem)]",
     },
     el(
       "div",
-      { className: "fixed inset-x-0 top-0 h-21.25 border-b-[3px] border-outline bg-primary p-5" },
+      { className: "fixed inset-x-0 top-0 h-header border-b-[3px] border-outline bg-primary p-5" },
       brand,
     ),
     el(
@@ -92,8 +96,7 @@ export function startupShell() {
       "div",
       {
         "data-startup-signin": "",
-        className:
-          "toon-card toon-paper mx-auto mt-10 max-w-lg rounded-2xl bg-panel p-6 pt-10 sm:p-8 sm:pt-12",
+        className: "toon-card toon-paper mx-auto mt-10 max-w-lg bg-panel p-6 pt-10 sm:p-8 sm:pt-12",
       },
       el(SkeletonBlock, { className: "h-9 w-48" }),
       el(SkeletonBlock, { className: "mt-3 h-5 w-4/5" }),

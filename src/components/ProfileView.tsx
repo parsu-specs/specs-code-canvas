@@ -1,4 +1,5 @@
 import ProjectImage from "./ProjectImage";
+import { accountRole, canSubmitProjects } from "../data/accountRoles";
 import VotersDialog from "./VotersDialog";
 import ShareButton from "./ShareButton";
 import ProjectPlaceholder from "./ProjectPlaceholder";
@@ -83,7 +84,6 @@ export default function ProfileView({
   const editingRef = useRef(false);
   editingRef.current = editing;
   const [name, setName] = useState(initialProfile?.name ?? "");
-  const [role, setRole] = useState(initialProfile?.role ?? "");
   const [bio, setBio] = useState(initialProfile?.bio ?? "");
   const [color, setColor] = useState<string>(initialProfile?.color ?? "sky");
   const [theme, setTheme] = useState<string>(initialProfile?.theme ?? "");
@@ -129,7 +129,6 @@ export default function ProfileView({
         if (p.id === currentUser?.id) updateCachedProfile(p);
         if (!editingRef.current) {
           setName(p.name);
-          setRole(p.role);
           setBio(p.bio);
           setColor(p.color);
           setTheme(p.theme ?? "");
@@ -162,7 +161,7 @@ export default function ProfileView({
       if (!(await confirmDisplayNameChange(getProfileRepo(), profile, nextName, confirm))) return;
       const updated = await getProfileRepo().updateProfile(
         profile.id,
-        { name: nextName, role, bio, color, imageUrl, theme },
+        { name: nextName, bio, color, imageUrl, theme },
         currentUser.id,
       );
       // Keep the sign-in session in sync so the new name survives reloads
@@ -198,7 +197,7 @@ export default function ProfileView({
   if (loading && !profile) return <ProfileSkeleton />;
   if (!profile) {
     return (
-      <div className="toon-card toon-paper bg-panel rounded-2xl p-10 text-center">
+      <div className="toon-card toon-paper bg-panel p-10 text-center">
         <h3 className="text-xl font-black">Developer not found</h3>
         <p className="font-bold text-muted">
           {error ? userFacingError(error) : "This profile does not exist."}
@@ -225,7 +224,7 @@ export default function ProfileView({
       </Button>
 
       <div
-        className="toon-card toon-paper bg-panel mt-5 rounded-2xl p-6 pt-10 sm:p-8 sm:pt-12"
+        className="toon-card toon-paper bg-panel mt-5 p-6 pt-10 sm:p-8 sm:pt-12"
         style={
           pageTheme
             ? {
@@ -234,31 +233,31 @@ export default function ProfileView({
             : undefined
         }
       >
-        <div className="min-w-0 flex flex-col items-center gap-5 text-center sm:flex-row sm:items-start sm:text-left *:min-w-0 max-w-full">
+        <div className="min-w-0 flex flex-col items-center gap-5 text-center sm:flex-row sm:items-start sm:text-left max-w-full">
           <Avatar name={profile.name} color={profile.color} imageUrl={profile.imageUrl} size="xl" />
           <div className="w-full min-w-0 flex-1 sm:w-auto">
-            <p className="min-w-0 inline-flex -rotate-2 items-center gap-2 border-2 border-dashed border-primary px-3 py-1 text-xs font-black uppercase text-primary bg-surface *:min-w-0 max-w-full">
+            <p className="min-w-0 inline-flex -rotate-2 items-center gap-2 border-2 border-dashed border-primary px-3 py-1 text-xs font-black uppercase text-primary bg-surface max-w-full">
               {isSelf ? "Your profile" : "Developer"}
             </p>
-            <h2 className="mt-3 flex min-w-0 max-w-full flex-wrap items-center justify-center gap-2 text-3xl font-black sm:justify-start *:min-w-0">
+            <h2 className="mt-3 flex min-w-0 max-w-full flex-wrap items-center justify-center gap-2 text-3xl font-black sm:justify-start">
               <span className="min-w-0 max-w-full wrap-anywhere">{profile.name}</span>
               {trophies.get(profile.id) !== undefined && (
                 <TrophyMark minimal place={trophies.get(profile.id) as 1 | 2 | 3} size={32} />
               )}
             </h2>
-            <p className="mt-1 font-bold text-muted">{profile.role}</p>
+            <p className="mt-1 font-bold text-muted">{accountRole(profile.role)}</p>
             {profile.bio && (
               <p className="mt-3 max-w-2xl break-words leading-7 text-body">{profile.bio}</p>
             )}
             {!loading && !error && (
-              <div className="min-w-0 mt-4 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-black sm:justify-start *:min-w-0 max-w-full">
+              <div className="min-w-0 mt-4 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-black sm:justify-start max-w-full">
                 <span>
                   {apps.length} project{apps.length === 1 ? "" : "s"}
                 </span>
-                <span className="min-w-0 flex items-center gap-1 *:min-w-0 max-w-full">
+                <span className="min-w-0 flex items-center gap-1 max-w-full">
                   <Heart size={16} weight="duotone" /> {totalVotes} likes received
                 </span>
-                <span className="min-w-0 flex items-center gap-1 *:min-w-0 max-w-full">
+                <span className="min-w-0 flex items-center gap-1 max-w-full">
                   <ChatCircleDots size={16} weight="duotone" /> {totalFeedback} feedback
                 </span>
               </div>
@@ -290,7 +289,7 @@ export default function ProfileView({
           <form
             ref={editFormRef}
             onSubmit={(e) => void save(e)}
-            className="min-w-0 mt-6 grid *:min-w-0 scroll-mt-28 gap-4 border-t-2 border-dashed border-divider pt-6 @min-[36rem]/content:grid-cols-2 max-w-full"
+            className="min-w-0 mt-6 grid scroll-mt-28 gap-4 border-t-2 border-dashed border-divider pt-6 @min-[36rem]/content:grid-cols-2 max-w-full"
           >
             {confirmationModal}
             <label>
@@ -303,16 +302,6 @@ export default function ProfileView({
                 maxLength={40}
                 required
                 placeholder="e.g. Alex Reyes"
-              />
-            </label>
-            <label>
-              <span className="mb-2 block text-xs font-black uppercase">Role</span>
-              <Input
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                maxLength={80}
-                required
-                placeholder="e.g. Frontend development"
               />
             </label>
             <label>
@@ -330,7 +319,7 @@ export default function ProfileView({
                 Profile theme (profile page only)
               </span>
               <div
-                className="min-w-0 flex flex-wrap items-center gap-2 *:min-w-0 max-w-full"
+                className="min-w-0 flex flex-wrap items-center gap-2 max-w-full"
                 role="group"
                 aria-label="Profile theme"
               >
@@ -370,7 +359,7 @@ export default function ProfileView({
             </label>
             <label className="@min-[36rem]/content:col-span-2">
               <span className="mb-2 block text-xs font-black uppercase">Profile photo</span>
-              <span className="min-w-0 flex flex-wrap items-center gap-3 *:min-w-0 max-w-full">
+              <span className="min-w-0 flex flex-wrap items-center gap-3 max-w-full">
                 <ButtonLabel variant="surface" size="small" className="cursor-pointer">
                   <Images size={18} weight="duotone" />
                   {photoBusy ? "Processing…" : "Choose from gallery"}
@@ -414,7 +403,7 @@ export default function ProfileView({
                 placeholder="…or paste an https:// image link"
               />
             </label>
-            <div className="min-w-0 flex items-center gap-3 @min-[36rem]/content:col-span-2 *:min-w-0 max-w-full">
+            <div className="min-w-0 flex items-center gap-3 @min-[36rem]/content:col-span-2 max-w-full">
               <Avatar
                 name={name.trim() || profile.name}
                 color={color}
@@ -450,7 +439,7 @@ export default function ProfileView({
             {isSelf ? "Your projects" : `Projects by ${profile.name}`}
           </h3>
         </div>
-        {isSelf && apps.length > 0 && (
+        {isSelf && canSubmitProjects(profile) && apps.length > 0 && (
           <Button variant="secondary" size="small" onClick={onSubmitProject}>
             <Plus size={18} weight="bold" /> Submit project
           </Button>
@@ -463,11 +452,11 @@ export default function ProfileView({
           {userFacingError(error)}
         </p>
       ) : apps.length ? (
-        <div className="min-w-0 flex flex-wrap justify-center gap-6 lg:justify-start *:min-w-0 max-w-full">
+        <div className="min-w-0 flex flex-wrap justify-center gap-6 lg:justify-start max-w-full">
           {apps.map((app) => (
             <article
               key={app.id}
-              className="app-card toon-card toon-paper bg-panel flex w-full min-w-0 max-w-sm flex-[1_1_18rem] flex-col rounded-2xl p-4 text-left *:min-w-0"
+              className="app-card toon-card toon-paper bg-panel flex w-full min-w-0 max-w-sm flex-[1_1_18rem] flex-col p-4 text-left"
             >
               {app.screenshots?.[0] ? (
                 <span className="relative block h-48 w-full shrink-0 overflow-hidden rounded-xl border-[3px] border-outline bg-inverse">
@@ -495,7 +484,7 @@ export default function ProfileView({
               <p className="mb-3 mt-2 shrink-0 text-[10px] font-black uppercase text-primary">
                 {app.category}
               </p>
-              <h4 className="flex min-w-0 max-w-full shrink-0 flex-wrap items-center gap-2 text-xl font-black *:min-w-0">
+              <h4 className="flex min-w-0 max-w-full shrink-0 flex-wrap items-center gap-2 text-xl font-black">
                 <span className="min-w-0 max-w-full line-clamp-2 wrap-anywhere" title={app.title}>
                   <Button variant="text" onClick={() => onOpenApp(app.id)}>
                     {app.title}
@@ -514,7 +503,7 @@ export default function ProfileView({
                 />
               </p>
               <div className="min-w-0 mt-auto flex min-h-8 shrink-0 flex-wrap items-center gap-3 border-t-2 border-dashed border-divider pt-4 text-sm font-black max-w-full">
-                <span className="min-w-0 flex items-center gap-1 *:min-w-0 max-w-full">
+                <span className="min-w-0 flex items-center gap-1 max-w-full">
                   <Heart size={18} weight="duotone" />
                   <VotersDialog
                     appId={app.id}
@@ -523,7 +512,7 @@ export default function ProfileView({
                     onOpenProfile={onOpenProfile}
                   />
                 </span>
-                <span className="min-w-0 flex items-center gap-1 *:min-w-0 max-w-full">
+                <span className="min-w-0 flex items-center gap-1 max-w-full">
                   <ChatCircleDots size={18} weight="duotone" /> {app.comments}
                 </span>
                 <ShareButton app={app} size="compact" className="ml-auto" />
@@ -535,7 +524,7 @@ export default function ProfileView({
           ))}
         </div>
       ) : (
-        <div className="toon-card toon-paper bg-panel rounded-2xl p-10 text-center">
+        <div className="toon-card toon-paper bg-panel p-10 text-center">
           {isSelf && (
             <RocketLaunch
               size={40}
@@ -549,10 +538,12 @@ export default function ProfileView({
           </h4>
           <p className="mt-2 font-bold text-muted">
             {isSelf
-              ? "Share your first build with the community. Your projects and their feedback will appear here."
+              ? canSubmitProjects(profile)
+                ? "Share your first build with the community. Your projects and their feedback will appear here."
+                : "You can browse and post in the feed. An admin must approve your account as a Member before you can submit projects."
               : "Check back soon."}
           </p>
-          {isSelf && (
+          {isSelf && canSubmitProjects(profile) && (
             <Button className="mt-5" onClick={onSubmitProject}>
               <Plus size={18} weight="bold" /> Submit project
             </Button>

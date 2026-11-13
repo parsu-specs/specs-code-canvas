@@ -2,6 +2,7 @@
 // and mappers to the app's camelCase domain types. The UI never imports this.
 
 import type { AppItem, Comment, Mention, FeedPost, Profile, User } from "../types";
+import { accountRole } from "../accountRoles";
 
 export type ProfileRow = {
   id: string;
@@ -16,6 +17,7 @@ export type ProfileRow = {
 };
 
 export type AppRow = {
+  icon?: string | null;
   stage?: AppItem["stage"];
   version?: string;
   versions?: AppItem["versions"];
@@ -68,7 +70,7 @@ export function toProfile(row: ProfileRow): Profile {
   return {
     id: row.id,
     name: row.name,
-    role: row.role,
+    role: accountRole(row.role),
     bio: row.bio,
     color: row.color,
     imageUrl: row.image_url ?? undefined,
@@ -80,6 +82,7 @@ export function toProfile(row: ProfileRow): Profile {
 
 export function toApp(row: AppRow, commentsCount?: number): AppItem {
   return {
+    icon: row.icon || undefined,
     stage: row.stage,
     version: row.version || undefined,
     versions: row.versions,

@@ -8,6 +8,7 @@ type BrandProps = {
   compact?: boolean;
   monogram?: boolean;
   text?: boolean;
+  size?: "default" | "navigation";
   className?: string;
 };
 
@@ -17,6 +18,7 @@ export default function Brand({
   compact = false,
   monogram = false,
   text = false,
+  size = "default",
   className = "",
 }: BrandProps) {
   // "light" targets a --color-brand-surface background while "onPrimary"
@@ -29,9 +31,10 @@ export default function Brand({
       ? "text-brand-foreground"
       : "text-foreground";
   const accent = onPrimary ? "text-secondary" : light ? "text-brand-accent" : "text-primary";
+  const textSize = size === "navigation" ? "text-2xl" : "text-base sm:text-xl";
   if (text) {
     return (
-      <span className={`font-display text-base sm:text-xl font-bold ${base} ${className}`}>
+      <span className={`font-display ${textSize} font-bold ${base} ${className}`}>
         Code<span className={accent}>Canvas</span>
       </span>
     );
@@ -48,7 +51,7 @@ export default function Brand({
     );
   }
   return (
-    <span className={`min-w-0 inline-flex items-center gap-3 ${className} *:min-w-0 max-w-full`}>
+    <span className={`min-w-0 inline-flex items-center gap-3 ${className} max-w-full`}>
       <svg
         viewBox="0 0 48 48"
         className="h-9 w-9 sm:h-11 sm:w-11 shrink-0 rotate-[-4deg] drop-shadow-[3px_3px_0_var(--color-outline)]"
@@ -90,7 +93,7 @@ export default function Brand({
         />
       </svg>
       {!compact && (
-        <div className="min-w-0 flex flex-col gap-0 *:min-w-0 max-w-full">
+        <div className="min-w-0 flex flex-col gap-0 max-w-full">
           <span className={`font-display text-base sm:text-xl font-bold ${base}`}>
             Code<span className={accent}>Canvas</span>
           </span>

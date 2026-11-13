@@ -60,7 +60,7 @@ const SharePhoto = forwardRef<
             <img src="/specs-logo.png" alt="SPECS logo" />
           </span>
           <div>
-            <div>CodeCanvas · An initiative by</div>
+            <div>Partido State University</div>
             <strong style={{ color: textColors.headerAccent }}>
               Society of Programmers and Enthusiasts
               <br />

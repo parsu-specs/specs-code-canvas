@@ -186,7 +186,7 @@ export default function NotificationBell({
                     onClick={() => go(item)}
                     className={`min-w-0 flex w-full items-start gap-3 rounded-xl border-2 border-dashed p-3 text-left hover:bg-background ${
                       isUnread ? "border-primary/40 bg-primary/5" : "border-divider/60"
-                    } *:min-w-0 max-w-full`}
+                    } max-w-full`}
                   >
                     <span
                       className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${isUnread ? "bg-primary/15 text-primary" : "bg-background text-muted"}`}
@@ -194,7 +194,7 @@ export default function NotificationBell({
                       <Icon size={20} weight="duotone" aria-hidden="true" />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="min-w-0 flex flex-wrap items-center gap-2 *:min-w-0 max-w-full">
+                      <span className="min-w-0 flex flex-wrap items-center gap-2 max-w-full">
                         <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-black uppercase text-primary">
                           {KIND_LABEL[item.kind]}
                         </span>
@@ -211,7 +211,7 @@ export default function NotificationBell({
                       <span className="mt-0.5 block line-clamp-2 text-xs font-bold text-muted">
                         {item.body}
                       </span>
-                      <span className="min-w-0 mt-3 flex flex-wrap items-center gap-1 border-t-2 border-dashed border-divider/60 pt-2 *:min-w-0 max-w-full">
+                      <span className="min-w-0 mt-3 flex flex-wrap items-center gap-1 border-t-2 border-dashed border-divider/60 pt-2 max-w-full">
                         {item.kind === "vote" || item.kind === "collab" || item.kind === "like" ? (
                           <UploadStamp
                             createdAt={item.createdAt}

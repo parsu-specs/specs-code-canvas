@@ -106,19 +106,19 @@ export const seedApps: AppItem[] = [
 ];
 
 export const seedBuilders: Builder[] = [
-  { name: "Mia Santos", role: "Frontend development", apps: 4, color: "pink" },
-  { name: "Leo Cruz", role: "Campus services", apps: 3, color: "yellow" },
-  { name: "Ari Mendoza", role: "Game development", apps: 5, color: "mint" },
-  { name: "Sam Rivera", role: "Education technology", apps: 2, color: "sky" },
-  { name: "Nica Flores", role: "Creative tools", apps: 2, color: "lavender" },
-  { name: "Jules Tan", role: "Team collaboration", apps: 3, color: "yellow" },
+  { name: "Mia Santos", role: "Member", apps: 4, color: "pink" },
+  { name: "Leo Cruz", role: "Member", apps: 3, color: "yellow" },
+  { name: "Ari Mendoza", role: "Member", apps: 5, color: "mint" },
+  { name: "Sam Rivera", role: "Member", apps: 2, color: "sky" },
+  { name: "Nica Flores", role: "Member", apps: 2, color: "lavender" },
+  { name: "Jules Tan", role: "Member", apps: 3, color: "yellow" },
 ];
 
 export const seedProfiles: Profile[] = [
   {
     id: "mia-santos",
     name: "Mia Santos",
-    role: "Frontend development",
+    role: "Member",
     bio: "Builds study tools with a focus on simple, calm interfaces for group work.",
     color: "pink",
     imageUrl: "https://randomuser.me/api/portraits/women/44.jpg",
@@ -127,7 +127,7 @@ export const seedProfiles: Profile[] = [
   {
     id: "leo-cruz",
     name: "Leo Cruz",
-    role: "Campus services",
+    role: "Member",
     bio: "Maps campus food and services so students waste less time hunting and more time building.",
     color: "yellow",
     imageUrl: "https://randomuser.me/api/portraits/men/32.jpg",
@@ -136,7 +136,7 @@ export const seedProfiles: Profile[] = [
   {
     id: "ari-mendoza",
     name: "Ari Mendoza",
-    role: "Game development",
+    role: "Member",
     bio: "Makes small multiplayer games for org hangouts and playtesting nights.",
     color: "mint",
     imageUrl: "https://randomuser.me/api/portraits/men/75.jpg",
@@ -145,7 +145,7 @@ export const seedProfiles: Profile[] = [
   {
     id: "sam-rivera",
     name: "Sam Rivera",
-    role: "Education technology",
+    role: "Member",
     bio: "Turns messy lecture notes into tight review quizzes for exam season.",
     color: "sky",
     imageUrl: "https://randomuser.me/api/portraits/men/45.jpg",
@@ -154,7 +154,7 @@ export const seedProfiles: Profile[] = [
   {
     id: "nica-flores",
     name: "Nica Flores",
-    role: "Creative tools",
+    role: "Member",
     bio: "Design-tool nerd. Into color, type, and boards you can share with friends.",
     color: "lavender",
     imageUrl: "https://randomuser.me/api/portraits/women/68.jpg",
@@ -163,7 +163,7 @@ export const seedProfiles: Profile[] = [
   {
     id: "jules-tan",
     name: "Jules Tan",
-    role: "Team collaboration",
+    role: "Member",
     bio: "Keeps project teams honest with shared checklists and clear ownership.",
     color: "yellow",
     imageUrl: "https://randomuser.me/api/portraits/men/22.jpg",
@@ -172,7 +172,7 @@ export const seedProfiles: Profile[] = [
   {
     id: "user-1",
     name: "Student Demo",
-    role: "Community member",
+    role: "Guest",
     bio: "Exploring digital creations across the community.",
     color: "sky",
     createdAt: "2026-09-01T10:00:00.000Z",

@@ -1,4 +1,6 @@
 import { captureMentions } from "../../utils/mentions";
+import { rejectRolePatch } from "../accountRoles";
+import { validateProjectIcon } from "../../utils/projectIcon";
 // HTTP implementations of the repo contracts. Inactive until
 // VITE_DATA_SOURCE=http AND VITE_API_URL are set — see docs/backends.md
 // for the endpoint contract the server must honor. Local behavior is untouched.
@@ -160,6 +162,7 @@ export function createHttpAppRepo(): AppRepo {
     },
 
     async createApp(input: AppInput, _author: User) {
+      validateProjectIcon(input.icon);
       const { app } = await api<{ app: AppRow }>("/apps", {
         method: "POST",
         body: JSON.stringify({
@@ -175,6 +178,7 @@ export function createHttpAppRepo(): AppRepo {
           repo_url: input.repoUrl,
           category: input.category,
           screenshots: input.screenshots,
+          icon: input.icon,
           docs: input.docs,
           collaborators: input.collaborators,
         }),
@@ -372,12 +376,12 @@ export function createHttpProfileRepo(): ProfileRepo {
     },
 
     async updateProfile(id: string, patch: ProfilePatch, _requesterId: string) {
+      rejectRolePatch(patch);
       const { profile } = await api<{ profile: ProfileRow }>(
         `/profiles/${encodeURIComponent(id)}`,
         {
           method: "PATCH",
           body: JSON.stringify({
-            role: patch.role,
             bio: patch.bio,
             color: patch.color,
             image_url: patch.imageUrl,

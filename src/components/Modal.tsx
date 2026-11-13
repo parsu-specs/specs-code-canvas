@@ -10,6 +10,7 @@ type ModalProps = {
   onClose: () => void;
   closeDisabled?: boolean;
   closeConfirmation?: string;
+  fixedHeight?: boolean;
   children: ReactNode;
 };
 
@@ -20,6 +21,7 @@ export default function Modal({
   onClose,
   closeDisabled = false,
   closeConfirmation,
+  fixedHeight = false,
   children,
 }: ModalProps) {
   const labelId = useId();
@@ -104,7 +106,7 @@ export default function Modal({
   }, []);
 
   return createPortal(
-    <div className="fixed inset-0 z-80 flex min-w-0 items-center justify-center bg-inverse/80 p-3 sm:p-6">
+    <div className="fixed inset-0 z-80 flex items-center justify-center bg-inverse/80 p-3 sm:p-6">
       <div
         ref={panelRef}
         id={id}
@@ -113,15 +115,15 @@ export default function Modal({
         aria-labelledby={labelId}
         aria-describedby={description || confirmingClose ? descriptionId : undefined}
         tabIndex={-1}
-        className="toon-card flex max-h-[90dvh] min-w-0 w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-info outline-none"
+        className={`toon-card flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden bg-panel outline-none ${fixedHeight ? "h-[min(40rem,90dvh)]" : ""}`}
       >
-        <div className="flex shrink-0 items-center justify-between gap-4 border-b-[3px] border-outline p-4 sm:p-6">
+        <div className="flex shrink-0 items-center justify-between gap-4 border-b-[3px] border-outline bg-primary text-primary-foreground p-4 sm:p-6">
           <div className="min-w-0">
             <h2 id={labelId} className="text-2xl font-black">
               {confirmingClose ? "Close project submission?" : title}
             </h2>
             {(description || confirmingClose) && (
-              <p id={descriptionId} className="mt-1 text-sm text-body">
+              <p id={descriptionId} className="mt-1 text-sm text-primary-foreground/85">
                 {confirmingClose ? closeConfirmation : description}
               </p>
             )}
@@ -132,8 +134,15 @@ export default function Modal({
             aria-label={confirmingClose ? "Keep editing" : `Close ${title.toLowerCase()}`}
           />
         </div>
-        <div className="scrollbar-minimal @container/content min-h-0 min-w-0 overflow-y-auto overscroll-contain p-4 sm:p-6">
-          <div hidden={confirmingClose}>{children}</div>
+        <div
+          className={`modal-grid scrollbar-minimal @container/content min-h-0 min-w-0 overscroll-contain bg-panel p-4 sm:p-6 ${fixedHeight ? "flex flex-1 flex-col overflow-hidden" : "overflow-y-auto"}`}
+        >
+          <div
+            hidden={confirmingClose}
+            className={fixedHeight && !confirmingClose ? "flex min-h-0 flex-1 flex-col" : undefined}
+          >
+            {children}
+          </div>
           {confirmingClose && (
             <div className="flex flex-wrap justify-end gap-3">
               <Button

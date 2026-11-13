@@ -17,6 +17,24 @@ beforeEach(() => {
 });
 
 describe("updateProfile name guard", () => {
+  it("starts new accounts as Guest and rejects role changes", async () => {
+    const repo = createLocalProfileRepo();
+    const user = { id: "new-guest", name: "New Guest", email: "guest@example.com" };
+    expect((await repo.ensureUserProfile(user)).role).toBe("Guest");
+    await expect(
+      repo.updateProfile(user.id, JSON.parse('{"role":"Member"}'), user.id),
+    ).rejects.toThrow("admin console");
+    expect((await repo.getProfile(user.id)).role).toBe("Guest");
+    await expect(
+      createLocalAppRepo().createApp(
+        { title: "Guest project", description: "Test", category: "Creative" },
+        user,
+      ),
+    ).rejects.toThrow("approve");
+    await expect(createLocalAppRepo().postFeedPost(user, "Guest feed post")).resolves.toMatchObject(
+      { body: "Guest feed post" },
+    );
+  });
   it("palette-only saves succeed despite a same-named duplicate row", async () => {
     const repo = createLocalProfileRepo();
     const all = await repo.listProfiles();
@@ -51,6 +69,11 @@ describe("mention persistence across renames", () => {
   it("keeps comment and description bindings through reloads, edits and name reuse", async () => {
     const profiles = createLocalProfileRepo();
     const [original] = await profiles.listProfiles();
+    const stored = JSON.parse(store.get("cc.profiles.v1")!) as Array<{ id: string; role: string }>;
+    store.set(
+      "cc.profiles.v1",
+      JSON.stringify(stored.map((p) => (p.id === original.id ? { ...p, role: "Member" } : p))),
+    );
     const author = { id: original.id, name: original.name, email: "test@example.com" };
     const apps = createLocalAppRepo();
     const text = `Thanks @${original.name}!`;

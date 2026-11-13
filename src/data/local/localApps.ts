@@ -1,4 +1,6 @@
 import { applyPublication, snapshotVersion, validateVersion } from "../../utils/projectVersions";
+import { validateProjectIcon } from "../../utils/projectIcon";
+import { canSubmitProjects, MEMBERSHIP_REQUIRED } from "../accountRoles";
 import { captureMentions } from "../../utils/mentions";
 import { NotFoundError, type AppRepo } from "../repositories";
 import type {
@@ -17,6 +19,7 @@ import {
   createLocalProfileRepo,
   freezeLegacyLocalMentions,
   getLocalProfilesByIds,
+  loadProfiles,
 } from "./localProfiles";
 import { assertReplyDepth } from "../commentRules";
 
@@ -208,6 +211,10 @@ export function createLocalAppRepo(): AppRepo {
     },
 
     async createApp(input: AppInput, author: User): Promise<AppItem> {
+      if (!canSubmitProjects(loadProfiles().find((profile) => profile.id === author.id))) {
+        throw new Error(MEMBERSHIP_REQUIRED);
+      }
+      validateProjectIcon(input.icon);
       await delay(150);
       validateVersion(input.stage, input.version);
       const title = input.title.trim();
@@ -248,6 +255,7 @@ export function createLocalAppRepo(): AppRepo {
         url: url ? url : undefined,
         repoUrl: repoUrl ? repoUrl : undefined,
         screenshots: screenshots.length ? screenshots : undefined,
+        icon: input.icon,
         collaborators: collaborators.length ? collaborators : undefined,
         docs: docs ? docs : undefined,
         createdAt: new Date().toISOString(),
@@ -501,10 +509,6 @@ export function createLocalAppRepo(): AppRepo {
         const apps = loadApps();
         const target = apps.find((a) => a.id === appId);
         if (!target) throw new NotFoundError("Project not found.");
-        const owned = target.creatorId
-          ? target.creatorId === author.id
-          : target.creator.toLowerCase() === author.name.toLowerCase();
-        if (!owned) throw new Error("You can only link your own projects.");
       }
       const feedPost: FeedPost = {
         id: newId(),

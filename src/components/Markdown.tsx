@@ -81,7 +81,7 @@ const components: Components = {
   table: ({ node: _node, ...props }) => (
     <table
       {...props}
-      className="my-[1em] block w-full max-w-full overflow-x-auto border-collapse text-[.9em]"
+      className="my-[1em] block w-full overflow-x-auto border-collapse text-[.9em]"
     />
   ),
   th: ({ node: _node, ...props }) => (

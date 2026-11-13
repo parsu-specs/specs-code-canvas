@@ -16,6 +16,7 @@ type VotersDialogProps = {
   totalVotes: number;
   onOpenProfile: (profileId: string) => void;
   compact?: boolean;
+  size?: "small" | "default";
 };
 
 /**
@@ -29,6 +30,7 @@ export default function VotersDialog({
   totalVotes,
   onOpenProfile,
   compact = false,
+  size = "small",
 }: VotersDialogProps) {
   const reaction = "like";
   const [open, setOpen] = useState(false);
@@ -104,11 +106,19 @@ export default function VotersDialog({
         className={
           compact
             ? "translate-y-[1.5px] inline-flex! min-h-8 min-w-6 shrink-0 text-xs"
-            : "translate-y-[1.5px] text-xs"
+            : size === "default"
+              ? "inline-flex! min-h-11 text-sm"
+              : "translate-y-[1.5px] text-xs"
         }
       >
-        {totalVotes}
-        {!compact && ` ${reaction}${totalVotes === 1 ? "" : "s"}`}
+        <span
+          className={
+            !compact && size === "default" ? "relative top-[1.4px] leading-none" : undefined
+          }
+        >
+          {totalVotes}
+          {!compact && ` ${reaction}${totalVotes === 1 ? "" : "s"}`}
+        </span>
       </Button>
 
       {open &&
@@ -118,14 +128,14 @@ export default function VotersDialog({
             aria-modal="true"
             aria-label={`Likes for ${appTitle}`}
             onClick={() => setOpen(false)}
-            className="min-w-0 fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-inverse/80 p-4 max-w-full"
+            className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-inverse/80 p-4"
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="min-w-0 toon-card my-auto flex max-h-[85vh] min-h-0 w-full max-w-md flex-col overflow-hidden rounded-2xl bg-surface *:min-w-0"
+              className="toon-card my-auto flex max-h-[85vh] min-h-0 w-full max-w-md flex-col overflow-hidden bg-panel"
             >
-              <div className="min-w-0 flex shrink-0 items-center justify-between gap-3 border-b-[3px] border-outline p-4 *:min-w-0 max-w-full">
-                <h4 className="flex min-w-0 items-center gap-2 truncate text-lg font-black *:min-w-0 max-w-full">
+              <div className="min-w-0 flex shrink-0 items-center justify-between gap-3 border-b-[3px] border-outline bg-primary text-primary-foreground p-4 max-w-full">
+                <h4 className="flex items-center gap-2 truncate text-lg font-black max-w-full">
                   <Heart size={20} weight="duotone" aria-hidden="true" />
                   <span className="truncate">
                     Liked by
@@ -139,7 +149,7 @@ export default function VotersDialog({
                   autoFocus
                 />
               </div>
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
+              <div className="modal-grid min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
                 {loading ? (
                   <RowsSkeleton label="Loading likes" />
                 ) : error ? (
@@ -169,7 +179,7 @@ export default function VotersDialog({
                             className="flex items-center w-full justify-start gap-3 rounded-xl border-2 border-transparent p-2 text-left transition-colors group hover:border-outline hover:bg-background focus-visible:border-outline focus-visible:bg-background"
                           >
                             <Avatar name={v.name} color={v.color} imageUrl={v.imageUrl} size="sm" />
-                            <span className="min-w-0 flex-1 truncate text-sm font-black group-hover:text-primary transition-colors">
+                            <span className="flex-1 truncate text-sm font-black group-hover:text-primary transition-colors">
                               {v.name}
                             </span>
                           </Button>

@@ -24,7 +24,14 @@ beforeEach(() => {
 
 it("requests one screenshot and no documentation for catalog cards", async () => {
   range.mockResolvedValue({
-    data: [{ id: "a1", title: "App", screenshots: "https://images.example/first.webp" }],
+    data: [
+      {
+        id: "a1",
+        title: "App",
+        icon: "data:image/png;base64,aWNvbg==",
+        screenshots: "https://images.example/first.webp",
+      },
+    ],
     error: null,
   });
   const apps = await createSupabaseAppRepo().listApps({ userId: "viewer" });
@@ -32,6 +39,8 @@ it("requests one screenshot and no documentation for catalog cards", async () =>
   expect(select.mock.calls[0][0]).not.toContain("docs");
   expect(apps[0].screenshots).toEqual(["https://images.example/first.webp"]);
   expect(apps[0].docs).toBeUndefined();
+  expect(select.mock.calls[0][0].split(",")).toContain("icon");
+  expect(apps[0].icon).toBe("data:image/png;base64,aWNvbg==");
 });
 
 it("handles rows with no first screenshot", async () => {

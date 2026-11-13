@@ -21,7 +21,7 @@ export default function ProjectSubmissionPrompt({
 }: Props) {
   return (
     <div
-      className={`toon-card relative min-w-0 rounded-2xl bg-secondary p-4 text-foreground ${loading ? "startup-placeholder pointer-events-none" : "motion-safe:animate-content-in"} ${className}`}
+      className={`toon-card relative min-w-0 bg-secondary p-4 text-foreground ${loading ? "startup-placeholder pointer-events-none" : "motion-safe:animate-content-in"} ${className}`}
       aria-busy={loading}
       aria-hidden={loading || undefined}
     >

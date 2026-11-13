@@ -97,7 +97,7 @@ export default function About() {
             <p className="text-xs font-black uppercase text-primary">What you can do here</p>
             <h2 className="mt-1 text-2xl font-black">From first idea to shared progress.</h2>
           </div>
-          <div className="min-w-0 grid *:min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-6 max-w-full">
+          <div className="min-w-0 grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-6 max-w-full">
             {APP_INFO.features.map((f, i) => (
               <article key={f.title} className="min-w-0 border-l-2 border-primary/30 pl-5 py-2">
                 <div className="mb-5 text-primary" aria-hidden="true">
@@ -149,13 +149,10 @@ export default function About() {
             <p className="text-xs font-black uppercase text-primary">The builders</p>
             <h2 className="mt-1 text-2xl font-black">Meet the people behind the canvas.</h2>
           </div>
-          <div className="min-w-0 grid *:min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-6 max-w-full">
+          <div className="min-w-0 grid grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))] gap-6 max-w-full">
             {TEAM.map((member) => (
-              <article
-                key={member.name}
-                className="toon-card min-w-0 rounded-2xl bg-surface p-6 sm:p-8"
-              >
-                <div className="min-w-0 flex *:min-w-0 max-w-full">
+              <article key={member.name} className="toon-card min-w-0 bg-surface p-6 sm:p-8">
+                <div className="min-w-0 flex max-w-full">
                   {member.imageUrl ? (
                     <Button
                       variant="plain"
@@ -206,7 +203,7 @@ export default function About() {
         </section>
 
         <section
-          className="toon-card mb-4 flex min-w-0 flex-col gap-6 rounded-2xl bg-info p-6 sm:p-8 md:flex-row md:items-center md:justify-between"
+          className="toon-card mb-4 flex min-w-0 flex-col gap-6 bg-info p-6 sm:p-8 md:flex-row md:items-center md:justify-between"
           aria-labelledby="contact-heading"
         >
           <div className="min-w-0">

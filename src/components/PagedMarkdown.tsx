@@ -16,7 +16,7 @@ type PagedMarkdownProps = {
 
 /**
  * Stepped document pager: shows the first chunk, then reveals one part at a
- * time per See more press (never the full document at once). See less walks
+ * time per See more press (never the full document at once). Collapse walks
  * back one part per press. Short docs render fully with no buttons.
  *
  * Height-clipping is used instead of slicing the markdown source so fenced
@@ -62,7 +62,7 @@ export default function PagedMarkdown({
 
   return (
     <div>
-      <div style={{ maxHeight: height }} className="relative min-w-0 max-w-full overflow-hidden">
+      <div style={{ maxHeight: height }} className="relative max-w-full overflow-hidden">
         <div ref={contentRef} className="flow-root min-w-0 max-w-full">
           <Markdown text={text} />
         </div>
@@ -74,7 +74,7 @@ export default function PagedMarkdown({
           />
         )}
       </div>
-      <div className="min-w-0 mt-4 flex flex-wrap items-center gap-3 *:min-w-0 max-w-full">
+      <div className="min-w-0 mt-4 flex flex-wrap items-center gap-3 max-w-full">
         {hasMore && (
           <Button
             variant="secondary"
@@ -94,7 +94,7 @@ export default function PagedMarkdown({
             onClick={seeLess}
             aria-expanded={expanded}
           >
-            See less
+            Collapse
           </Button>
         )}
       </div>

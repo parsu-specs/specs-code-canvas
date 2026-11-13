@@ -36,6 +36,7 @@ export type ProjectVersion = {
 };
 
 export type AppItem = {
+  icon?: string;
   stage?: ProjectStage;
   version?: string;
   versions?: ProjectVersion[];
@@ -60,6 +61,7 @@ export type AppItem = {
 };
 
 export type AppInput = {
+  icon?: string;
   stage?: ProjectStage;
   version?: string;
   title: string;
@@ -147,6 +149,7 @@ export const AVATAR_COLORS = [
 export type Profile = {
   id: string;
   name: string;
+  /** Guest or Member, assigned by the separate admin console. */
   role: string;
   bio: string;
   color: string;

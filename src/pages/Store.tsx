@@ -116,18 +116,17 @@ export default function Store() {
     setConfirmPromptDismissal(false);
     requestAnimationFrame(() => submitButtonRef.current?.focus());
   };
-  const canSubmit = Boolean(user && !store.appsLoading && !store.appsError);
   const pageTitle = copyForView[view]?.title?.trim();
   const pageDescription = copyForView[view]?.description?.trim();
   const myTrophy = myProfile ? trophies.get(myProfile.id) : undefined;
   return (
     <div className="min-h-screen overflow-x-clip">
-      <aside className="halloween-sidebar fixed inset-x-0 top-0 z-40 h-21.25 border-b-[3px] border-outline bg-brand-surface px-3 py-5 text-brand-foreground sm:px-5 lg:inset-y-0 lg:left-0 lg:right-auto lg:flex lg:h-screen lg:w-70 lg:flex-col lg:overflow-y-auto lg:border-b-0 lg:border-r-[3px] lg:p-7">
-        <div className="hidden min-w-0 items-center justify-between *:min-w-0 max-w-full lg:flex">
-          <Brand light text className="text-2xl!" />
+      <aside className="halloween-sidebar fixed inset-x-0 top-0 z-40 h-header border-b-[3px] border-outline bg-brand-surface px-3 py-5 text-brand-foreground sm:px-5 lg:inset-y-0 lg:left-0 lg:right-auto lg:flex lg:h-screen lg:w-sidebar lg:flex-col lg:overflow-y-auto lg:border-b-0 lg:border-r-[3px] lg:p-7">
+        <div className="hidden min-w-0 shrink-0 items-center justify-between max-w-full lg:flex">
+          <Brand light text size="navigation" />
         </div>
         <nav
-          className="min-w-0 fixed inset-x-0 bottom-0 z-50 grid *:min-w-0 h-[calc(4.5rem+env(safe-area-inset-bottom,0px))] grid-cols-4 gap-1 border-t-2 border-outline bg-brand-surface p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:gap-2 lg:static lg:mt-12 lg:flex lg:h-auto lg:flex-col lg:gap-2 lg:border-0 lg:bg-transparent lg:p-0 lg:pr-1 max-w-full"
+          className="fixed inset-x-0 bottom-0 z-50 grid h-[calc(4.5rem+env(safe-area-inset-bottom,0px))] grid-cols-4 gap-1 border-t-2 border-outline bg-brand-surface p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:gap-2 lg:static lg:mt-12 lg:flex lg:h-auto lg:shrink-0 lg:flex-col lg:gap-2 lg:border-0 lg:bg-transparent lg:p-0 lg:pr-1 max-w-full"
           aria-label="Main navigation"
         >
           <ButtonLink
@@ -176,15 +175,14 @@ export default function Store() {
             Settings
           </ButtonLink>
         </nav>
-        <div className="hidden pt-6 lg:mt-auto lg:block">
-          {view === "discover" && user && !store.appsError && !promptDismissed && (
+        <div className="hidden shrink-0 pt-6 lg:mt-auto lg:block">
+          {view === "discover" && user && store.canSubmitProject && !promptDismissed && (
             <ProjectSubmissionPrompt
               hasSubmittedProject={store.hasSubmittedProject}
               showForm={store.showForm}
               onSubmit={() => store.setShowForm(true)}
               onDismiss={() => setConfirmPromptDismissal(true)}
               className="mb-6"
-              loading={store.appsLoading && store.apps.length === 0}
             />
           )}
           <nav
@@ -241,36 +239,40 @@ export default function Store() {
             aria-modal="true"
             aria-label="Confirm sign out"
             onClick={() => setConfirmSignOut(false)}
-            className="min-w-0 fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-inverse/80 p-4 *:min-w-0 max-w-full"
+            className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-inverse/80 p-4"
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="toon-card my-auto w-full max-w-sm rounded-2xl bg-surface p-6 text-center"
+              className="toon-card my-auto w-full max-w-sm overflow-hidden bg-panel text-center"
             >
-              <SignOut size={28} weight="duotone" className="mx-auto" />
-              <h2 className="mt-3 text-xl font-black">Sign out?</h2>
-              <p className="mt-1 text-sm font-bold text-muted">
-                Are you sure you want to sign out?
-              </p>
-              <div className="min-w-0 mt-5 flex flex-wrap justify-center gap-3 *:min-w-0 max-w-full">
-                <Button
-                  variant="surface"
-                  size="small"
-                  onClick={() => setConfirmSignOut(false)}
-                  autoFocus
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="small"
-                  onClick={() => {
-                    setConfirmSignOut(false);
-                    void handleSignOut();
-                  }}
-                >
-                  Yes, sign out
-                </Button>
+              <div className="border-b-[3px] border-outline bg-primary text-primary-foreground p-6">
+                <SignOut size={28} weight="duotone" className="mx-auto" />
+                <h2 className="mt-3 text-xl font-black">Sign out?</h2>
+              </div>
+              <div className="modal-grid bg-panel p-6">
+                <p className="mt-1 text-sm font-bold text-muted">
+                  Are you sure you want to sign out?
+                </p>
+                <div className="min-w-0 mt-5 flex flex-wrap justify-center gap-3 max-w-full">
+                  <Button
+                    variant="surface"
+                    size="small"
+                    onClick={() => setConfirmSignOut(false)}
+                    autoFocus
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    onClick={() => {
+                      setConfirmSignOut(false);
+                      void handleSignOut();
+                    }}
+                  >
+                    Yes, sign out
+                  </Button>
+                </div>
               </div>
             </div>
           </div>,
@@ -284,36 +286,40 @@ export default function Store() {
             aria-modal="true"
             aria-label="Project published"
             onClick={() => setPublishBonus(null)}
-            className="min-w-0 fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-inverse/80 p-4 *:min-w-0 max-w-full"
+            className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-inverse/80 p-4"
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="toon-card my-auto w-full max-w-sm rounded-2xl bg-surface p-6 text-center"
+              className="toon-card my-auto w-full max-w-sm overflow-hidden bg-panel text-center"
             >
-              <Trophy size={40} weight="duotone" className="mx-auto text-primary" />
-              <h2 className="mt-3 text-xl font-black">Project published!</h2>
-              <p className="mt-1 text-sm font-bold text-muted">
-                {publishBonus.title} is live — plus 20 pts on the developer leaderboard.
-              </p>
-              <div className="min-w-0 mt-5 flex justify-center gap-3 *:min-w-0 max-w-full">
-                <Button
-                  variant="surface"
-                  size="small"
-                  onClick={() => setPublishBonus(null)}
-                  autoFocus
-                >
-                  Keep exploring
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="small"
-                  onClick={() => {
-                    openApp(publishBonus.id);
-                    setPublishBonus(null);
-                  }}
-                >
-                  View project
-                </Button>
+              <div className="border-b-[3px] border-outline bg-primary text-primary-foreground p-6">
+                <Trophy size={40} weight="duotone" className="mx-auto" />
+                <h2 className="mt-3 text-xl font-black">Project published!</h2>
+              </div>
+              <div className="modal-grid bg-panel p-6">
+                <p className="mt-1 text-sm font-bold text-muted">
+                  {publishBonus.title} is live — plus 20 pts on the developer leaderboard.
+                </p>
+                <div className="min-w-0 mt-5 flex justify-center gap-3 max-w-full">
+                  <Button
+                    variant="surface"
+                    size="small"
+                    onClick={() => setPublishBonus(null)}
+                    autoFocus
+                  >
+                    Keep exploring
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    onClick={() => {
+                      openApp(publishBonus.id);
+                      setPublishBonus(null);
+                    }}
+                  >
+                    View project
+                  </Button>
+                </div>
               </div>
             </div>
           </div>,
@@ -323,22 +329,19 @@ export default function Store() {
       {voteNotice && <ErrorNotice message={voteNotice} onDismiss={() => setVoteNotice(null)} />}
 
       <div className="min-w-0">
-        <header className="fixed inset-x-0 top-0 z-60 flex h-21.25 items-center justify-between gap-3 border-b-[3px] border-outline bg-brand-surface px-3 sm:px-5 lg:left-70 lg:z-40 lg:gap-4 lg:bg-panel lg:px-8 lg:py-4">
+        <header className="fixed inset-x-0 top-0 z-60 flex h-header items-center justify-between gap-3 border-b-[3px] border-outline bg-brand-surface px-3 sm:px-5 lg:left-sidebar lg:z-40 lg:gap-4 lg:bg-panel lg:px-8 lg:py-4">
           <div className="min-w-0 text-brand-foreground lg:hidden">
             <div className="block sm:hidden">
-              <Brand light monogram className="ml-2 text-2xl!" />
+              <Brand light monogram size="navigation" className="ml-2" />
             </div>
             <div className="hidden sm:block">
-              <Brand light text className="text-2xl!" />
+              <Brand light text size="navigation" />
             </div>
           </div>
           <nav aria-label="Breadcrumb" className="hidden min-w-0 flex-1 text-sm lg:block">
-            <ol className="flex min-w-0 flex-1 flex-wrap items-center gap-2 *:min-w-0 max-w-full">
+            <ol className="flex min-w-0 flex-1 flex-wrap items-center gap-2 max-w-full">
               {crumbs.map((c, i) => (
-                <li
-                  key={`${c.label}-${i}`}
-                  className="flex min-w-0 items-center gap-3 *:min-w-0 max-w-full"
-                >
+                <li key={`${c.label}-${i}`} className="flex min-w-0 items-center gap-3 max-w-full">
                   {i > 0 && (
                     <span aria-hidden="true" className="font-black">
                       \
@@ -353,7 +356,7 @@ export default function Store() {
                       {c.label}
                     </span>
                   ) : (
-                    <Button variant="ghost" onClick={c.go} title={`Go to ${c.label}`} className="">
+                    <Button variant="ghost" onClick={c.go} title={`Go to ${c.label}`}>
                       {c.label}
                     </Button>
                   )}
@@ -362,7 +365,7 @@ export default function Store() {
             </ol>
           </nav>
           <div className="relative min-w-0 max-w-full shrink-0 lg:max-w-[45%]">
-            <div className="relative flex min-w-0 max-w-full items-center gap-2 *:min-w-0">
+            <div className="relative flex min-w-0 max-w-full items-center gap-2">
               <div className="shrink-0">
                 <AppearanceControl compact />
               </div>
@@ -511,17 +514,17 @@ export default function Store() {
             </div>
           </div>
         </header>
-        <div className="min-w-0 max-w-full px-4 pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))] pt-27.25 sm:px-8 sm:pb-[calc(6.25rem+env(safe-area-inset-bottom,0px))] sm:pt-29.25 lg:ml-70 lg:p-10 lg:pt-31.25">
+        <div className="min-w-0 max-w-full px-4 pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))] pt-[calc(var(--spacing-header)+1.5rem)] sm:px-8 sm:pb-[calc(6.25rem+env(safe-area-inset-bottom,0px))] sm:pt-[calc(var(--spacing-header)+2rem)] lg:ml-sidebar lg:p-10 lg:pt-[calc(var(--spacing-header)+2.5rem)]">
           {(pageTitle || pageDescription) && (
             <header id="discover" className="mx-auto max-w-6xl scroll-mt-5">
-              <div className="min-w-0 flex flex-wrap items-center justify-between gap-3 *:min-w-0 max-w-full">
+              <div className="min-w-0 flex flex-wrap items-center justify-between gap-3 max-w-full">
                 <div className="flex-1">
                   {pageTitle && <h1 className="text-2xl font-black sm:text-3xl">{pageTitle}</h1>}
                   {pageDescription && (
                     <p className="mt-2 hidden max-w-2xl text-muted sm:block">{pageDescription}</p>
                   )}
                 </div>
-                {view === "discover" && user && !store.appsError && promptDismissed && (
+                {view === "discover" && user && store.canSubmitProject && promptDismissed && (
                   <Button
                     variant="primary"
                     size="small"
@@ -531,7 +534,6 @@ export default function Store() {
                     aria-controls="submit-project"
                     ref={submitButtonRef}
                     aria-label="Submit project"
-                    disabled={!canSubmit}
                   >
                     <Plus size={18} weight="bold" aria-hidden="true" />
                     <span className="hidden lg:inline">Submit project</span>

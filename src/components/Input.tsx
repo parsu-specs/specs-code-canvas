@@ -121,8 +121,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             : getInputClassName(),
           "block min-h-24 max-h-[min(60vh,32rem)] supports-[height:100dvh]:max-h-[min(60dvh,32rem)] overflow-y-auto",
           sizing === "fixed"
-            ? "[field-sizing:fixed] resize-none"
-            : "[field-sizing:content] resize-y supports-[field-sizing:content]:resize-none",
+            ? "field-sizing-fixed resize-none"
+            : "field-sizing-content resize-y supports-[field-sizing:content]:resize-none",
           className ?? "",
         ].join(" ")}
       />
@@ -149,7 +149,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     if (!showCounter) return textarea;
 
     return (
-      <span className="block min-w-0 w-full max-w-full">
+      <span className="block min-w-0 w-full">
         {textarea}
         <span className="mt-2 block text-right">{counter}</span>
       </span>

@@ -1,4 +1,5 @@
 import ProjectImage from "./ProjectImage";
+import ProjectIcon from "./ProjectIcon";
 import { CloseButton } from "./CloseButton";
 import React, { Suspense, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
@@ -102,7 +103,7 @@ export default function AppCard({
         pressPos.current = { x: e.clientX, y: e.clientY };
       }}
       onClick={openFromCard}
-      className="app-card toon-card toon-paper bg-panel flex w-full min-w-0 max-w-sm flex-[1_1_18rem] cursor-pointer flex-col rounded-2xl p-3 *:min-w-0"
+      className="app-card toon-card toon-paper bg-panel flex w-full min-w-0 max-w-sm flex-[1_1_18rem] cursor-pointer flex-col p-3"
     >
       <Button
         variant="plain"
@@ -129,7 +130,7 @@ export default function AppCard({
           />
         )}
       </Button>
-      <div className="min-h-0 min-w-0 flex flex-1 flex-col *:min-w-0 max-w-full">
+      <div className="min-h-0 min-w-0 flex flex-col max-w-full">
         <div className="min-w-0 mt-2 flex shrink-0 flex-col items-start max-w-full">
           <div className="flex w-full min-w-0 items-center justify-between">
             <span
@@ -147,8 +148,9 @@ export default function AppCard({
               </div>
             )}
           </div>
-          <div className="flex w-full min-w-0 items-center justify-between gap-2 max-w-full">
+          <div className="flex w-full min-w-0 items-center justify-between gap-2">
             <div className="flex min-w-0 flex-1 items-center gap-1">
+              <ProjectIcon icon={app.icon} className="mr-1 size-9" />
               <h3
                 className="min-w-0 w-fit max-w-full line-clamp-2 wrap-anywhere pr-[0.2em] text-lg font-black"
                 title={app.title}
@@ -179,7 +181,7 @@ export default function AppCard({
               className="shrink-0 text-muted"
               aria-hidden="true"
             />
-            <span className="min-w-0 truncate" title={creatorName}>
+            <span className="truncate" title={creatorName}>
               {creatorProfile ? (
                 <Button
                   variant="text"
@@ -208,7 +210,7 @@ export default function AppCard({
             )}
           </div>
         </div>
-        <p className="my-2 line-clamp-2 shrink-0 text-xs text-left text-pretty leading-5 text-muted/75">
+        <p className="my-2 h-10 line-clamp-2 shrink-0 text-xs text-left text-pretty leading-5 text-muted/75">
           <MentionText
             text={app.description}
             mentions={app.mentions ?? []}
@@ -216,11 +218,10 @@ export default function AppCard({
             onOpenProfile={onOpenProfile}
           />
         </p>
-        <div className="min-w-0 mt-auto flex min-h-8 shrink-0 flex-wrap items-center gap-2 border-t-2 border-dashed border-divider pt-2.5 *:min-w-0 max-w-full">
-          <span className="min-w-0 flex items-center gap-2 *:min-w-0 max-w-full">
+        <div className="min-w-0 flex min-h-8 shrink-0 flex-wrap items-center gap-2 border-t-2 border-dashed border-divider pt-2.5 max-w-full">
+          <span className="min-w-0 flex items-center gap-2 max-w-full">
             <Button
               variant="vote"
-              className=""
               onClick={() => onVote(app.id)}
               aria-pressed={voted}
               aria-label={voted ? "Unlike project" : "Like project"}
@@ -235,7 +236,6 @@ export default function AppCard({
             />
             <Button
               variant="vote"
-              className=""
               onClick={() => onToggle(app.id)}
               aria-expanded={expanded}
               aria-haspopup="dialog"
@@ -246,17 +246,18 @@ export default function AppCard({
               <span className="sr-only">Show comments</span>
             </Button>
           </span>
-          <span className="min-w-0 ml-auto flex items-center gap-1 *:min-w-0 max-w-full">
+          <span className="min-w-0 ml-auto flex items-center gap-1 max-w-full">
             <ShareButton app={app} size="compact" iconOnly variant="outline-flat" />
             {isOwner && (
               <Button
-                variant="outline-flat"
+                variant="icon"
                 size="compact"
-                className="min-h-8 min-w-8"
+                className="size-8 max-sm:size-11"
                 onClick={() => onEditApp(app.id)}
                 aria-label={`Edit ${app.title}`}
+                title={`Edit ${app.title}`}
               >
-                <PencilSimple size={16} weight="duotone" />
+                <PencilSimple size={16} weight="duotone" aria-hidden="true" />
               </Button>
             )}
             {isSafeHttpUrl(app.url) && (
@@ -264,12 +265,13 @@ export default function AppCard({
                 href={app.url as string}
                 target="_blank"
                 rel="noreferrer"
-                variant="outline-flat"
+                variant="icon"
                 size="compact"
-                className="min-h-8 shrink-0 whitespace-nowrap"
+                className="size-8 max-sm:size-11"
                 aria-label={`Open ${app.title} in a new tab`}
+                title={`Open ${app.title} in a new tab`}
               >
-                Open <ArrowUpRight size={14} weight="duotone" />
+                <ArrowUpRight size={16} weight="duotone" aria-hidden="true" />
               </ButtonLink>
             )}
           </span>
@@ -282,14 +284,14 @@ export default function AppCard({
               aria-modal="true"
               aria-label={`Comments for ${app.title}`}
               onClick={(e) => e.stopPropagation()}
-              className="min-w-0 fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-inverse/80 p-4 max-w-full"
+              className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-inverse/80 p-4"
             >
               <div
                 id={panelId}
                 onClick={(e) => e.stopPropagation()}
-                className="min-w-0 toon-card my-auto flex max-h-[85vh] min-h-0 w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-surface *:min-w-0"
+                className="toon-card my-auto flex max-h-[85vh] min-h-0 w-full max-w-lg flex-col overflow-hidden bg-panel"
               >
-                <div className="min-w-0 flex shrink-0 items-center justify-between gap-3 border-b-[3px] border-outline p-4 *:min-w-0 max-w-full">
+                <div className="min-w-0 flex shrink-0 items-center justify-between gap-3 border-b-[3px] border-outline bg-primary text-primary-foreground p-4 max-w-full">
                   <h4 className="truncate text-lg font-black">
                     Feedback ({app.comments}) · {app.title}
                   </h4>
@@ -300,7 +302,7 @@ export default function AppCard({
                     autoFocus
                   />
                 </div>
-                <div className="flex min-h-0 flex-1 flex-col">
+                <div className="modal-grid flex min-h-0 flex-1 flex-col">
                   <Suspense fallback={<RowsSkeleton label="Loading comments" />}>
                     <Comments
                       appId={app.id}

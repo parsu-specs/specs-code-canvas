@@ -49,9 +49,10 @@ export default function DevelopersPage({
               className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"
             />
             <Input
+              type="search"
               value={devQuery}
               onChange={(event) => setDevQuery(event.target.value)}
-              className="py-2.5 pl-11 text-sm"
+              className="py-2.5 pl-11 text-sm truncate"
               placeholder="Search name or role…"
             />
           </label>
@@ -77,7 +78,7 @@ export default function DevelopersPage({
           </div>
         </div>
         <div
-          className={`min-w-0 toon-card toon-paper bg-panel grid *:min-w-0 rounded-2xl max-w-full ${layout === "grid" ? "gap-4 p-4 pt-10 sm:p-8 sm:pt-12 grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))]" : "grid-cols-1 gap-1 p-3 pt-10 sm:p-4 sm:pt-12"}`}
+          className={`min-w-0 toon-card toon-paper bg-panel grid max-w-full ${layout === "grid" ? "gap-4 p-4 pt-10 sm:p-8 sm:pt-12 grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))]" : "grid-cols-1 gap-1 p-3 pt-10 sm:p-4 sm:pt-12"}`}
         >
           {profilesLoading ? (
             <div className="col-span-full">
@@ -103,7 +104,7 @@ export default function DevelopersPage({
                   className={`min-w-0 motion-safe:animate-content-in rounded-xl border-[3px] ${place !== undefined ? "border-outline" : "border-transparent"} ${place === 1 ? "bg-podium-gold" : place === 2 ? "bg-podium-silver" : place === 3 ? "bg-podium-bronze" : ""} ${layout === "list" ? "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-3 py-2 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto]" : "p-4"}`}
                 >
                   <div
-                    className={`min-w-0 flex items-center *:min-w-0 max-w-full ${layout === "list" ? "col-span-2 gap-2 sm:col-span-1" : "gap-3"}`}
+                    className={`min-w-0 flex items-center max-w-full ${layout === "list" ? "col-span-2 gap-2 sm:col-span-1" : "gap-3"}`}
                   >
                     <ButtonLink
                       variant="plain"
@@ -132,7 +133,6 @@ export default function DevelopersPage({
                           e.preventDefault();
                           openProfile(p.id);
                         }}
-                        className=""
                       >
                         {p.name}
                       </ButtonLink>

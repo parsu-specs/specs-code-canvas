@@ -55,6 +55,9 @@ function renderForm(overrides: Partial<SubmitProjectModalProps> = {}) {
     docsTab: "write",
     downloadDocumentation: vi.fn(),
     imageBusy: false,
+    icon: "",
+    setIcon: vi.fn(),
+    pickIcon: vi.fn().mockResolvedValue(true),
     imgError: null,
     importRepositoryFiles: vi.fn(),
     loadRepositoryFiles: vi.fn(),
@@ -96,7 +99,9 @@ function renderForm(overrides: Partial<SubmitProjectModalProps> = {}) {
     act(() => root.unmount());
     container.remove();
   };
-  const upload = container.querySelector('input[type="file"]') as HTMLInputElement;
+  const upload = container.querySelector(
+    'input[aria-label="Choose thumbnail images"]',
+  ) as HTMLInputElement;
   const choose = (count: number) => {
     const files = Array.from(
       { length: count },
@@ -124,6 +129,48 @@ it("allows a visual prototype without a live app link or numbered version", () =
   });
   act(() => button("Publish project").click());
   expect(props.submit).toHaveBeenCalledOnce();
+});
+
+it("crops icons separately from thumbnails, blocks publishing while editing, and supports removal", async () => {
+  const { props, container, button, rerender } = renderForm();
+  const input = container.querySelector(
+    'input[aria-label="Choose project icon"]',
+  ) as HTMLInputElement;
+  Object.defineProperty(input, "files", {
+    configurable: true,
+    value: [new File(["icon"], "icon.png", { type: "image/png" })],
+  });
+  act(() => input.dispatchEvent(new Event("change", { bubbles: true })));
+  expect(container.querySelector('[data-editor="icon.png"]')?.getAttribute("data-ratio")).toBe("1");
+  expect(button("Publish project").disabled).toBe(true);
+  await act(async () => button("Use edited image").click());
+  expect(props.pickIcon).toHaveBeenCalledOnce();
+  expect(props.pickImages).not.toHaveBeenCalled();
+  expect(button("Publish project").disabled).toBe(false);
+  rerender({ icon: "data:image/png;base64,aWNvbg==" });
+  expect(container.querySelector('img[alt="Project icon preview"]')).not.toBeNull();
+  act(() => button("Remove icon").click());
+  expect(props.setIcon).toHaveBeenCalledWith("");
+});
+
+it("can cancel icon editing and retry a failed icon save", async () => {
+  const pickIcon = vi.fn().mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+  const { container, button } = renderForm({ pickIcon });
+  const input = container.querySelector(
+    'input[aria-label="Choose project icon"]',
+  ) as HTMLInputElement;
+  Object.defineProperty(input, "files", {
+    configurable: true,
+    value: [new File(["icon"], "icon.png", { type: "image/png" })],
+  });
+  act(() => input.dispatchEvent(new Event("change", { bubbles: true })));
+  await act(async () => button("Use edited image").click());
+  expect(button("Publish project").disabled).toBe(true);
+  await act(async () => button("Use edited image").click());
+  expect(container.querySelector("[data-editor]")).toBeNull();
+  act(() => input.dispatchEvent(new Event("change", { bubbles: true })));
+  act(() => button("Skip image").click());
+  expect(button("Publish project").disabled).toBe(false);
 });
 
 it("validates the version label before publishing", () => {

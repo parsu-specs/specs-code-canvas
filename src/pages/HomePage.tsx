@@ -16,9 +16,9 @@ export default function HomePage() {
   return (
     <div>
       <div className="mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-10">
-        <header className="min-w-0 mx-auto grid *:min-w-0 max-w-7xl gap-14 pb-16 pt-6 sm:pt-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,.85fr)] lg:items-center lg:pb-24 lg:pt-10">
+        <header className="min-w-0 mx-auto grid max-w-7xl gap-14 pb-16 pt-6 sm:pt-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,.85fr)] lg:items-center lg:pb-24 lg:pt-10">
           <div>
-            <div className="min-w-0 inline-flex -rotate-2 items-center gap-2 border-2 border-dashed border-primary px-3 py-1 text-xs font-black uppercase text-primary mb-7 bg-surface *:min-w-0 max-w-full">
+            <div className="min-w-0 inline-flex -rotate-2 items-center gap-2 border-2 border-dashed border-primary px-3 py-1 text-xs font-black uppercase text-primary mb-7 bg-surface max-w-full">
               <Sparkle size={17} weight="fill" />
               Create. Share. Learn together.
             </div>
@@ -31,7 +31,7 @@ export default function HomePage() {
               here.
             </h1>
             <p className="mt-7 max-w-xl text-lg leading-8 text-body">{APP_INFO.description}</p>
-            <div className="min-w-0 mt-9 flex flex-wrap gap-5 *:min-w-0 max-w-full">
+            <div className="min-w-0 mt-9 flex flex-wrap gap-5 max-w-full">
               <ButtonLink
                 href={user ? ROUTES.discover : ROUTES.signin}
                 onClick={navigateInternalLink}
@@ -43,13 +43,13 @@ export default function HomePage() {
                 Explore projects <Binoculars size={21} weight="duotone" />
               </ButtonLink>
             </div>
-            <div className="min-w-0 mt-12 flex flex-wrap gap-x-8 gap-y-4 text-sm font-black *:min-w-0 max-w-full">
+            <div className="min-w-0 mt-12 flex flex-wrap gap-x-8 gap-y-4 text-sm font-black max-w-full">
               {[
                 "Projects and reusable resources",
                 "Community learning",
                 "Constructive feedback",
               ].map((item) => (
-                <span key={item} className="min-w-0 flex items-center gap-2 *:min-w-0 max-w-full">
+                <span key={item} className="min-w-0 flex items-center gap-2 max-w-full">
                   <CheckCircle size={20} weight="fill" className="text-primary" />
                   {item}
                 </span>
@@ -57,16 +57,16 @@ export default function HomePage() {
             </div>
           </div>
           <div className="relative">
-            <div className="toon-card toon-paper sm:rotate-2 rounded-2xl bg-info p-7 pt-10">
+            <div className="toon-card toon-paper sm:rotate-2 bg-info p-7 pt-10">
               <div className="rounded-[2rem] border-[3px] border-outline bg-surface p-6">
-                <div className="min-w-0 flex items-center justify-between *:min-w-0 max-w-full">
+                <div className="min-w-0 flex items-center justify-between max-w-full">
                   <span className="rounded-full bg-success px-3 py-1 text-xs font-black">LIVE</span>
                   <RocketLaunch size={40} weight="duotone" />
                 </div>
                 <div className="mt-12 h-5 w-3/4 rounded-full bg-inverse" />
                 <div className="mt-3 h-3 w-full rounded-full bg-placeholder" />
                 <div className="mt-2 h-3 w-2/3 rounded-full bg-placeholder" />
-                <div className="min-w-0 mt-8 grid *:min-w-0 grid-cols-3 gap-3 max-w-full">
+                <div className="min-w-0 mt-8 grid grid-cols-3 gap-3 max-w-full">
                   {["bg-secondary", "bg-accent", "bg-success"].map((backgroundClassName) => (
                     <div
                       key={backgroundClassName}
@@ -107,7 +107,7 @@ export default function HomePage() {
               ))}
             </ul>
           </div>
-          <div className="min-w-0 mt-10 grid *:min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,14rem),1fr))] gap-6 max-w-full">
+          <div className="min-w-0 mt-10 grid grid-cols-[repeat(auto-fit,minmax(min(100%,14rem),1fr))] gap-6 max-w-full">
             {[
               {
                 n: "01",
@@ -132,7 +132,7 @@ export default function HomePage() {
             ].map((item, index) => (
               <article
                 key={item.n}
-                className={`toon-card toon-paper bg-panel rounded-2xl p-6 pt-9 ${index === 0 ? "rotate-[-1deg]" : index === 1 ? "rotate-1" : "rotate-[-.5deg]"}`}
+                className={`toon-card toon-paper bg-panel p-6 pt-9 ${index === 0 ? "rotate-[-1deg]" : index === 1 ? "rotate-1" : "rotate-[-.5deg]"}`}
               >
                 <span className="text-sm font-black">STEP {item.n}</span>
                 <h3 className="mt-8 text-2xl font-black">{item.t}</h3>
