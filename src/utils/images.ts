@@ -1,3 +1,5 @@
+import { prepareImageInput } from "./imageInput";
+
 export type EncodedImage = { dataUrl: string; width: number; height: number; mimeType: string };
 
 function blobDataUrl(blob: Blob): Promise<string> {
@@ -39,20 +41,11 @@ export async function encodeImage(
     maxBytes = 300_000,
   } = {},
 ): Promise<EncodedImage> {
-  const kind = (file.type || "").toLowerCase();
-  if (kind.includes("heic") || kind.includes("heif")) {
-    throw new Error("iPhone HEIC photos can't be read here yet. Convert to JPEG/PNG first.");
-  }
-  // Some gallery/camera apps report an empty MIME type for valid photos,
-  // so only reject when a type IS present and is definitely not an image.
-  if (kind && !kind.startsWith("image/")) {
-    throw new Error("Pick an image file from your gallery.");
-  }
-  if (file.size > 8_000_000) throw new Error("That file is too big. Pick one under 8MB.");
+  const source = await prepareImageInput(file);
 
   const fallback = async () => {
     // Fallback for browsers without createImageBitmap file support.
-    const url = URL.createObjectURL(file);
+    const url = URL.createObjectURL(source);
     try {
       const img = new Image();
       img.decoding = "async";
@@ -66,7 +59,7 @@ export async function encodeImage(
   let bitmap: ImageBitmap | HTMLImageElement;
   try {
     bitmap =
-      typeof createImageBitmap === "function" ? await createImageBitmap(file) : await fallback();
+      typeof createImageBitmap === "function" ? await createImageBitmap(source) : await fallback();
   } catch {
     bitmap = await fallback();
   }

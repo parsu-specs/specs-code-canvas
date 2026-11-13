@@ -1,6 +1,14 @@
-# CodeCanvas by SPECS
+# CodeCanvas
 
-A community app store by SPECS, a computer science student organization, where student developers publish software, exchange feedback, find collaborators, and share progress.
+**A home for what you build.**
+
+CodeCanvas is a community platform for discovering and sharing digital creations: software applications, websites, games, utility scripts, automation tools, AI agent skills, reusable software components, and other digital resources.
+
+Publish creations with project links, screenshots, and documentation to demonstrate what they do. Connect with fellow developers and potential users through feedback, discussions, project updates, technical questions, and collaborative learning.
+
+CodeCanvas is an initiative by the **Society of Programmers and Enthusiasts in Computer Science (SPECS)**. Its roots in a community of computer science students and alumni inform the initiative, while projects and shared learning lead its public identity.
+
+See the [product and branding guide](docs/branding.md) for positioning, supported creations, and organization attribution.
 
 ## Getting started
 
@@ -34,6 +42,7 @@ Home (`/`) and About (`/about`) are public. Sign in to browse Discover, develope
 
 Start with the [documentation index](docs/README.md).
 
+- [Product and branding](docs/branding.md): positioning, supported creations, and SPECS attribution.
 - [Setup](docs/setup.md): local development and environment configuration.
 - [Architecture](docs/architecture.md): routes, features, data layers, authentication, and project structure.
 - [Backends](docs/backends.md): Supabase setup and custom HTTP endpoint contract.
@@ -42,4 +51,4 @@ Start with the [documentation index](docs/README.md).
 - [UI conventions and audit](docs/ui-audit.md): shared components and responsive layouts.
 - [Design decisions](design.md) and [agent instructions](agent.md): implementation conventions.
 
-Edit `src/data/team.ts` for the About page roster, feature copy, and contact information. The root PDF is a historical snapshot; maintained Markdown documentation is authoritative.
+Edit `src/data/team.ts` for shared product copy, creation types, organization attribution, the About page roster, and contact information. The organization logo is `public/specs-logo.png`. The root PDF is a historical snapshot; maintained Markdown documentation is authoritative.

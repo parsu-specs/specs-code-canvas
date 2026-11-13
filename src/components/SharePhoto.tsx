@@ -60,11 +60,11 @@ const SharePhoto = forwardRef<
             <img src="/specs-logo.png" alt="SPECS logo" />
           </span>
           <div>
-            <div>Partido State University · Goa Campus</div>
+            <div>CodeCanvas · An initiative by</div>
             <strong style={{ color: textColors.headerAccent }}>
               Society of Programmers and Enthusiasts
               <br />
-              in Computer Science
+              in Computer Science (SPECS)
             </strong>
           </div>
         </div>
@@ -128,7 +128,7 @@ const SharePhoto = forwardRef<
           <p className="share-photo-description">
             {data.description ||
               (data.kind === "project"
-                ? "Discover this student-built project on CodeCanvas."
+                ? "Discover this creation on CodeCanvas."
                 : "Meet this builder and explore their projects on CodeCanvas.")}
           </p>
         </div>

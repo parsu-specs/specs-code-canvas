@@ -172,8 +172,8 @@ export const seedProfiles: Profile[] = [
   {
     id: "user-1",
     name: "Student Demo",
-    role: "SPECS member",
-    bio: "Exploring student-built software across the community.",
+    role: "Community member",
+    bio: "Exploring digital creations across the community.",
     color: "sky",
     createdAt: "2026-09-01T10:00:00.000Z",
   },

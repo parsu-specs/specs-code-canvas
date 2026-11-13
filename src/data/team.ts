@@ -7,23 +7,39 @@
 
 export const CONTACT_EMAIL = "parsu.specs@gmail.com";
 
+export const ORGANIZATION = {
+  name: "Society of Programmers and Enthusiasts in Computer Science",
+  shortName: "SPECS",
+  logo: "/specs-logo.png",
+};
+
 export const APP_INFO = {
   name: "CodeCanvas",
   tagline: "A home for what you build.",
   description:
-    "A community app store by SPECS, a computer science student organization, where student developers publish software, exchange feedback, find collaborators, and share progress.",
+    "A community platform for discovering and sharing digital creations. Publish your work, share documentation, demonstrate what it does, and connect with fellow developers and potential users.",
+  creationTypes: [
+    "Software applications",
+    "Websites",
+    "Games",
+    "Utility scripts",
+    "Automation tools",
+    "AI agent skills",
+    "Reusable components",
+    "Other digital resources",
+  ],
   features: [
     {
       title: "Discover something new",
-      body: "Explore student-built apps, read their stories, and meet the developers behind them.",
+      body: "Explore apps, websites, games, tools, and reusable resources. Read their documentation and meet the people behind them.",
     },
     {
-      title: "Share your next idea",
-      body: "Give your project a home with screenshots, documentation, and a space for thoughtful feedback.",
+      title: "Show what you build",
+      body: "Publish your creation with screenshots, documentation, and a project link so others can understand it, try it, and share feedback.",
     },
     {
-      title: "Build with your community",
-      body: "Find collaborators, share progress in the feed, and celebrate the projects moving forward.",
+      title: "Learn with your community",
+      body: "Share project updates, ask technical questions, and join discussions. Connect with fellow developers and potential users to learn and improve together.",
     },
   ],
 };
@@ -44,7 +60,8 @@ export const TEAM: TeamMember[] = [
     role: "Lead Developer",
     // bio: "Owns the overall direction of the app store and keeps releases moving.",
     bio: "Leads product direction, development, and UI/UX design. Shapes the platform's visual identity and refines the experience for a consistent, intuitive feel.",
-    imageUrl: "https://picsum.photos/seed/specs-dev-1/200",
+    imageUrl:
+      "https://raw.githubusercontent.com/jj-rmr/Images/4903d6cf5c130e44adde1d0ce323e16e3150eb07/CodeCanvas/romero_id-pic.png",
     color: "yellow",
   },
   {

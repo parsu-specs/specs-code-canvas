@@ -1,7 +1,7 @@
 import { ButtonLink } from "./Button";
 import Brand from "./Brand";
 import { useAuth } from "../auth/authContext";
-import { APP_INFO, CONTACT_EMAIL } from "../data/team";
+import { APP_INFO, CONTACT_EMAIL, ORGANIZATION } from "../data/team";
 import { ROUTES, isProtectedRoute, navigateInternalLink } from "../pages/routes";
 
 const exploreLinks = [
@@ -63,10 +63,9 @@ export default function Footer() {
       <div className="border-t-2 border-surface/30">
         <div className="min-w-0 mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-5 py-5 text-xs font-bold opacity-90 sm:px-8 lg:px-10 *:min-w-0">
           <span>
-            CodeCanvas · Est. 2026 · Society of Programmers and Enthusiasts in Computer Science
-            (SPECS)
+            CodeCanvas · An initiative by {ORGANIZATION.name} ({ORGANIZATION.shortName})
           </span>
-          <span>Built together by the SPECS community.</span>
+          <span>A home for what you build.</span>
         </div>
       </div>
     </footer>

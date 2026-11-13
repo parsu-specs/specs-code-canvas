@@ -2,6 +2,8 @@
 
 ## Shared component rules
 
+Public Home and About lead with digital creations and community learning. Shared product copy, supported-creation labels, and organization details live in `src/data/team.ts`. About includes a secondary SPECS organization section with `public/specs-logo.png`, reserved image dimensions, and alternative text; the CodeCanvas lockup remains the primary identity. Creation labels wrap on narrow screens. Follow the [product and branding guide](branding.md) when editing public copy; historical browser measurements below predate this messaging update.
+
 | Need                                                        | Component                                                     |
 | ----------------------------------------------------------- | ------------------------------------------------------------- |
 | Standard actions and action links                           | `Button`, `ButtonLink`                                        |

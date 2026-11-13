@@ -194,7 +194,7 @@ body:has([data-dropdown-portal]) {
     }
   }
   .app-card {
-    height: 32rem;
+    min-height: 24rem;
   }
 
   .toon-card {

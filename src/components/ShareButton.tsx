@@ -12,6 +12,7 @@ type Props = ({ app: AppItem; profile?: never } | { profile: Profile; app?: neve
   variant?: ButtonVariant;
   size?: "small" | "compact";
   className?: string;
+  iconOnly?: boolean;
 };
 
 export default function ShareButton({
@@ -20,6 +21,7 @@ export default function ShareButton({
   variant = "outline-flat",
   size = "small",
   className,
+  iconOnly = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const id = useId();
@@ -31,8 +33,8 @@ export default function ShareButton({
     >
       <Button
         variant={variant}
-        size={size}
-        className="max-sm:min-h-11 max-sm:min-w-11 max-sm:gap-0 max-sm:border-0 max-sm:bg-transparent max-sm:p-2 max-sm:hover:bg-transparent"
+        size={size === "compact" && iconOnly ? "compact-icon" : size}
+        className={`${iconOnly ? "min-h-8 min-w-8" : ""} max-sm:min-h-11 max-sm:min-w-11 max-sm:gap-0 max-sm:border-0 max-sm:bg-transparent max-sm:p-2 max-sm:hover:bg-transparent`}
         onClick={() => setOpen(true)}
         aria-label={`Share ${title}`}
         title={`Share ${title}`}
@@ -40,7 +42,7 @@ export default function ShareButton({
         aria-expanded={open}
       >
         <ShareNetwork size={size === "compact" ? 16 : 18} weight="bold" aria-hidden="true" />
-        <span className="hidden sm:inline">Share</span>
+        {!iconOnly && <span className="hidden sm:inline">Share</span>}
       </Button>
       {open && (
         <Modal

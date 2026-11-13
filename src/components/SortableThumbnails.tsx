@@ -1,6 +1,6 @@
 import ProjectImage from "./ProjectImage";
-import { useState } from "react";
-import { CaretLeft, CaretRight, DotsSixVertical, X } from "@phosphor-icons/react";
+import { useState, type ReactNode } from "react";
+import { DotsSixVertical, X } from "@phosphor-icons/react";
 import { Button } from "./Button";
 
 export type SortableThumbnailsProps = {
@@ -10,17 +10,19 @@ export type SortableThumbnailsProps = {
   onReorder: (next: string[]) => void;
   /** Called with the index of the thumbnail to remove. */
   onRemove: (index: number) => void;
+  /** Optional empty upload slots rendered after the existing images. */
+  children?: ReactNode;
 };
 
 /**
- * Thumbnail preview grid with drag-to-reorder. Desktop uses the native HTML5
- * drag-and-drop API (no library); the per-tile arrow buttons keep reordering
- * available on touch and keyboard, where native DnD does not apply.
+ * Thumbnail preview grid with drag-to-reorder using the native HTML5
+ * drag-and-drop API (no library).
  */
 export default function SortableThumbnails({
   images,
   onReorder,
   onRemove,
+  children,
 }: SortableThumbnailsProps) {
   const [dragging, setDragging] = useState<number | null>(null);
   const [dropTarget, setDropTarget] = useState<number | null>(null);
@@ -36,7 +38,7 @@ export default function SortableThumbnails({
     <div
       role="list"
       aria-label="Thumbnail previews, drag to reorder"
-      className="min-w-0 mt-3 grid *:min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,8rem),1fr))] gap-3 max-w-full"
+      className="mt-3 grid w-full min-w-0 max-w-[49.5rem] grid-cols-[repeat(auto-fill,minmax(min(100%,12rem),1fr))] gap-3 *:min-w-0"
     >
       {images.map((src, i) => {
         const isDragging = dragging === i;
@@ -77,14 +79,14 @@ export default function SortableThumbnails({
               setDragging(null);
               setDropTarget(null);
             }}
-            className={`group relative cursor-grab select-none active:cursor-grabbing ${
+            className={`group relative aspect-video w-full max-w-64 cursor-grab select-none active:cursor-grabbing ${
               isDragging ? "opacity-40" : ""
             }`}
           >
             <ProjectImage
               src={src}
               alt={`Upload preview ${i + 1}`}
-              className={`h-24 w-full rounded-xl border-[3px] object-cover transition-transform ${
+              className={`absolute inset-0 h-full w-full rounded-xl border-[3px] object-cover transition-transform ${
                 isDropTarget ? "scale-[1.04] border-foreground" : "border-outline"
               }`}
             />
@@ -97,30 +99,6 @@ export default function SortableThumbnails({
               <DotsSixVertical size={12} weight="bold" aria-hidden />
               DRAG
             </span>
-            <div className="absolute bottom-2 right-2 flex gap-1">
-              <Button
-                variant="icon"
-                size="compact-icon"
-                type="button"
-                draggable={false}
-                disabled={i === 0}
-                onClick={() => move(i, i - 1)}
-                aria-label={`Move thumbnail ${i + 1} left`}
-              >
-                <CaretLeft size={14} weight="bold" />
-              </Button>
-              <Button
-                variant="icon"
-                size="compact-icon"
-                type="button"
-                draggable={false}
-                disabled={i === images.length - 1}
-                onClick={() => move(i, i + 1)}
-                aria-label={`Move thumbnail ${i + 1} right`}
-              >
-                <CaretRight size={14} weight="bold" />
-              </Button>
-            </div>
             <Button
               variant="icon"
               size="compact"
@@ -135,6 +113,7 @@ export default function SortableThumbnails({
           </div>
         );
       })}
+      {children}
     </div>
   );
 }

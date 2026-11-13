@@ -127,7 +127,7 @@ export default function Store() {
           <Brand light text className="text-2xl!" />
         </div>
         <nav
-          className="min-w-0 fixed inset-x-0 bottom-0 z-50 grid *:min-w-0 h-[calc(4.5rem+env(safe-area-inset-bottom,0px))] grid-cols-3 gap-1 border-t-2 border-outline bg-brand-surface p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:gap-2 lg:static lg:mt-12 lg:flex lg:h-auto lg:flex-col lg:gap-2 lg:border-0 lg:bg-transparent lg:p-0 lg:pr-1 max-w-full"
+          className="min-w-0 fixed inset-x-0 bottom-0 z-50 grid *:min-w-0 h-[calc(4.5rem+env(safe-area-inset-bottom,0px))] grid-cols-4 gap-1 border-t-2 border-outline bg-brand-surface p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:gap-2 lg:static lg:mt-12 lg:flex lg:h-auto lg:flex-col lg:gap-2 lg:border-0 lg:bg-transparent lg:p-0 lg:pr-1 max-w-full"
           aria-label="Main navigation"
         >
           <ButtonLink
@@ -152,7 +152,7 @@ export default function Store() {
             variant="plain"
             href={ROUTES.developers}
             onClick={(event) => goTab(event, "developers")}
-            className={`${navClass("developers")} hidden lg:flex lg:order-2`}
+            className={`${navClass("developers")} lg:order-2`}
           >
             <UsersThree size={22} weight="duotone" />
             Developers
@@ -161,7 +161,7 @@ export default function Store() {
             variant="plain"
             href={ROUTES.leaderboard}
             onClick={(event) => goTab(event, "leaderboard")}
-            className={`${navClass("leaderboard")} hidden lg:flex lg:order-4`}
+            className={`${navClass("leaderboard")} lg:order-4`}
           >
             <Trophy size={22} weight="duotone" />
             Leaderboard
@@ -170,7 +170,7 @@ export default function Store() {
             variant="plain"
             href={ROUTES.settings}
             onClick={(event) => goTab(event, "settings")}
-            className={`${navClass("settings")} lg:order-6`}
+            className={`${navClass("settings")} hidden lg:flex lg:order-6`}
           >
             <Gear size={22} weight="duotone" />
             Settings
@@ -391,7 +391,7 @@ export default function Store() {
                   <Button
                     type="button"
                     variant="secondary"
-                    size="compact"
+                    size="compact-icon"
                     aria-label="Open profile and site menu"
                     title={myProfile?.name ?? "Account"}
                     aria-haspopup="dialog"
@@ -401,23 +401,28 @@ export default function Store() {
                       setNotificationsOpen(false);
                       setAccountMenuOpen((open) => !open);
                     }}
-                    className="shrink-0 max-md:[&>span:last-child]:p-0! max-md:[&>span:last-child]:will-change-[translate]"
+                    className="shrink-0 [&>span:last-child]:p-0 md:[&>span:last-child]:p-1"
                   >
-                    {myProfile ? (
-                      <Avatar
-                        name={myProfile.name}
-                        color={myProfile.color}
-                        imageUrl={myProfile.imageUrl}
-                        size="sm"
-                        className="h-7! w-7! rounded-[13px] border-0! text-xs text-foreground md:h-5! md:w-5! md:rounded-full md:border-2! md:border-outline! md:text-[8px]!"
-                      />
-                    ) : (
-                      <span className="grid h-7 w-7 place-items-center rounded-[13px] md:h-5 md:w-5 md:rounded-full">
-                        <UserIcon size={20} weight="bold" />
+                    <span className="flex min-w-0 items-center gap-0 md:gap-2">
+                      {myProfile ? (
+                        <Avatar
+                          name={myProfile.name}
+                          color={myProfile.color}
+                          imageUrl={myProfile.imageUrl}
+                          size="sm"
+                          className="h-7! w-7! rounded-full border-0! scale-102 text-xs! text-foreground md:h-5! md:w-5! md:rounded-[10px]! md:text-[10px]!"
+                        />
+                      ) : (
+                        <span
+                          aria-hidden="true"
+                          className="grid h-7 w-7 shrink-0 place-items-center rounded-full md:h-5 md:w-5 md:rounded-[10px]"
+                        >
+                          <UserIcon size={20} weight="duotone" />
+                        </span>
+                      )}
+                      <span className="hidden max-w-32 truncate pr-1 text-xs font-black md:block">
+                        {myProfile?.name ?? "Account"}
                       </span>
-                    )}
-                    <span className="hidden w-24 min-w-0 truncate text-xs font-black md:block">
-                      {myProfile?.name ?? "Account"}
                     </span>
                   </Button>
                 }
@@ -442,7 +447,9 @@ export default function Store() {
                       <span className="block wrap-anywhere text-base font-black">
                         {myProfile.name}
                       </span>
-                      <span className="mt-1 block text-xs font-bold text-muted">SPECS member</span>
+                      <span className="mt-1 block text-xs font-bold text-muted">
+                        Community member
+                      </span>
                     </span>
                     {myTrophy !== undefined && <TrophyMark minimal place={myTrophy} size={28} />}
                   </Button>
@@ -453,26 +460,13 @@ export default function Store() {
                     type="button"
                     onClick={() => {
                       setAccountMenuOpen(false);
-                      goPath(ROUTES.developers, "developers");
+                      goPath(ROUTES.settings, "settings");
                     }}
-                    aria-current={view === "developers" ? "page" : undefined}
+                    aria-current={view === "settings" ? "page" : undefined}
                     className="min-h-11 justify-between! px-3 aria-[current=page]:bg-background aria-[current=page]:text-primary"
                   >
-                    <span>Developers</span>
-                    <UsersThree size={20} weight="duotone" />
-                  </Button>
-                  <Button
-                    variant="menu"
-                    type="button"
-                    onClick={() => {
-                      setAccountMenuOpen(false);
-                      goPath(ROUTES.leaderboard, "leaderboard");
-                    }}
-                    aria-current={view === "leaderboard" ? "page" : undefined}
-                    className="min-h-11 justify-between! px-3 aria-[current=page]:bg-background aria-[current=page]:text-primary"
-                  >
-                    <span>Leaderboard</span>
-                    <Trophy size={20} weight="duotone" />
+                    <span>Settings</span>
+                    <Gear size={20} weight="duotone" />
                   </Button>
                 </div>
                 <div className="space-y-1 border-t-2 border-dashed border-outline/15 pt-2 lg:hidden">

@@ -46,26 +46,6 @@ it("renders one tile per image with the cover badge only on the first", () => {
   expect(tiles(container)[0].contains(badges[0])).toBe(true);
 });
 
-it("reorders through the arrow buttons", () => {
-  const { container, onReorder } = renderSortable();
-  act(() => {
-    (container.querySelector('[aria-label="Move thumbnail 2 left"]') as HTMLElement).click();
-  });
-  expect(onReorder).toHaveBeenCalledExactlyOnceWith([images[1], images[0], images[2]]);
-});
-
-it("disables the outer arrows", () => {
-  const { container } = renderSortable();
-  const firstLeft = container.querySelector(
-    '[aria-label="Move thumbnail 1 left"]',
-  ) as HTMLButtonElement;
-  const lastRight = container.querySelector(
-    '[aria-label="Move thumbnail 3 right"]',
-  ) as HTMLButtonElement;
-  expect(firstLeft.disabled).toBe(true);
-  expect(lastRight.disabled).toBe(true);
-});
-
 it("reorders through native drag and drop", () => {
   const { container, onReorder } = renderSortable();
   const dataTransfer = { setData: vi.fn(), effectAllowed: "", dropEffect: "" };

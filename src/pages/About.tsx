@@ -14,7 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import Avatar from "../components/Avatar";
 import ImageViewer from "../components/ImageViewer";
-import { APP_INFO, CONTACT_EMAIL, TEAM } from "../data/team";
+import { APP_INFO, CONTACT_EMAIL, ORGANIZATION, TEAM } from "../data/team";
 
 const badgeIcons = {
   Leadership: Compass,
@@ -59,14 +59,38 @@ export default function About() {
               Shared possibilities.
             </p>
             <p className="mt-4 leading-7 text-body">
-              Built for the student who has an idea, a work in progress, or something ready to
-              share.
+              Bring an idea, a work in progress, or a release ready to share. Give others a way to
+              explore your work, understand how it works, and help it grow.
             </p>
             <p className="mt-6 border-t-2 border-dashed border-divider pt-4 text-xs font-black uppercase tracking-wider">
-              Student-made. Community-powered.
+              Creation starts with you. Progress grows together.
             </p>
           </aside>
         </header>
+
+        <section
+          className="border-t-2 border-dashed border-divider py-12"
+          aria-labelledby="creations-heading"
+        >
+          <p className="text-xs font-black uppercase text-primary">What belongs on CodeCanvas</p>
+          <h2 id="creations-heading" className="mt-1 text-2xl font-black">
+            More ways to create. More to discover.
+          </h2>
+          <p className="mt-4 max-w-3xl leading-7 text-body">
+            CodeCanvas welcomes a wide range of technological outputs, from complete applications to
+            focused tools and resources others can reuse.
+          </p>
+          <ul className="mt-6 flex flex-wrap gap-2" aria-label="Supported creations">
+            {APP_INFO.creationTypes.map((type) => (
+              <li
+                key={type}
+                className="max-w-full rounded-full border border-primary/20 bg-surface px-3 py-1 text-sm font-bold text-body"
+              >
+                {type}
+              </li>
+            ))}
+          </ul>
+        </section>
 
         <section className="border-t-2 border-dashed border-divider py-12" aria-label="Features">
           <div className="mb-8">
@@ -89,6 +113,34 @@ export default function About() {
                 <p className="mt-2 leading-7 text-body">{f.body}</p>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section
+          className="flex min-w-0 flex-col gap-6 border-t-2 border-dashed border-divider py-10 sm:flex-row sm:items-center"
+          aria-labelledby="organization-heading"
+        >
+          <img
+            src={ORGANIZATION.logo}
+            alt="SPECS logo"
+            width={96}
+            height={96}
+            loading="lazy"
+            className="h-24 w-24 shrink-0 rounded-xl object-contain"
+          />
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase text-primary">
+              The organization behind the initiative
+            </p>
+            <h2 id="organization-heading" className="mt-2 text-xl font-black">
+              {ORGANIZATION.name} ({ORGANIZATION.shortName})
+            </h2>
+            <p className="mt-3 max-w-3xl leading-7 text-body">
+              CodeCanvas is an initiative by SPECS, created to help developers share their digital
+              creations, exchange knowledge, and learn together. Rooted in a community of computer
+              science students and alumni, the initiative puts projects, people, and shared learning
+              at its center.
+            </p>
           </div>
         </section>
 

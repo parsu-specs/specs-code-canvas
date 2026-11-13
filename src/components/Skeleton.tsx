@@ -52,20 +52,22 @@ export function AppCardsSkeleton({ count = 6 }: { count?: number }) {
         {Array.from({ length: count }, (_, index) => (
           <div
             key={index}
-            className="app-card toon-card toon-paper flex w-full min-w-0 max-w-sm flex-[1_1_18rem] flex-col bg-panel p-4"
+            className="app-card toon-card toon-paper flex w-full min-w-0 max-w-sm flex-[1_1_18rem] flex-col bg-panel p-3"
           >
-            <SkeletonBlock className="h-48 w-full rounded-xl border-[3px] border-outline/20" />
-            <SkeletonBlock className="mt-2 h-4 w-20" />
-            <SkeletonBlock className="mt-3 h-7 w-3/4" />
-            <SkeletonBlock className="mt-2 h-5 w-1/2" />
-            <div className="my-4 space-y-3">
-              <SkeletonBlock className="h-3 w-full" />
+            <SkeletonBlock className="h-36 w-full rounded-xl border-[3px] border-outline/20" />
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <SkeletonBlock className="h-4 w-20" />
+              <SkeletonBlock className="h-4 w-12" />
+            </div>
+            <SkeletonBlock className="mt-2 h-7 w-3/4" />
+            <SkeletonBlock className="mt-1 h-5 w-1/2" />
+            <div className="my-2 space-y-2 py-1">
               <SkeletonBlock className="h-3 w-full" />
               <SkeletonBlock className="h-3 w-4/5" />
             </div>
-            <div className="mt-auto flex gap-3 border-t-2 border-dashed border-divider pt-4">
-              <SkeletonBlock className="h-9 w-16" />
-              <SkeletonBlock className="h-9 w-16" />
+            <div className="mt-auto flex items-center justify-between gap-2 border-t-2 border-dashed border-divider pt-2.5">
+              <SkeletonBlock className="h-8 w-24 max-sm:h-11" />
+              <SkeletonBlock className="h-8 w-24 max-sm:h-11" />
             </div>
           </div>
         ))}

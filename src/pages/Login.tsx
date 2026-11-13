@@ -304,7 +304,9 @@ export default function Login() {
         <div className="mb-7 text-center">
           <Brand className="mb-6" />
           <h1 className="mt-2 text-3xl font-black">Sign in to CodeCanvas</h1>
-          <p className="mt-2 text-muted">Access projects shared by the SPECS community.</p>
+          <p className="mt-2 text-muted">
+            Discover creations and connect with the CodeCanvas community.
+          </p>
         </div>
         <div className="toon-card toon-paper rounded-2xl bg-surface p-4 pt-10 sm:p-7 sm:p-9 sm:pt-11">
           <div className="min-w-0 mb-6 flex items-center justify-between *:min-w-0 max-w-full">

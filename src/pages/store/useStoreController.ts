@@ -99,7 +99,7 @@ function parsePath(path: string): {
 const copyForView: Partial<Record<StoreView, { title?: string; description?: string }>> = {
   discover: {
     title: "Discover",
-    description: "Explore software built by the SPECS community.",
+    description: "Explore digital creations shared by the community.",
   },
   developers: {
     title: "Developers",
@@ -1384,8 +1384,8 @@ export default function useStoreController() {
     resetForm();
     setShowForm(false);
   };
-  const pickImages = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+  const pickImages = async (files: FileList | readonly File[] | null) => {
+    if (!files || files.length === 0) return false;
     const version = submissionVersion.current;
     setImageBusy(true);
     setImgError(null);
@@ -1395,11 +1395,13 @@ export default function useStoreController() {
       const { fileToProjectImageDataUrl } = await import("../../utils/images");
       const compressed: string[] = [];
       for (const file of chosen) compressed.push(await fileToProjectImageDataUrl(file));
-      if (version !== submissionVersion.current) return;
+      if (version !== submissionVersion.current) return false;
       setScreenshots((prev) => [...prev, ...compressed].slice(0, 3));
+      return true;
     } catch (e) {
-      if (version !== submissionVersion.current) return;
+      if (version !== submissionVersion.current) return false;
       setImgError(e instanceof Error ? e.message : "Could not read those images.");
+      return false;
     } finally {
       if (version === submissionVersion.current) setImageBusy(false);
     }

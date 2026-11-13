@@ -55,6 +55,8 @@ Supabase Google login uses a provider redirect to `/discover`. Supabase email/pa
 
 ## Product behavior
 
+CodeCanvas welcomes applications, websites, games, utility scripts, automation tools, AI agent skills, reusable software components, and other digital resources through the same project model. Existing categories describe project topics; creation types do not add schema values. Projects provide external links rather than an execution or binary-hosting service. The feed and project comments support updates, technical questions, discussions, and feedback. See [product and branding](branding.md) for positioning and SPECS attribution.
+
 - Projects include a validated URL, description, category, collaborators, optional screenshots, and Markdown docs. Owners can edit/delete their projects.
 - Project feedback supports likes and four comment levels, including the root. Deleting a comment preserves a placeholder when replies exist; replies remain readable. Feed uses `FeedPost` in the UI/repository contract, with legacy milestone tables/RPCs and HTTP URLs retained underneath.
 - Notifications derive from repository activity and device read/arrival state.
@@ -65,6 +67,8 @@ Supabase Google login uses a provider redirect to `/discover`. Supabase email/pa
 - Project docs prefer submitted content; otherwise public GitHub repository URLs can supply a README. Publishing allows 50,000 characters of docs; individual repository Markdown files allow 200KB for preview/download.
 
 ## UI and validation
+
+Below `lg`, the mobile bottom bar contains Feeds, Discover, Developers, and Leaderboard in four equal columns. Settings appears in the account popover and closes the popover when selected. At `lg`, the sidebar retains its existing navigation, including Settings.
 
 `build/dataBackend.ts` selects one adapter through `@data-backend`; Vite and Vitest share the resolver. The initial HTML contains a public branded shell and route placeholders. Cached viewer hints permit early Store preloads but never authorize rendering or API access. Verified Discover sessions warm one catalog request; noncritical pages, submission, sharing, and card comments load on demand. Auth restoration overlaps the bundled-font readiness guard (up to 1.5 seconds). Skeletons reserve space immediately and reveal after 180 ms. The service worker caches fonts only.
 

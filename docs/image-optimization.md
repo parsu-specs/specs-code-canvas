@@ -19,7 +19,10 @@ Quality is reduced before dimensions when a file exceeds its byte budget.
 | Profile avatar        | 256 longest side     | 30 KB               | 76%             |
 | Pending Storage setup | 800 longest side     | 80 KB               | 76%             |
 
-Input files retain the existing 8 MB limit. HEIC/HEIF needs conversion before upload.
+Input files retain the existing 8 MB limit. `prepareImageInput` accepts browser-readable
+images and converts HEIC/HEIF to PNG on-device using the lazy `heic-to/csp` decoder
+before preview or WebP/JPEG encoding. The submit project editor offers a full-width
+crop preview without padding, plus synchronized slider and percentage number controls.
 The encoder loads only when images are selected or persisted; selected files are
 processed sequentially to limit concurrent decoding on mobile.
 

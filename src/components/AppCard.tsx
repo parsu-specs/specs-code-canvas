@@ -3,7 +3,7 @@ import { CloseButton } from "./CloseButton";
 import React, { Suspense, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
-  ArrowRight,
+  ArrowUpRight,
   ChatCircleDots,
   Heart,
   PencilSimple,
@@ -102,7 +102,7 @@ export default function AppCard({
         pressPos.current = { x: e.clientX, y: e.clientY };
       }}
       onClick={openFromCard}
-      className="app-card toon-card toon-paper bg-panel flex w-full min-w-0 max-w-sm flex-[1_1_18rem] cursor-pointer flex-col rounded-2xl p-4 *:min-w-0"
+      className="app-card toon-card toon-paper bg-panel flex w-full min-w-0 max-w-sm flex-[1_1_18rem] cursor-pointer flex-col rounded-2xl p-3 *:min-w-0"
     >
       <Button
         variant="plain"
@@ -111,7 +111,7 @@ export default function AppCard({
         className="block w-full shrink-0"
       >
         {app.screenshots?.[0] ? (
-          <span className="relative block h-48 w-full overflow-hidden rounded-xl border-[3px] border-outline bg-inverse">
+          <span className="relative block h-36 w-full overflow-hidden rounded-xl border-[3px] border-outline bg-inverse">
             <ProjectImage
               src={app.screenshots[0]}
               alt={`${app.title} thumbnail`}
@@ -125,17 +125,29 @@ export default function AppCard({
           <ProjectPlaceholder
             title={app.title}
             color={app.color}
-            className="h-48 rounded-xl border-[3px] border-outline"
+            className="h-36 rounded-xl border-[3px] border-outline"
           />
         )}
       </Button>
       <div className="min-h-0 min-w-0 flex flex-1 flex-col *:min-w-0 max-w-full">
-        <div className="min-w-0 mt-2 flex shrink-0 flex-col items-start gap-3 *:min-w-0 max-w-full">
-          <span className="text-[10px] font-black uppercase text-primary">{app.category}</span>
+        <div className="min-w-0 mt-2 flex shrink-0 flex-col items-start gap-2 *:min-w-0 max-w-full">
+          <div className="flex w-full min-w-0 items-center justify-between gap-2">
+            <span
+              className="min-w-0 truncate text-[10px] font-black uppercase text-primary"
+              title={app.category}
+            >
+              {app.category}
+            </span>
+            {app.createdAt && (
+              <div className="max-w-[60%] shrink-0 text-right">
+                <PostTimestamp createdAt={app.createdAt} subject="project" />
+              </div>
+            )}
+          </div>
           <div className="flex w-full min-w-0 items-center gap-2 max-w-full">
             <div className="flex min-w-0 flex-1 items-center gap-1">
               <h3
-                className="min-w-0 w-fit max-w-full line-clamp-2 wrap-anywhere pr-[0.2em] text-xl font-black"
+                className="min-w-0 w-fit max-w-full line-clamp-2 wrap-anywhere pr-[0.2em] text-lg font-black"
                 title={app.title}
               >
                 {app.title}
@@ -149,55 +161,46 @@ export default function AppCard({
                   </ButtonChip>
                 ))}
             </div>
-            {app.createdAt && (
-              <div className="max-w-[45%] shrink-0">
-                <PostTimestamp createdAt={app.createdAt} subject="project" />
-              </div>
-            )}
           </div>
         </div>
-        <div className="mt-2 shrink-0 text-xs leading-5">
-          <p className="line-clamp-2 wrap-anywhere">
+        <div className="mt-1 shrink-0 text-xs leading-5">
+          <div className="flex min-w-0 items-center gap-1 text-muted">
             <UserIcon
               size={15}
               weight="duotone"
-              className="mr-2 inline-block align-[-3px] text-muted"
+              className="shrink-0 text-muted"
               aria-hidden="true"
             />
-            {creatorProfile ? (
+            <span className="min-w-0 truncate" title={creatorName}>
+              {creatorProfile ? (
+                <Button
+                  variant="text"
+                  size="compact"
+                  onClick={() => onOpenProfile(creatorProfile.id)}
+                  className="text-left text-muted"
+                  aria-label={`View ${creatorName}'s profile`}
+                >
+                  {creatorName}
+                </Button>
+              ) : (
+                <span>{creatorName}</span>
+              )}
+            </span>
+            {collaborators.length > 0 && (
               <Button
                 variant="text"
                 size="compact"
-                onClick={() => onOpenProfile(creatorProfile.id)}
-                className="text-left text-muted"
-                aria-label={`View ${creatorName}'s profile`}
+                className="shrink-0 text-muted"
+                onClick={() => onOpenApp(app.id)}
+                title={collaborators.map((profile) => profile.name).join(", ")}
+                aria-label={`View ${collaborators.length} collaborators for ${app.title}`}
               >
-                {creatorName}
+                +{collaborators.length}
               </Button>
-            ) : (
-              <span>{creatorName}</span>
             )}
-            {collaborators.length > 0 && (
-              <>
-                <span className="mx-1">-</span>
-                {collaborators.map((profile, index) => (
-                  <React.Fragment key={profile.id}>
-                    {index > 0 && <span>, </span>}
-                    <Button
-                      variant="text"
-                      size="compact"
-                      className="text-muted"
-                      onClick={() => onOpenProfile(profile.id)}
-                    >
-                      {profile.name}
-                    </Button>
-                  </React.Fragment>
-                ))}
-              </>
-            )}
-          </p>
+          </div>
         </div>
-        <p className="my-4 min-h-0 line-clamp-4 flex-1 text-xs text-left text-pretty leading-6 text-muted/75">
+        <p className="my-2 line-clamp-2 shrink-0 text-xs text-left text-pretty leading-5 text-muted/75">
           <MentionText
             text={app.description}
             mentions={app.mentions ?? []}
@@ -205,10 +208,11 @@ export default function AppCard({
             onOpenProfile={onOpenProfile}
           />
         </p>
-        <div className="min-w-0 mt-auto flex min-h-8 shrink-0 flex-wrap items-center gap-3 border-t-2 border-dashed border-divider pt-4 *:min-w-0 max-w-full">
-          <span className="min-w-0 flex items-center gap-2 *:min-w-0 max-w-full">
+        <div className="min-w-0 mt-auto flex min-h-8 shrink-0 flex-wrap items-center gap-2 border-t-2 border-dashed border-divider pt-2.5 *:min-w-0 max-w-full">
+          <span className="min-w-0 flex items-center gap-1 *:min-w-0 max-w-full">
             <Button
               variant="vote"
+              className="min-h-8 min-w-8 max-sm:min-h-11 max-sm:min-w-11"
               onClick={() => onVote(app.id)}
               aria-pressed={voted}
               aria-label={voted ? "Unlike project" : "Like project"}
@@ -223,22 +227,24 @@ export default function AppCard({
             />
             <Button
               variant="vote"
+              className="min-h-8 min-w-8 max-sm:min-h-11 max-sm:min-w-11"
               onClick={() => onToggle(app.id)}
               aria-expanded={expanded}
               aria-haspopup="dialog"
               aria-controls={panelId}
             >
               <ChatCircleDots size={20} weight={expanded ? "fill" : "duotone"} />
-              {app.comments}
+              <span className="translate-y-[1.5px]">{app.comments}</span>
               <span className="sr-only">Show comments</span>
             </Button>
           </span>
-          <span className="min-w-0 ml-auto flex items-center gap-2 *:min-w-0 max-w-full">
-            <ShareButton app={app} size="compact" />
+          <span className="min-w-0 ml-auto flex items-center gap-1 *:min-w-0 max-w-full">
+            <ShareButton app={app} size="compact" iconOnly variant="outline-flat" />
             {isOwner && (
               <Button
                 variant="outline-flat"
                 size="compact"
+                className="min-h-8 min-w-8"
                 onClick={() => onEditApp(app.id)}
                 aria-label={`Edit ${app.title}`}
               >
@@ -252,8 +258,10 @@ export default function AppCard({
                 rel="noreferrer"
                 variant="outline-flat"
                 size="compact"
+                className="min-h-8 shrink-0 whitespace-nowrap"
+                aria-label={`Open ${app.title} in a new tab`}
               >
-                Open app <ArrowRight size={14} weight="duotone" />
+                Open <ArrowUpRight size={14} weight="duotone" />
               </ButtonLink>
             )}
           </span>

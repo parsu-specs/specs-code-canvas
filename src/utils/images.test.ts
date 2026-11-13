@@ -1,6 +1,9 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { encodeImage, imageDataUrlToBlob } from "./images";
+import { heicTo } from "heic-to/csp";
+
+vi.mock("heic-to/csp", () => ({ heicTo: vi.fn() }));
 
 const bitmap = { width: 4000, height: 2000, close: vi.fn() };
 const context = {
@@ -64,9 +67,6 @@ it("does not upscale smaller originals", async () => {
 });
 
 it("rejects unsupported/oversized inputs and unsafe raster payloads", async () => {
-  await expect(
-    encodeImage(new File(["image"], "photo.heic", { type: "image/heic" })),
-  ).rejects.toThrow("HEIC");
   await expect(encodeImage(new File(["text"], "file.txt", { type: "text/plain" }))).rejects.toThrow(
     "Pick an image",
   );
@@ -75,6 +75,16 @@ it("rejects unsupported/oversized inputs and unsafe raster payloads", async () =
   ).rejects.toThrow("under 8MB");
   expect(() => imageDataUrlToBlob("data:text/html;base64,AQID")).toThrow();
   expect(() => imageDataUrlToBlob("data:image/svg+xml;base64,AQID")).toThrow();
+});
+
+it("decodes HEIC before applying the normal WebP compression pipeline", async () => {
+  const converted = new Blob(["decoded pixels"], { type: "image/png" });
+  vi.mocked(heicTo).mockResolvedValueOnce(converted);
+  const file = new File(["heic"], "photo.heic", { type: "image/heic" });
+  const result = await encodeImage(file);
+  expect(heicTo).toHaveBeenCalledWith({ blob: file, type: "image/png" });
+  expect(createImageBitmap).toHaveBeenCalledWith(converted);
+  expect(result.mimeType).toBe("image/webp");
 });
 
 it("releases decoded memory even when canvas creation fails", async () => {

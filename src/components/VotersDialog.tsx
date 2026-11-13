@@ -15,6 +15,7 @@ type VotersDialogProps = {
   appTitle: string;
   totalVotes: number;
   onOpenProfile: (profileId: string) => void;
+  compact?: boolean;
 };
 
 /**
@@ -27,6 +28,7 @@ export default function VotersDialog({
   appTitle,
   totalVotes,
   onOpenProfile,
+  compact = false,
 }: VotersDialogProps) {
   const reaction = "like";
   const [open, setOpen] = useState(false);
@@ -98,10 +100,15 @@ export default function VotersDialog({
             ? `See who ${reaction}d (1 ${reaction})`
             : `See who ${reaction}d (${totalVotes} ${reaction}s)`
         }
-        className="text-sm"
+        aria-label={`See who liked ${appTitle} (${totalVotes} ${totalVotes === 1 ? "like" : "likes"})`}
+        className={
+          compact
+            ? "translate-y-[1.5px] inline-flex! min-h-8 min-w-6 shrink-0 text-xs"
+            : "translate-y-[1.5px] text-sm"
+        }
       >
-        {totalVotes} {reaction}
-        {totalVotes === 1 ? "" : "s"}
+        {totalVotes}
+        {!compact && ` ${reaction}${totalVotes === 1 ? "" : "s"}`}
       </Button>
 
       {open &&

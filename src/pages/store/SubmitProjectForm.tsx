@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { userFacingError } from "../../utils/userFacingError";
 import {
   ArrowRight,
@@ -14,6 +15,8 @@ import { Button, ButtonLabel } from "../../components/Button";
 import Input, { FileInput, Checkbox } from "../../components/Input";
 import Dropdown from "../../components/Dropdown";
 import SortableThumbnails from "../../components/SortableThumbnails";
+import ImageEditor from "../../components/ImageEditor";
+import { IMAGE_FILE_ACCEPT } from "../../utils/imageInput";
 import CollaboratorPicker from "../../components/CollaboratorPicker";
 import MentionInput from "../../components/MentionInput";
 import { isGitHubRepositoryUrl } from "../../utils/readGitHubReadme";
@@ -112,6 +115,11 @@ export default function SubmitProjectForm({
   title,
   url,
 }: SubmitProjectModalProps) {
+  const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const editingImage = pendingImages[0];
+  const imageUploadDisabled = submitting || imageBusy || !!editingImage || screenshots.length >= 3;
+
   return (
     <form
       onSubmit={(event) => event.preventDefault()}
@@ -215,34 +223,75 @@ export default function SubmitProjectForm({
         <span className="mb-2 block text-xs font-black uppercase">
           Thumbnails (up to 3, first is the cover)
         </span>
-        <ButtonLabel variant="surface" size="small" className="cursor-pointer">
-          <Images size={20} weight="duotone" />
-          {imageBusy ? "Processing…" : screenshots.length ? "Add more" : "Choose from gallery"}
-          <FileInput
-            accept="image/*"
-            multiple
-            disabled={imageBusy || screenshots.length >= 3}
-            onChange={(e) => {
-              void pickImages(e.target.files);
-              e.target.value = "";
-            }}
-          />
-        </ButtonLabel>
+        <FileInput
+          ref={imageInputRef}
+          tabIndex={-1}
+          aria-label="Choose thumbnail images"
+          accept={IMAGE_FILE_ACCEPT}
+          multiple
+          disabled={imageUploadDisabled}
+          onChange={(e) => {
+            setPendingImages(
+              Array.from(e.target.files ?? []).slice(0, Math.max(0, 3 - screenshots.length)),
+            );
+            e.target.value = "";
+          }}
+        />
+        <SortableThumbnails
+          images={screenshots}
+          onReorder={setScreenshots}
+          onRemove={(i) => setScreenshots((prev) => prev.filter((_, j) => j !== i))}
+        >
+          {Array.from({ length: Math.max(0, 3 - screenshots.length) }, (_, index) => {
+            const slot = screenshots.length + index + 1;
+            return (
+              <div key={slot} role="listitem" className="aspect-video w-full max-w-64">
+                <Button
+                  type="button"
+                  variant="plain"
+                  fullWidth
+                  fullHeight
+                  disabled={imageUploadDisabled}
+                  aria-label={`Add thumbnail ${slot}`}
+                  onClick={() => imageInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center gap-2 rounded-xl border-[3px] border-dashed border-divider bg-surface text-muted transition-colors enabled:hover:border-primary enabled:hover:text-primary"
+                >
+                  <Images size={28} weight="duotone" aria-hidden="true" />
+                  <span className="text-sm font-bold">Add image</span>
+                </Button>
+              </div>
+            );
+          })}
+        </SortableThumbnails>
+        {editingImage && (
+          <div className="mt-4">
+            <h3 className="text-lg font-black">Edit thumbnail</h3>
+            <p className="mt-1 mb-3 break-all text-xs font-bold text-muted">
+              {editingImage.name} · {pendingImages.length} image
+              {pendingImages.length === 1 ? "" : "s"} remaining
+            </p>
+            <ImageEditor
+              file={editingImage}
+              aspectRatio={16 / 9}
+              onCancel={() => setPendingImages((images) => images.slice(1))}
+              onSave={async (file) => {
+                if (!(await pickImages([file]))) {
+                  throw new Error("Could not add this thumbnail.");
+                }
+                setPendingImages((images) => images.slice(1));
+              }}
+            />
+          </div>
+        )}
         {imgError && (
           <p role="alert" className="mt-2 text-sm font-bold">
             {userFacingError(imgError)}
           </p>
         )}
-        {screenshots.length > 0 && (
-          <SortableThumbnails
-            images={screenshots}
-            onReorder={setScreenshots}
-            onRemove={(i) => setScreenshots((prev) => prev.filter((_, j) => j !== i))}
-          />
-        )}
         <span className="mt-2 block text-xs text-body">
-          Any photo from your gallery (iPhone HEIC not yet supported), compressed on-device. Drag a
-          thumbnail to reorder — the first image becomes the card cover.
+          JPEG, PNG, WebP, GIF, BMP, AVIF, SVG, and iPhone HEIC/HEIF photos up to 8MB. Animated
+          images become still thumbnails. Crop before adding, then drag to reorder — the first image
+          becomes the cover.
         </span>
       </div>
       <div className="@min-[36rem]/content:col-span-2">
@@ -470,7 +519,13 @@ export default function SubmitProjectForm({
         onClick={(event) => {
           if (event.currentTarget.form?.reportValidity()) void submit(event);
         }}
-        disabled={submitting || imageBusy || repositoryFilesLoading || repositoryFilesImporting}
+        disabled={
+          submitting ||
+          imageBusy ||
+          !!editingImage ||
+          repositoryFilesLoading ||
+          repositoryFilesImporting
+        }
         className="@min-[36rem]/content:col-span-2 @min-[36rem]/content:justify-self-start"
       >
         {submitting

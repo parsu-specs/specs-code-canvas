@@ -871,8 +871,8 @@ export function createSupabaseProfileRepo(): ProfileRepo {
         .insert({
           id: user.id,
           name: user.name,
-          role: "SPECS member",
-          bio: "Exploring student-built software across the community.",
+          role: "Community member",
+          bio: "Exploring digital creations across the community.",
           color: "sky",
         })
         .select()

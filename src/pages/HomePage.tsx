@@ -20,10 +20,10 @@ export default function HomePage() {
           <div>
             <div className="min-w-0 inline-flex -rotate-2 items-center gap-2 border-2 border-dashed border-primary px-3 py-1 text-xs font-black uppercase text-primary mb-7 bg-surface *:min-w-0 max-w-full">
               <Sparkle size={17} weight="fill" />
-              SPECS &middot; Computer science student organization
+              Create. Share. Learn together.
             </div>
             <h1 className="max-w-3xl text-4xl font-black leading-tight sm:text-6xl">
-              Student software, built{" "}
+              Digital creations, built{" "}
               <span className="relative inline-block after:absolute after:-bottom-[7px] after:-left-[2%] after:h-2 after:w-[104%] after:-rotate-1 after:rounded-[50%] after:border-t-[3px] after:border-primary after:content-[''] text-primary">
                 and shared
                 <span className="absolute -bottom-2 left-0 -z-10 h-3 w-full -rotate-1 rounded-full bg-secondary" />
@@ -45,8 +45,8 @@ export default function HomePage() {
             </div>
             <div className="min-w-0 mt-12 flex flex-wrap gap-x-8 gap-y-4 text-sm font-black *:min-w-0 max-w-full">
               {[
-                "Student-built software",
-                "Cross-campus collaboration",
+                "Projects and reusable resources",
+                "Community learning",
                 "Constructive feedback",
               ].map((item) => (
                 <span key={item} className="min-w-0 flex items-center gap-2 *:min-w-0 max-w-full">
@@ -88,7 +88,24 @@ export default function HomePage() {
         >
           <div className="text-center">
             <p className="text-xs font-black uppercase text-primary">How CodeCanvas works</p>
-            <h2 className="mt-3 text-3xl font-black">A shared space for student software.</h2>
+            <h2 className="mt-3 text-3xl font-black">A shared space for what you create.</h2>
+            <p className="mx-auto mt-4 max-w-2xl leading-7 text-body">
+              From a useful script to your next big release, give your work a place to be
+              discovered.
+            </p>
+            <ul
+              className="mx-auto mt-6 flex max-w-3xl flex-wrap justify-center gap-2"
+              aria-label="Creations you can share"
+            >
+              {APP_INFO.creationTypes.map((type) => (
+                <li
+                  key={type}
+                  className="max-w-full rounded-full border border-primary/20 bg-surface px-3 py-1 text-sm font-bold text-body"
+                >
+                  {type}
+                </li>
+              ))}
+            </ul>
           </div>
           <div className="min-w-0 mt-10 grid *:min-w-0 grid-cols-[repeat(auto-fit,minmax(min(100%,14rem),1fr))] gap-6 max-w-full">
             {[
@@ -100,17 +117,17 @@ export default function HomePage() {
               {
                 n: "02",
                 t: "Publish a project",
-                d: "Give your app a clear home and make it easy for others to try.",
+                d: "Share a project link, screenshots, and documentation to show what your creation does.",
               },
               {
                 n: "03",
-                t: "Find collaborators",
-                d: "Connect with students working on related tools and problems.",
+                t: "Connect with the community",
+                d: "Meet fellow developers and potential users working with related tools and ideas.",
               },
               {
                 n: "04",
-                t: "Improve through feedback",
-                d: "Exchange useful reviews and help promising projects move forward.",
+                t: "Learn and improve together",
+                d: "Post updates, ask technical questions, and exchange feedback through community discussions.",
               },
             ].map((item, index) => (
               <article

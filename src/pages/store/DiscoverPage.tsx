@@ -7,6 +7,7 @@ import { PostTimeProvider } from "../../components/PostTimestamp";
 import NoticeBanner from "../../components/NoticeBanner";
 import { Button } from "../../components/Button";
 import Input from "../../components/Input";
+import Dropdown from "../../components/Dropdown";
 import SubmitProjectModal, { type SubmitProjectModalProps } from "./SubmitProjectModal";
 import type { StoreController } from "./useStoreController";
 
@@ -118,8 +119,24 @@ export default function DiscoverPage(props: Props) {
             placeholder="Search projects or developers"
           />
         </label>
+        <div className="mb-6 md:hidden">
+          <Dropdown
+            label="Project categories"
+            value={category}
+            onChange={(value) => {
+              const selected = categories.find(({ label }) => label === value);
+              if (selected) setCategory(selected.label);
+            }}
+            options={categories.map(({ label, Icon }) => ({
+              value: label,
+              label,
+              icon: <Icon size={19} weight="duotone" />,
+            }))}
+            variant="icons"
+          />
+        </div>
         <div
-          className="min-w-0 mb-12 flex flex-wrap gap-2 *:min-w-0 max-w-full"
+          className="min-w-0 mb-6 hidden flex-wrap gap-2 *:min-w-0 max-w-full md:flex"
           role="group"
           aria-label="Project categories"
         >
