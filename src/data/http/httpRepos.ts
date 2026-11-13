@@ -163,6 +163,8 @@ export function createHttpAppRepo(): AppRepo {
       const { app } = await api<{ app: AppRow }>("/apps", {
         method: "POST",
         body: JSON.stringify({
+          stage: input.stage,
+          version: input.version,
           title: input.title,
           description: input.description,
           mentions: captureMentions(
@@ -184,6 +186,9 @@ export function createHttpAppRepo(): AppRepo {
       const { app } = await api<{ app: AppRow }>(`/apps/${encodeURIComponent(appId)}`, {
         method: "PATCH",
         body: JSON.stringify({
+          stage: patch.stage,
+          version: patch.version,
+          publication: patch.publication,
           title: patch.title,
           description: patch.description,
           mentions:

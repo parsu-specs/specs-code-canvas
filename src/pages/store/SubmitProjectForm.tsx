@@ -1,3 +1,4 @@
+import ProjectStageFields from "../../components/ProjectStageFields";
 import { useRef, useState } from "react";
 import { userFacingError } from "../../utils/userFacingError";
 import {
@@ -25,6 +26,10 @@ import type { StoreController } from "./useStoreController";
 
 export type SubmitProjectModalProps = Pick<
   StoreController,
+  | "projectStage"
+  | "setProjectStage"
+  | "projectVersion"
+  | "setProjectVersion"
   | "categories"
   | "categoryInput"
   | "collabIds"
@@ -71,6 +76,10 @@ export type SubmitProjectModalProps = Pick<
 >;
 
 export default function SubmitProjectForm({
+  projectStage,
+  setProjectStage,
+  projectVersion,
+  setProjectVersion,
   categories,
   categoryInput,
   collabIds,
@@ -125,6 +134,13 @@ export default function SubmitProjectForm({
       onSubmit={(event) => event.preventDefault()}
       className="grid min-w-0 max-w-full gap-5 @min-[36rem]/content:grid-cols-2 *:min-w-0 motion-safe:animate-content-in"
     >
+      <ProjectStageFields
+        stage={projectStage}
+        onStageChange={setProjectStage}
+        version={projectVersion}
+        onVersionChange={setProjectVersion}
+        disabled={submitting}
+      />
       <label className="@min-[36rem]/content:col-span-2">
         <span className="mb-2 block text-xs font-black uppercase">Project name</span>
         <Input
@@ -169,7 +185,7 @@ export default function SubmitProjectForm({
         />
       </div>
       <label>
-        <span className="mb-2 block text-xs font-black uppercase">App link</span>
+        <span className="mb-2 block text-xs font-black uppercase">Project link (optional)</span>
         <span className="relative block">
           <LinkSimple
             size={21}
@@ -184,13 +200,12 @@ export default function SubmitProjectForm({
               setUrl(event.target.value);
               resetRepositoryFiles();
             }}
-            required
             placeholder="https://project.example"
             aria-describedby="app-link-help"
           />
         </span>
         <span id="app-link-help" className="mt-2 block text-xs text-body">
-          The live demo or project page behind the Open app button.
+          Link a prototype, demo, or project page. You can also showcase your work with screenshots.
         </span>
       </label>
       <label>

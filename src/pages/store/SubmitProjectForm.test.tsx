@@ -39,6 +39,10 @@ afterEach(() => {
 
 function renderForm(overrides: Partial<SubmitProjectModalProps> = {}) {
   const props: SubmitProjectModalProps = {
+    projectStage: "Working prototype",
+    setProjectStage: vi.fn(),
+    projectVersion: "v0.1",
+    setProjectVersion: vi.fn(),
     categories: [],
     categoryInput: "Productivity",
     collabIds: [],
@@ -111,6 +115,22 @@ function renderForm(overrides: Partial<SubmitProjectModalProps> = {}) {
   };
   return { props, container, upload, choose, button, rerender };
 }
+
+it("allows a visual prototype without a live app link or numbered version", () => {
+  const { props, button } = renderForm({
+    projectStage: "Visual prototype",
+    projectVersion: "",
+    url: "",
+  });
+  act(() => button("Publish project").click());
+  expect(props.submit).toHaveBeenCalledOnce();
+});
+
+it("validates the version label before publishing", () => {
+  const { props, button } = renderForm({ projectVersion: "not a version" });
+  act(() => button("Publish project").click());
+  expect(props.submit).not.toHaveBeenCalled();
+});
 
 it("opens the picker from empty slots, replaces filled slots, and restores a slot after removal", () => {
   const { props, container, upload, rerender } = renderForm();

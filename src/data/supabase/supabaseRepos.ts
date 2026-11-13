@@ -1,3 +1,4 @@
+import { validateVersion } from "../../utils/projectVersions";
 import { captureMentions } from "../../utils/mentions";
 // Supabase implementations of the repo contracts. Active only when
 // VITE_DATA_SOURCE=supabase. Reads work with the anon key under the public
@@ -246,6 +247,10 @@ async function commentCounts(appIds: string[]): Promise<Map<string, number>> {
 
 function toAppRow(row: Record<string, unknown>): AppRow {
   return {
+    stage: (row["stage"] as AppRow["stage"]) || undefined,
+    version: (row["version"] as string) || undefined,
+    last_published_at: (row["last_published_at"] as string) || undefined,
+    versions: row["versions"] as AppRow["versions"],
     id: String(row["id"]),
     title: String(row["title"] ?? ""),
     description: String(row["description"] ?? ""),
@@ -307,7 +312,7 @@ export function createSupabaseAppRepo(): AppRepo {
       let request = supabase
         .from("apps")
         .select(
-          "id,title,description,mentions,creator,creator_id,category,votes,color,url,repo_url,screenshots:screenshots->0,collaborators,created_at",
+          "id,title,description,mentions,creator,creator_id,category,votes,color,url,repo_url,screenshots:screenshots->0,collaborators,created_at,stage,version,last_published_at",
         )
         .order("created_at", { ascending: false });
       const q = query.trim();
@@ -336,7 +341,23 @@ export function createSupabaseAppRepo(): AppRepo {
       const supabase = getSupabase();
       const { data, error } = await supabase.from("apps").select("*").eq("id", id).single();
       if (error || !data) throw new NotFoundError("Project not found.");
-      const row = toAppRow(data as Record<string, unknown>);
+      const { data: history, error: historyError } = await supabase
+        .from("project_versions")
+        .select("*")
+        .eq("app_id", id)
+        .order("published_at", { ascending: false });
+      if (historyError) throw new Error("Could not load project history.");
+      const row = toAppRow({
+        ...data,
+        versions: (history ?? []).map((entry) => ({
+          id: entry.id,
+          stage: entry.stage || undefined,
+          version: entry.version || undefined,
+          notes: entry.notes,
+          publishedAt: entry.published_at,
+          snapshot: entry.snapshot,
+        })),
+      });
       const uid = userId || (await authUid());
       const [votes, counts] = await Promise.all([
         viewerVotes([row.id], uid),
@@ -346,6 +367,7 @@ export function createSupabaseAppRepo(): AppRepo {
     },
 
     async createApp(input: AppInput, author: User) {
+      validateVersion(input.stage, input.version);
       const title = input.title.trim();
       const description = input.description.trim();
       if (!title || !description) throw new Error("Title and description are required.");
@@ -371,6 +393,8 @@ export function createSupabaseAppRepo(): AppRepo {
           .from("apps")
           .insert({
             id: newId(),
+            stage: input.stage || null,
+            version: input.version?.trim() || null,
             title,
             description,
             mentions: captureMentions(
@@ -396,6 +420,9 @@ export function createSupabaseAppRepo(): AppRepo {
     },
 
     async updateApp(appId: string, author: User, patch: AppUpdate) {
+      validateVersion(patch.stage, patch.version, patch.publication?.notes);
+      if (patch.publication && (!patch.stage || !patch.version?.trim()))
+        throw new Error("Choose a stage and version for this update.");
       const supabase = getSupabase();
       const { data: existing, error: fetchError } = await supabase
         .from("apps")
@@ -404,6 +431,8 @@ export function createSupabaseAppRepo(): AppRepo {
         .single();
       if (fetchError || !existing) throw new NotFoundError("Project not found.");
       const current = toAppRow(existing as Record<string, unknown>);
+      if (!patch.publication && patch.version !== undefined && patch.version !== current.version)
+        throw new Error("Publish an update to change the version.");
       const owned = current.creator_id
         ? current.creator_id === author.id
         : current.creator.toLowerCase() === author.name.toLowerCase();
@@ -439,9 +468,17 @@ export function createSupabaseAppRepo(): AppRepo {
         screenshots,
         author.id,
         async (images) => {
-          const { data, error } = await supabase
+          let request = supabase
             .from("apps")
             .update({
+              stage: patch.stage ?? current.stage ?? null,
+              ...(patch.publication
+                ? {
+                    version: patch.version?.trim(),
+                    publication_id: crypto.randomUUID(),
+                    publication_notes: patch.publication.notes.trim(),
+                  }
+                : {}),
               title,
               description,
               url: url || null,
@@ -456,9 +493,16 @@ export function createSupabaseAppRepo(): AppRepo {
               docs: docs || null,
               collaborators,
             })
-            .eq("id", appId)
-            .select()
-            .single();
+            .eq("id", appId);
+          if (patch.publication)
+            request = patch.publication.expectedPublication
+              ? request.eq("last_published_at", patch.publication.expectedPublication)
+              : request.is("last_published_at", null);
+          const { data, error } = await request.select().single();
+          if (patch.publication && error?.code === "PGRST116")
+            throw new Error("This project changed. Reload before publishing an update.");
+          if (patch.publication && error?.code === "23505")
+            throw new Error("This version already exists. Choose a new version.");
           if (error || !data) throw new Error(error?.message ?? "Could not save changes.");
           return images;
         },
@@ -486,11 +530,23 @@ export function createSupabaseAppRepo(): AppRepo {
         ? row.creator_id === author.id
         : row.creator.toLowerCase() === author.name.toLowerCase();
       if (!owned) throw new Error("You can only delete your own projects.");
+      const { data: history, error: historyError } = await supabase
+        .from("project_versions")
+        .select("snapshot")
+        .eq("app_id", appId);
+      if (historyError) throw new Error("Could not load project history.");
+      const historicalImages = (history ?? []).flatMap(
+        (entry) => (entry.snapshot?.screenshots ?? []) as string[],
+      );
       // Counter/row cleanup runs inside the function (RLS forbids direct edits).
       const { error } = await supabase.rpc("delete_project", { p_app_id: appId });
       if (error) throw new Error(error.message);
       const { cleanupProjectImages } = await import("./projectImages");
-      await cleanupProjectImages(row.screenshots ?? [], [], author.id).catch(() => undefined);
+      await cleanupProjectImages(
+        [...(row.screenshots ?? []), ...historicalImages],
+        [],
+        author.id,
+      ).catch(() => undefined);
     },
 
     async setVote(appId, _userId, liked) {

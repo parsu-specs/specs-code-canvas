@@ -16,7 +16,7 @@ import TrophyMark from "./TrophyMark";
 import PostTimestamp from "./PostTimestamp";
 import VotersDialog from "./VotersDialog";
 import { profileForApp } from "../data/profileLinks";
-import type { AppItem, Profile, User } from "../data/types";
+import { PROJECT_STAGE_LABELS, type AppItem, type Profile, type User } from "../data/types";
 import { isSafeHttpUrl } from "../utils/urls";
 import { Button, ButtonChip, ButtonLink } from "./Button";
 import ShareButton from "./ShareButton";
@@ -130,13 +130,16 @@ export default function AppCard({
         )}
       </Button>
       <div className="min-h-0 min-w-0 flex flex-1 flex-col *:min-w-0 max-w-full">
-        <div className="min-w-0 mt-2 flex shrink-0 flex-col items-start gap-2 *:min-w-0 max-w-full">
-          <div className="flex w-full min-w-0 items-center justify-between gap-2">
+        <div className="min-w-0 mt-2 flex shrink-0 flex-col items-start max-w-full">
+          <div className="flex w-full min-w-0 items-center justify-between">
             <span
-              className="min-w-0 truncate text-[10px] font-black uppercase text-primary"
-              title={app.category}
+              className="min-w-0 wrap-anywhere text-[10px] font-black uppercase text-primary"
+              title={[app.category, app.stage && PROJECT_STAGE_LABELS[app.stage]]
+                .filter(Boolean)
+                .join(" · ")}
             >
               {app.category}
+              {app.stage && <> · {PROJECT_STAGE_LABELS[app.stage]}</>}
             </span>
             {app.createdAt && (
               <div className="max-w-[60%] shrink-0 text-right">
@@ -144,7 +147,7 @@ export default function AppCard({
               </div>
             )}
           </div>
-          <div className="flex w-full min-w-0 items-center gap-2 max-w-full">
+          <div className="flex w-full min-w-0 items-center justify-between gap-2 max-w-full">
             <div className="flex min-w-0 flex-1 items-center gap-1">
               <h3
                 className="min-w-0 w-fit max-w-full line-clamp-2 wrap-anywhere pr-[0.2em] text-lg font-black"
@@ -161,6 +164,11 @@ export default function AppCard({
                   </ButtonChip>
                 ))}
             </div>
+            {app.version && (
+              <p className="max-w-[40%] shrink-0 text-right text-xs font-bold text-muted wrap-anywhere">
+                {app.version}
+              </p>
+            )}
           </div>
         </div>
         <div className="mt-1 shrink-0 text-xs leading-5">
@@ -209,10 +217,10 @@ export default function AppCard({
           />
         </p>
         <div className="min-w-0 mt-auto flex min-h-8 shrink-0 flex-wrap items-center gap-2 border-t-2 border-dashed border-divider pt-2.5 *:min-w-0 max-w-full">
-          <span className="min-w-0 flex items-center gap-1 *:min-w-0 max-w-full">
+          <span className="min-w-0 flex items-center gap-2 *:min-w-0 max-w-full">
             <Button
               variant="vote"
-              className="min-h-8 min-w-8 max-sm:min-h-11 max-sm:min-w-11"
+              className=""
               onClick={() => onVote(app.id)}
               aria-pressed={voted}
               aria-label={voted ? "Unlike project" : "Like project"}
@@ -227,14 +235,14 @@ export default function AppCard({
             />
             <Button
               variant="vote"
-              className="min-h-8 min-w-8 max-sm:min-h-11 max-sm:min-w-11"
+              className=""
               onClick={() => onToggle(app.id)}
               aria-expanded={expanded}
               aria-haspopup="dialog"
               aria-controls={panelId}
             >
               <ChatCircleDots size={20} weight={expanded ? "fill" : "duotone"} />
-              <span className="translate-y-[1.5px]">{app.comments}</span>
+              <span className="translate-y-[1.5px] text-xs">{app.comments}</span>
               <span className="sr-only">Show comments</span>
             </Button>
           </span>

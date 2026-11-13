@@ -1,5 +1,6 @@
 -- Disposable PostgreSQL tests only: stand in for Supabase-managed Storage tables.
 create role service_role bypassrls;
+create role anon;
 create schema storage;
 create table storage.buckets (
   id text primary key, name text not null, public boolean not null default false,

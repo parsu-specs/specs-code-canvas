@@ -3,6 +3,16 @@ const fallback = "Something went wrong. Please try again.";
 // Only reviewed messages may pass through. Never display arbitrary server text,
 // even when it looks like a readable sentence.
 const safeMessages = new Set([
+  "Choose a valid project stage.",
+  "Use a version like v0.1, v1.0, or v2.0-beta.",
+  "Keep the version under 40 characters.",
+  "Describe what changed in 1 to 2000 characters.",
+  "Publish an update to change the version.",
+  "Choose a stage and version for this update.",
+  "This project changed. Reload before publishing an update.",
+  "This version already exists. Choose a new version.",
+  "Could not load project history.",
+
   "Google sign-in failed. Try again.",
   "That Google sign-in was invalid. Try again.",
   "Could not check display name availability. Try again.",

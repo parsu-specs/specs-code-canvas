@@ -11,7 +11,35 @@ export type User = {
   name: string;
 };
 
+export const PROJECT_STAGES = [
+  "Concept",
+  "Visual prototype",
+  "Working prototype",
+  "Beta",
+  "Released",
+] as const;
+export type ProjectStage = (typeof PROJECT_STAGES)[number];
+export const PROJECT_STAGE_LABELS: Record<ProjectStage, string> = {
+  Concept: "Concept",
+  "Visual prototype": "Visual",
+  "Working prototype": "Working",
+  Beta: "Beta",
+  Released: "Released",
+};
+export type ProjectVersion = {
+  id: string;
+  stage?: ProjectStage;
+  version?: string;
+  notes: string;
+  publishedAt: string;
+  snapshot: Pick<AppItem, "title" | "description" | "screenshots" | "docs" | "url" | "repoUrl">;
+};
+
 export type AppItem = {
+  stage?: ProjectStage;
+  version?: string;
+  versions?: ProjectVersion[];
+  lastPublishedAt?: string;
   mentions?: Mention[];
   id: string;
   title: string;
@@ -32,6 +60,8 @@ export type AppItem = {
 };
 
 export type AppInput = {
+  stage?: ProjectStage;
+  version?: string;
   title: string;
   description: string;
   url?: string;
@@ -43,6 +73,9 @@ export type AppInput = {
 };
 
 export type AppUpdate = {
+  stage?: ProjectStage;
+  version?: string;
+  publication?: { notes: string; expectedPublication?: string };
   title?: string;
   description?: string;
   url?: string;

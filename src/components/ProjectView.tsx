@@ -1,3 +1,7 @@
+import ProjectStageFields from "./ProjectStageFields";
+import ProjectVersionHistory from "./ProjectVersionHistory";
+import { suggestedVersion } from "../utils/projectVersions";
+import { PROJECT_STAGE_LABELS, type ProjectStage } from "../data/types";
 import ProjectImage from "./ProjectImage";
 import { userFacingError } from "../utils/userFacingError";
 import ErrorNotice from "./ErrorNotice";
@@ -29,7 +33,6 @@ import MentionText from "./MentionText";
 import TrophyMark from "./TrophyMark";
 import MarkdownTextarea from "./MarkdownTextarea";
 import PagedMarkdown from "./PagedMarkdown";
-import UploadStamp from "./UploadStamp";
 import VotersDialog from "./VotersDialog";
 import ShareButton from "./ShareButton";
 import ProjectPlaceholder from "./ProjectPlaceholder";
@@ -116,6 +119,10 @@ export default function ProjectView({
   const [readmeLoading, setReadmeLoading] = useState(false);
   const [readmeError, setReadmeError] = useState<string | null>(null);
   const [editing, setEditing] = useState(startEditing);
+  const [publishingUpdate, setPublishingUpdate] = useState(false);
+  const [eStage, setEStage] = useState<ProjectStage | "">("");
+  const [eVersion, setEVersion] = useState("");
+  const [eNotes, setENotes] = useState("");
   const [eTitle, setETitle] = useState("");
   const [eDesc, setEDesc] = useState("");
   const [eCollabIds, setECollabIds] = useState<string[]>([]);
@@ -321,8 +328,12 @@ export default function ProjectView({
     app &&
     (app.creatorId ? app.creatorId === currentUser.id : app.creator === currentUser.name);
 
-  const beginEdit = () => {
+  const beginEdit = (publish = false) => {
     if (!app) return;
+    setPublishingUpdate(publish);
+    setEStage(app.stage ?? "");
+    setEVersion(publish ? suggestedVersion(app.stage ?? "", app.version) : (app.version ?? ""));
+    setENotes("");
     setETitle(app.title);
     setEDesc(app.description);
     setECollabIds(app.collaborators ?? []);
@@ -343,6 +354,13 @@ export default function ProjectView({
     setConfirmDelete(false);
     setEditing(true);
   };
+  const initializedEdit = useRef<string | null>(null);
+  useEffect(() => {
+    if (startEditing && app && initializedEdit.current !== app.id) {
+      initializedEdit.current = app.id;
+      beginEdit();
+    }
+  }, [startEditing, app?.id]);
 
   // Docs import source: the repo link, falling back to the app link for
   // older projects that stored a GitHub URL there.
@@ -459,11 +477,19 @@ export default function ProjectView({
     setESaving(true);
     setEError(null);
     try {
+      if (publishingUpdate && !eStage) throw new Error("Choose a valid project stage.");
       const before = new Set(app.collaborators ?? []);
       const nextCollaborators = [
         ...new Set([...eCollabIds, ...extractMentionIds(eDesc, [...profiles.values()])]),
       ];
       const updated = await getAppRepo().updateApp(app.id, currentUser, {
+        stage: eStage || undefined,
+        ...(publishingUpdate
+          ? {
+              version: eVersion,
+              publication: { notes: eNotes, expectedPublication: app.lastPublishedAt },
+            }
+          : {}),
         title: eTitle,
         description: eDesc,
         url: eUrl,
@@ -546,24 +572,50 @@ export default function ProjectView({
           <div className="min-w-0 flex flex-wrap items-start justify-between gap-4 *:min-w-0 max-w-full">
             <p className="min-w-0 inline-flex -rotate-2 items-center gap-2 border-2 border-dashed border-primary px-3 py-1 text-xs font-black uppercase text-primary bg-surface *:min-w-0 max-w-full">
               {app.category}
+              {app.stage && <> · {PROJECT_STAGE_LABELS[app.stage]}</>}
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <ShareButton app={app} />
               {isOwner && !editing && (
-                <Button variant="secondary" size="small" onClick={beginEdit}>
-                  <PencilSimple size={18} weight="bold" /> Edit project
+                <Button size="small" onClick={() => beginEdit(true)}>
+                  Publish an update
+                </Button>
+              )}
+              {isOwner && !editing && (
+                <Button variant="secondary" size="small" onClick={() => beginEdit()}>
+                  <PencilSimple size={18} weight="bold" /> Edit project details
                 </Button>
               )}
             </div>
           </div>
-          <h2 className="mt-4 flex min-w-0 max-w-full flex-wrap items-center gap-2 text-3xl font-black sm:text-4xl *:min-w-0">
-            <span className="min-w-0 max-w-full wrap-anywhere">{app.title}</span>
-            {projectTrophies.get(app.id) !== undefined && (
-              <TrophyMark minimal place={projectTrophies.get(app.id) as 1 | 2 | 3} size={30} />
+          <div className="mt-4 flex min-w-0 items-center justify-between gap-3">
+            <h2 className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-3xl font-black sm:text-4xl *:min-w-0">
+              <span className="min-w-0 max-w-full wrap-anywhere">{app.title}</span>
+              {projectTrophies.get(app.id) !== undefined && (
+                <TrophyMark minimal place={projectTrophies.get(app.id) as 1 | 2 | 3} size={30} />
+              )}
+            </h2>
+            {app.version && (
+              <p className="max-w-[40%] shrink-0 text-right text-sm font-black wrap-anywhere">
+                {app.version}
+              </p>
             )}
-          </h2>
-          <div className="mt-2">
-            <UploadStamp createdAt={app.createdAt} />
+          </div>
+          <div className="mt-2 grid gap-3 text-xs text-muted">
+            <p className="flex flex-row items-start gap-1">
+              <span>First published: </span>
+              <time dateTime={app.createdAt} className="font-bold">
+                {new Date(app.createdAt).toLocaleString()}
+              </time>
+            </p>
+            {app.lastPublishedAt && (
+              <p className="flex flex-col items-start gap-1">
+                <span>Latest update</span>
+                <time dateTime={app.lastPublishedAt} className="font-bold">
+                  {new Date(app.lastPublishedAt).toLocaleString()}
+                </time>
+              </p>
+            )}
           </div>
           <p className="mt-3 text-lg leading-8 text-body">
             <MentionText
@@ -661,6 +713,8 @@ export default function ProjectView({
         </div>
       </div>
 
+      <ProjectVersionHistory versions={app.versions ?? []} />
+
       {editing && (
         <form
           ref={editFormRef}
@@ -669,9 +723,36 @@ export default function ProjectView({
         >
           <div className="@min-[36rem]/content:col-span-2">
             <PencilSimple size={32} weight="duotone" />
-            <h3 className="mt-2 text-2xl font-black">Edit project</h3>
+            <h3 className="mt-2 text-2xl font-black">
+              {publishingUpdate ? "Publish an update" : "Edit project details"}
+            </h3>
             <p className="text-body">Only you can see this form — you own this project.</p>
           </div>
+          <ProjectStageFields
+            stage={eStage}
+            onStageChange={setEStage}
+            version={eVersion}
+            onVersionChange={publishingUpdate ? setEVersion : undefined}
+            versionRequired
+            currentVersion={app.version}
+            disabled={eSaving}
+          />
+          {publishingUpdate && (
+            <label className="@min-[36rem]/content:col-span-2">
+              <span className="mb-2 block text-xs font-black uppercase">What changed?</span>
+              <MarkdownTextarea
+                value={eNotes}
+                onChange={(event) => setENotes(event.target.value)}
+                required
+                maxLength={2000}
+                placeholder="Describe what is new in this version"
+              />
+              <p className="mt-2 text-xs text-muted">
+                Current version: {app.version || "Unversioned"}. Suggested starting version:{" "}
+                {suggestedVersion(eStage, app.version)}.
+              </p>
+            </label>
+          )}
           <label>
             <span className="mb-2 block text-xs font-black uppercase">Project name</span>
             <Input
@@ -995,7 +1076,7 @@ export default function ProjectView({
           )}
           <div className="min-w-0 flex flex-wrap gap-3 @min-[36rem]/content:col-span-2 *:min-w-0 max-w-full">
             <Button type="submit" disabled={eSaving || eBusy}>
-              {eSaving ? "Saving…" : "Save changes"}
+              {eSaving ? "Saving…" : publishingUpdate ? "Publish update" : "Save changes"}
             </Button>
             <Button
               variant="surface"
@@ -1085,9 +1166,6 @@ export default function ProjectView({
               </Button>
             ))}
           </div>
-          <p className="mt-3 text-xs font-bold text-muted">
-            Fixed preview box — click any image to view it full size.
-          </p>
         </section>
       )}
 

@@ -120,3 +120,7 @@ set `VOTE_RATE_LIMIT_ENABLED` in `src/utils/debouncedVotes.ts` to true.
 
 HTTP backends must also support `PUT /milestones/:id/cheer` with `{ liked: boolean }`,
 returning `{ milestone }` with the final counter and viewer state.
+
+## Project versioning
+
+Existing Supabase databases must apply `supabase/migrations/20261113000100_project_versions.sql` before deploying the versioning UI. See [project versioning](project-versioning.md) for stage fields, atomic publication snapshots, retained images, and the extended HTTP contract.

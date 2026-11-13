@@ -19,6 +19,9 @@ const appRow = {
   docs: null,
   collaborators: [],
   created_at: "2026-01-01T00:00:00Z",
+  stage: "Working prototype",
+  version: "v0.2",
+  last_published_at: "2026-11-13T08:00:00Z",
 };
 
 /**
@@ -28,6 +31,26 @@ const appRow = {
 function mockToggleVote(payload: unknown) {
   const rpc = vi.fn().mockResolvedValue({ data: payload, error: null });
   const from = vi.fn((table: string) => {
+    if (table === "project_versions")
+      return {
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            order: vi.fn().mockResolvedValue({
+              data: [
+                {
+                  id: "release-1",
+                  stage: appRow.stage,
+                  version: appRow.version,
+                  notes: "Core functionality works",
+                  published_at: appRow.last_published_at,
+                  snapshot: { title: appRow.title, description: appRow.description },
+                },
+              ],
+              error: null,
+            }),
+          })),
+        })),
+      };
     if (table === "apps")
       return {
         select: vi.fn(() => ({
@@ -60,6 +83,23 @@ beforeEach(() => {
 });
 
 describe("public project viewer flags", () => {
+  it("maps the current version and published snapshots on detail reads", async () => {
+    mockToggleVote(null);
+    const app = await createSupabaseAppRepo().getApp("a1", "u1");
+    expect(app).toMatchObject({
+      stage: "Working prototype",
+      version: "v0.2",
+      lastPublishedAt: appRow.last_published_at,
+      versions: [
+        {
+          id: "release-1",
+          version: "v0.2",
+          publishedAt: appRow.last_published_at,
+          snapshot: { title: appRow.title },
+        },
+      ],
+    });
+  });
   it("uses the restored viewer for public like flags without delaying the cover on another Auth call", async () => {
     mockToggleVote(null);
     const app = await createSupabaseAppRepo().getApp("a1", "u1");

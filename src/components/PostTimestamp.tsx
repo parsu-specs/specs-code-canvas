@@ -55,7 +55,7 @@ export default function PostTimestamp({
     <Button
       type="button"
       variant="text"
-      className="inline-flex items-center gap-1 cursor-pointer text-left text-xs font-bold text-muted"
+      className="inline-flex items-center gap-1 cursor-pointer text-left text-[10px] font-bold text-muted"
       onClick={() => setShowExact((value) => !value)}
       aria-pressed={showExact}
       aria-label={
@@ -67,7 +67,7 @@ export default function PostTimestamp({
         showExact ? "Click to show relative time" : `${exact.text} — click to show date and time`
       }
     >
-      <Clock size={14} weight="duotone" aria-hidden="true" />
+      <Clock size={10} weight="duotone" aria-hidden="true" />
       <time dateTime={exact.iso}>{showExact ? exact.text : relative}</time>
     </Button>
   );

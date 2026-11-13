@@ -104,7 +104,7 @@ export default function VotersDialog({
         className={
           compact
             ? "translate-y-[1.5px] inline-flex! min-h-8 min-w-6 shrink-0 text-xs"
-            : "translate-y-[1.5px] text-sm"
+            : "translate-y-[1.5px] text-xs"
         }
       >
         {totalVotes}

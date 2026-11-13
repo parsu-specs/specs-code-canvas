@@ -16,6 +16,10 @@ export type ProfileRow = {
 };
 
 export type AppRow = {
+  stage?: AppItem["stage"];
+  version?: string;
+  versions?: AppItem["versions"];
+  last_published_at?: string;
   mentions?: Mention[];
   id: string;
   title: string;
@@ -76,6 +80,10 @@ export function toProfile(row: ProfileRow): Profile {
 
 export function toApp(row: AppRow, commentsCount?: number): AppItem {
   return {
+    stage: row.stage,
+    version: row.version || undefined,
+    versions: row.versions,
+    lastPublishedAt: row.last_published_at,
     id: row.id,
     title: row.title,
     description: row.description,

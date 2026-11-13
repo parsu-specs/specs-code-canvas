@@ -1,3 +1,4 @@
+import { applyPublication, snapshotVersion, validateVersion } from "../../utils/projectVersions";
 import { captureMentions } from "../../utils/mentions";
 import { NotFoundError, type AppRepo } from "../repositories";
 import type {
@@ -208,6 +209,7 @@ export function createLocalAppRepo(): AppRepo {
 
     async createApp(input: AppInput, author: User): Promise<AppItem> {
       await delay(150);
+      validateVersion(input.stage, input.version);
       const title = input.title.trim();
       const description = input.description.trim();
       const url = input.url?.trim();
@@ -232,6 +234,8 @@ export function createLocalAppRepo(): AppRepo {
       const mentions = captureMentions(description, await createLocalProfileRepo().listProfiles());
       const item: AppItem = {
         mentions,
+        stage: input.stage,
+        version: input.version?.trim() || undefined,
         id: newId(),
         title,
         description,
@@ -249,6 +253,9 @@ export function createLocalAppRepo(): AppRepo {
         createdAt: new Date().toISOString(),
         viewerHasVoted: false,
       };
+      const first = snapshotVersion(item, "Initial publication");
+      item.versions = [first];
+      item.lastPublishedAt = first.publishedAt;
       const next = [item, ...apps];
       try {
         saveApps(next);
@@ -296,20 +303,30 @@ export function createLocalAppRepo(): AppRepo {
         await createLocalProfileRepo().listProfiles(),
         target.mentions,
       );
-      const next = apps.map((a) =>
+      // Profile loading yields control. Re-read before the synchronous save so
+      // another publication in this tab cannot be overwritten with stale history.
+      const latest = loadApps();
+      if (!latest.some((a) => a.id === appId)) throw new NotFoundError("Project not found.");
+      const next = latest.map((a) =>
         a.id === appId
-          ? {
-              ...a,
-              mentions,
-              title,
-              description,
-              url: url ? url : undefined,
-              repoUrl: repoUrl ? repoUrl : undefined,
-              collaborators: collaborators.length ? collaborators : undefined,
-              category: patch.category ?? a.category,
-              screenshots: screenshots.length ? screenshots : undefined,
-              docs: docs ? docs : undefined,
-            }
+          ? applyPublication(
+              {
+                ...a,
+                stage: patch.stage ?? a.stage,
+                version: patch.version?.trim() || a.version,
+                mentions,
+                title,
+                description,
+                url: url ? url : undefined,
+                repoUrl: repoUrl ? repoUrl : undefined,
+                collaborators: collaborators.length ? collaborators : undefined,
+                category: patch.category ?? a.category,
+                screenshots: screenshots.length ? screenshots : undefined,
+                docs: docs ? docs : undefined,
+              },
+              a,
+              patch,
+            )
           : a,
       );
       try {

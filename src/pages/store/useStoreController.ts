@@ -166,6 +166,10 @@ export default function useStoreController() {
   const [feedQuery, setFeedQuery] = useState("");
   const [category, setCategory] = useState<CategoryFilter>("All");
   const [showForm, setShowForm] = useState(false);
+  const [projectStage, setProjectStage] = useState<import("../../data/types").ProjectStage | "">(
+    "",
+  );
+  const [projectVersion, setProjectVersion] = useState("");
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [collabIds, setCollabIds] = useState<string[]>([]);
@@ -1322,8 +1326,11 @@ export default function useStoreController() {
     setSubmitting(true);
     setSubmitError(null);
     try {
+      if (!projectStage) throw new Error("Choose a valid project stage.");
       const created = await getAppRepo().createApp(
         {
+          stage: projectStage || undefined,
+          version: projectVersion.trim() || undefined,
           title: title.trim(),
           description: desc.trim(),
           url: url.trim() ? url.trim() : undefined,
@@ -1359,6 +1366,8 @@ export default function useStoreController() {
     submissionVersion.current += 1;
     repositoryRequest.current?.abort();
     repositoryRequest.current = null;
+    setProjectStage("");
+    setProjectVersion("");
     setTitle("");
     setDesc("");
     setCollabIds([]);
@@ -1633,6 +1642,10 @@ export default function useStoreController() {
     setSelectedProfileName,
     setSelectedRepositoryFiles,
     setShowForm,
+    projectStage,
+    setProjectStage,
+    projectVersion,
+    setProjectVersion,
     setTitle,
     setUrl,
     setView,
