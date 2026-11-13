@@ -1,9 +1,7 @@
 -- Preserve deleted comments only while replies still depend on them.
 alter table public.comments add column if not exists is_deleted boolean not null default false;
-
 -- Deletion goes through the function so replies cannot be cascaded by a client.
 drop policy if exists "own delete comments" on public.comments;
-
 create or replace function public.delete_comment(p_app_id text, p_comment_id text)
 returns void
 language plpgsql
@@ -40,6 +38,5 @@ begin
   end if;
 end;
 $$;
-
 revoke all on function public.delete_comment(text, text) from public;
 grant execute on function public.delete_comment(text, text) to authenticated;

@@ -3,7 +3,6 @@
 -- To re-enable, replace this function with SELECT true and enable the UI flag.
 create or replace function vote_rate_limit_enabled()
 returns boolean language sql immutable as $$ select false $$;
-
 create or replace function check_vote_spam()
 returns text
 language plpgsql
@@ -71,8 +70,6 @@ begin
   return 'tripped';
 end;
 $$;
-
-
 create or replace function toggle_app_vote(p_app_id text)
 returns jsonb
 language plpgsql
@@ -129,8 +126,6 @@ begin
   );
 end;
 $$;
-
-
 create or replace function vote_timeout_seconds()
 returns int
 language plpgsql
@@ -152,10 +147,7 @@ begin
   return ceil(extract(epoch from (v_until - now())))::int;
 end;
 $$;
-
 grant execute on function vote_timeout_seconds() to authenticated;
-
-
 -- An explicit desired state is idempotent, unlike a toggle. Lock the project
 -- before reading membership so concurrent calls cannot drift its counter.
 create or replace function set_app_vote(p_app_id text, p_liked boolean)
@@ -184,7 +176,6 @@ end;
 $$;
 revoke all on function set_app_vote(text, boolean) from public;
 grant execute on function set_app_vote(text, boolean) to authenticated;
-
 -- Feed upvotes use the same final-state debounce; retain their limiter behind the flag.
 create or replace function toggle_milestone_cheer(p_milestone_id text)
 returns jsonb
@@ -219,8 +210,6 @@ begin
   return jsonb_build_object('row', to_jsonb(v_row), 'liked', v_liked);
 end;
 $$;
-
-
 create or replace function set_milestone_cheer(p_milestone_id text, p_liked boolean)
 returns jsonb
 language plpgsql

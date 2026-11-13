@@ -20,9 +20,9 @@ Both applications share one database. Use **this repository** (`specs-code-canva
 From this repository's root, inspect and apply pending migrations with:
 
 ```powershell
-npx supabase migration list --linked
-npx supabase db push --dry-run
-npx supabase db push
+npx supabase migration list --remote
+npx supabase db push --remote --dry-run
+npx supabase db push --remote
 ```
 
 The admin checkout does not have a separate versioned migration history. Do not run shared-database migration commands from that checkout or reset the remote history to match it. If the history is mismatched even from the main checkout, inspect the version list and restore the missing original files before changing any history records. A history repair only marks migrations as applied or reverted; it does not execute their SQL.

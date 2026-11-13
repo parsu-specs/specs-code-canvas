@@ -8,7 +8,6 @@ alter table public.apps drop constraint if exists apps_stage_valid;
 alter table public.apps add constraint apps_stage_valid check (stage is null or stage in ('Concept', 'Visual prototype', 'Working prototype', 'Beta', 'Released'));
 alter table public.apps drop constraint if exists apps_version_valid;
 alter table public.apps add constraint apps_version_valid check (version is null or (length(version) <= 40 and version ~ '^v?[0-9]+(\.[0-9]+){0,2}(-[a-zA-Z0-9.-]+)?$'));
-
 create table if not exists public.project_versions (
   id uuid primary key default gen_random_uuid(),
   app_id text not null references public.apps(id) on delete cascade,
@@ -25,7 +24,6 @@ drop policy if exists "public read project versions" on public.project_versions;
 create policy "public read project versions" on public.project_versions for select using (true);
 grant select on public.project_versions to anon, authenticated;
 revoke insert, update, delete on public.project_versions from anon, authenticated;
-
 -- The outer apps write still uses owner RLS. Only this trigger writes history,
 -- in the same transaction, so failures cannot leave a partially published version.
 create or replace function public.capture_project_version()
@@ -62,7 +60,6 @@ $$;
 revoke all on function public.capture_project_version() from public;
 drop trigger if exists prepare_project_version on public.apps;
 create trigger prepare_project_version before insert or update on public.apps for each row execute function public.capture_project_version();
-
 create or replace function public.save_project_version()
 returns trigger language plpgsql security definer set search_path = public
 as $$
@@ -79,7 +76,6 @@ $$;
 revoke all on function public.save_project_version() from public;
 drop trigger if exists save_project_version on public.apps;
 create trigger save_project_version after insert or update on public.apps for each row execute function public.save_project_version();
-
 -- Keep immutable images while any published snapshot still uses them.
 create or replace function public.project_image_is_referenced(p_cover_url text)
 returns boolean language sql stable security invoker set search_path = public

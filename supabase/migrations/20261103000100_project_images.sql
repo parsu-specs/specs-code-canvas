@@ -7,22 +7,18 @@ on conflict (id) do update
 set public = excluded.public,
     file_size_limit = excluded.file_size_limit,
     allowed_mime_types = excluded.allowed_mime_types;
-
 drop policy if exists "Project image owners can inspect" on storage.objects;
 create policy "Project image owners can inspect" on storage.objects
 for select to authenticated
 using (bucket_id = 'project-images' and (storage.foldername(name))[1] = (select auth.uid()::text));
-
 drop policy if exists "Project image owners can upload" on storage.objects;
 create policy "Project image owners can upload" on storage.objects
 for insert to authenticated
 with check (bucket_id = 'project-images' and (storage.foldername(name))[1] = (select auth.uid()::text));
-
 drop policy if exists "Project image owners can delete" on storage.objects;
 create policy "Project image owners can delete" on storage.objects
 for delete to authenticated
 using (bucket_id = 'project-images' and (storage.foldername(name))[1] = (select auth.uid()::text));
-
 -- Preserve public images reused by another project, including URLs without metadata.
 create or replace function public.project_image_is_referenced(p_cover_url text)
 returns boolean language sql stable security invoker set search_path = public

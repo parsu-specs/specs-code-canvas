@@ -18,12 +18,10 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists guard_comment_like on public.comment_likes;
 create trigger guard_comment_like
   before insert or update on public.comment_likes
   for each row execute function public.guard_comment_like();
-
 create or replace function public.guard_comment_depth()
 returns trigger
 language plpgsql
@@ -56,16 +54,13 @@ begin
   return new;
 end;
 $$;
-
 drop trigger if exists guard_comment_depth on public.comments;
 create trigger guard_comment_depth
   before insert or update of parent_id, app_id on public.comments
   for each row execute function public.guard_comment_depth();
-
 -- Repair any reactions added to placeholders before this guard was installed.
 delete from public.comment_likes using public.comments
   where comment_likes.comment_id = comments.id and comments.is_deleted;
 update public.comments set likes = 0 where is_deleted and likes <> 0;
-
 revoke all on function public.guard_comment_like() from public;
 revoke all on function public.guard_comment_depth() from public;

@@ -2,7 +2,6 @@
 begin;
 alter table public.apps add column if not exists mentions jsonb;
 alter table public.comments add column if not exists mentions jsonb;
-
 -- Match literal names, not regex patterns, with whole-mention boundaries.
 -- Prior bindings win over current names when editing an existing post.
 create or replace function public.bind_mentions(content text, previous jsonb default '[]'::jsonb)
@@ -28,7 +27,6 @@ returns jsonb language sql stable set search_path = public as $$
   select coalesce(jsonb_agg(jsonb_build_object('name', name, 'userId', user_id)), '[]'::jsonb)
   from matches;
 $$;
-
 -- Only current names are recoverable for legacy posts; preserve original text.
 update public.apps set mentions = public.bind_mentions(description) where mentions is null;
 update public.comments set mentions = public.bind_mentions(body) where mentions is null;
@@ -36,7 +34,6 @@ alter table public.apps alter column mentions set default '[]'::jsonb;
 alter table public.apps alter column mentions set not null;
 alter table public.comments alter column mentions set default '[]'::jsonb;
 alter table public.comments alter column mentions set not null;
-
 create or replace function public.freeze_post_mentions()
 returns trigger language plpgsql set search_path = public as $$
 begin
