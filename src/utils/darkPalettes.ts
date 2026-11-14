@@ -1,4 +1,4 @@
-import { SITE_PALETTE_IDS } from "../data/types";
+import { SITE_PALETTE_IDS } from "../data/types.ts";
 
 type SitePaletteId = (typeof SITE_PALETTE_IDS)[number];
 

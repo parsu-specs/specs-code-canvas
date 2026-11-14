@@ -1,7 +1,7 @@
 import ErrorNotice from "../components/ErrorNotice";
 import { HalloweenDecorations } from "../experiments/halloweenTheme";
 import { createPortal } from "react-dom";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useMemo, useRef, useState } from "react";
 import { lazyPage } from "../utils/lazyPage";
 import { StoreContentSkeleton } from "../components/Skeleton";
 import {
@@ -37,26 +37,6 @@ const ProjectPage = lazyPage(() => import("./store/ProjectPage"));
 const SettingsPage = lazyPage(() => import("./store/SettingsPage"));
 
 export default function Store() {
-  useEffect(() => {
-    const root = document.documentElement;
-    const themeColor = document.createElement("meta");
-    themeColor.name = "theme-color";
-    const syncThemeColor = () => {
-      themeColor.content = getComputedStyle(root).getPropertyValue("--color-brand-surface").trim();
-    };
-    syncThemeColor();
-    document.head.appendChild(themeColor);
-    const observer = new MutationObserver(syncThemeColor);
-    observer.observe(root, {
-      attributes: true,
-      attributeFilter: ["data-palette", "data-mode", "style"],
-    });
-    return () => {
-      observer.disconnect();
-      themeColor.remove();
-    };
-  }, []);
-
   const store = useStoreController();
   const {
     accountMenuOpen,

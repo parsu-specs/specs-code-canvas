@@ -14,6 +14,7 @@ import {
 import { getAppRepo } from "../data/factory";
 import { preloadCatalog } from "../utils/loadCatalog";
 import Brand from "../components/Brand";
+import StartupReady from "../components/StartupReady";
 
 // Route-split: each page (and its heavy deps like markdown/GitHub readers)
 // loads on demand instead of inflating the first paint.
@@ -188,6 +189,7 @@ export default function Main({ fontsReady = true }: { fontsReady?: boolean }) {
     <main className="min-h-screen">
       <Suspense fallback={<PageLoader store={Boolean(user) && isProtectedRoute(normalizedPath)} />}>
         {page}
+        <StartupReady />
       </Suspense>
     </main>
   );

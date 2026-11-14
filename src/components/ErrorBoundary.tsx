@@ -2,6 +2,7 @@ import React from "react";
 import { ArrowCounterClockwise, WarningCircle } from "@phosphor-icons/react";
 import { Button } from "./Button";
 import { PageLoadError } from "../utils/lazyPage";
+import { dismissStartupSplash } from "../utils/startupSplash";
 
 type ErrorBoundaryProps = {
   /** Label shown in the fallback, e.g. "Discover". */
@@ -25,6 +26,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
+    dismissStartupSplash();
     // Visible in devtools and production log drains; never shown to users.
     console.error(`[ErrorBoundary:${this.props.name}]`, error, info.componentStack);
   }

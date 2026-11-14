@@ -22,7 +22,7 @@ These creations use the existing project submission flow. Creation types describ
 - Home introduces the platform, lists supported creations, and explains publishing and community participation.
 - About explains the purpose and features, lists supported creations, and includes a secondary organization section before the team.
 - Identify SPECS by its full name on About, in the footer, and in the main documentation. Use “An initiative by” to explain the relationship.
-- Keep CodeCanvas as the primary product identity. Retain its existing stitched patch, lightbulb, and wordmark through `Brand`.
+- Keep CodeCanvas as the primary product identity. Use its two-toned CC monogram and CodeCanvas wordmark through `Brand`.
 - Use the existing `public/specs-logo.png` for the organization section, with descriptive alternative text and reserved dimensions. Keep it outside the hero.
 - Keep wording consistent across sign-in, discovery, share-photo captions, and HTML metadata. Do not imply that all creators are SPECS members.
 

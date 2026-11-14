@@ -6,7 +6,6 @@ import "@fontsource/nunito/latin-700.css";
 import "@fontsource/nunito/latin-900.css";
 import App from "./App";
 import { preloadInitialPage } from "./pages/Main";
-import "./styles/style.css";
 import { initializeFluidText } from "./experiments/fluidText";
 import { initializeBoldText } from "./experiments/boldText";
 import { initializeFontStyle } from "./experiments/fontStyle";
@@ -19,10 +18,14 @@ import { initializeAppearance } from "./utils/appearance";
 import { initializeFavicon } from "./utils/favicon";
 import { initializePalette } from "./utils/palette";
 import { viewerSettingKey } from "./utils/viewerCache";
+import { initializePwa } from "./utils/pwa";
+import { initializePwaBranding } from "./utils/pwaBranding";
 
+initializePwa();
 initializePalette();
 initializeAppearance();
 initializeFavicon();
+initializePwaBranding();
 initializeFluidText();
 initializeBoldText();
 initializeFontStyle();
@@ -57,14 +60,6 @@ function startApp() {
       <App fontReadiness={fontReadiness} />
     </React.StrictMode>,
   );
-
-  if ("serviceWorker" in navigator) {
-    const register = () => {
-      void navigator.serviceWorker.register("/font-cache-worker.js").catch(() => undefined);
-    };
-    if (document.readyState === "complete") register();
-    else window.addEventListener("load", register, { once: true });
-  }
 }
 
 void startApp();

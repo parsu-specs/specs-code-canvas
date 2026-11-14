@@ -10,6 +10,7 @@
     "forceConsistentCasingInFileNames": true,
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
     "paths": { "@data-backend": ["./src/data/backends/local.ts"] },
     "resolveJsonModule": true,
     "isolatedModules": true,

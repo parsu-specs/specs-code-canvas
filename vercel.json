@@ -1,11 +1,51 @@
 {
   "rewrites": [
     {
+      "source": "/manifest.webmanifest",
+      "destination": "/api/pwa-manifest"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }
   ],
+  "functions": {
+    "api/pwa-manifest.js": {
+      "includeFiles": "src/data/{pwaManifest,pwaThemes}.json"
+    }
+  },
   "headers": [
+    {
+      "source": "/startup-theme.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    },
+    {
+      "source": "/font-cache-worker.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store"
+        }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [

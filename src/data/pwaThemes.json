@@ -1,0 +1,146 @@
+{
+  "candy-light": {
+    "primary": "#6558bd",
+    "surface": "#6558bd",
+    "ink": "#ffffff",
+    "accent": "#e8c451",
+    "secondary": "#e8c451",
+    "background": "#f6f4ed"
+  },
+  "candy-dark": {
+    "primary": "#c2a5f5",
+    "surface": "#21192e",
+    "ink": "#edeaf3",
+    "accent": "#c2a5f5",
+    "secondary": "#3d304f",
+    "background": "#121018"
+  },
+  "ocean-light": {
+    "primary": "#2f6df6",
+    "surface": "#2f6df6",
+    "ink": "#ffffff",
+    "accent": "#ffcf5c",
+    "secondary": "#ffcf5c",
+    "background": "#ebf2ec"
+  },
+  "ocean-dark": {
+    "primary": "#7bc9e8",
+    "surface": "#102532",
+    "ink": "#edeaf3",
+    "accent": "#7bc9e8",
+    "secondary": "#244355",
+    "background": "#0c151c"
+  },
+  "sunset-light": {
+    "primary": "#9d4edd",
+    "surface": "#9d4edd",
+    "ink": "#ffffff",
+    "accent": "#ff9e00",
+    "secondary": "#ff9e00",
+    "background": "#f6e9dd"
+  },
+  "sunset-dark": {
+    "primary": "#f2ad7e",
+    "surface": "#2c1d17",
+    "ink": "#edeaf3",
+    "accent": "#f2ad7e",
+    "secondary": "#51382a",
+    "background": "#19120f"
+  },
+  "forest-light": {
+    "primary": "#2d6a4f",
+    "surface": "#2d6a4f",
+    "ink": "#ffffff",
+    "accent": "#e9c46a",
+    "secondary": "#e9c46a",
+    "background": "#e9efe3"
+  },
+  "forest-dark": {
+    "primary": "#a1c992",
+    "surface": "#1b2a1d",
+    "ink": "#edeaf3",
+    "accent": "#a1c992",
+    "secondary": "#3a462c",
+    "background": "#101711"
+  },
+  "mono-light": {
+    "primary": "#3f3f3f",
+    "surface": "#3f3f3f",
+    "ink": "#ffffff",
+    "accent": "#8a8a8a",
+    "secondary": "#8a8a8a",
+    "background": "#f1f1f1"
+  },
+  "mono-dark": {
+    "primary": "#d0d0d0",
+    "surface": "#1b1b1b",
+    "ink": "#edeaf3",
+    "accent": "#d0d0d0",
+    "secondary": "#3b3b3b",
+    "background": "#141414"
+  },
+  "bubblegum-light": {
+    "primary": "#d6336c",
+    "surface": "#d6336c",
+    "ink": "#ffffff",
+    "accent": "#ffd166",
+    "secondary": "#ffd166",
+    "background": "#fbdfea"
+  },
+  "bubblegum-dark": {
+    "primary": "#e6a0b3",
+    "surface": "#2d1a23",
+    "ink": "#edeaf3",
+    "accent": "#e6a0b3",
+    "secondary": "#4b2d3b",
+    "background": "#1a1115"
+  },
+  "citrus-light": {
+    "primary": "#65a30d",
+    "surface": "#65a30d",
+    "ink": "#ffffff",
+    "accent": "#facc15",
+    "secondary": "#facc15",
+    "background": "#f3eedb"
+  },
+  "citrus-dark": {
+    "primary": "#c5d487",
+    "surface": "#252b18",
+    "ink": "#edeaf3",
+    "accent": "#c5d487",
+    "secondary": "#454829",
+    "background": "#15170e"
+  },
+  "grape-light": {
+    "primary": "#6d28d9",
+    "surface": "#6d28d9",
+    "ink": "#ffffff",
+    "accent": "#e9d5ff",
+    "secondary": "#e9d5ff",
+    "background": "#efe9fb"
+  },
+  "grape-dark": {
+    "primary": "#bca4ed",
+    "surface": "#281d37",
+    "ink": "#edeaf3",
+    "accent": "#bca4ed",
+    "secondary": "#423156",
+    "background": "#16111d"
+  },
+  "midnight-light": {
+    "primary": "#8b7cf6",
+    "surface": "#8b7cf6",
+    "ink": "#ffffff",
+    "accent": "#e8c451",
+    "secondary": "#e8c451",
+    "background": "#f6f4ed"
+  },
+  "midnight-dark": {
+    "primary": "#a5b6ee",
+    "surface": "#182138",
+    "ink": "#edeaf3",
+    "accent": "#a5b6ee",
+    "secondary": "#323f60",
+    "background": "#10131c"
+  }
+}

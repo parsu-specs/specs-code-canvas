@@ -1,6 +1,5 @@
 import { useSyncExternalStore } from "react";
 import SettingToggle from "../../components/SettingToggle";
-import "./scrollbars.css";
 
 const STORAGE_KEY = "cc.experimental.scrollbars.v1";
 const CHANGE_EVENT = "cc:scrollbars-change";

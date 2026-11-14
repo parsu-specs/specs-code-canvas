@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { registerStartupLoading } from "../utils/startupSplash.ts";
 
 export const SkeletonDelayContext = createContext(180);
 
@@ -25,6 +26,7 @@ export function LoadingRegion({
   const inheritedDelay = useContext(SkeletonDelayContext);
   const wait = delay ?? inheritedDelay;
   const [visible, setVisible] = useState(wait === 0);
+  useEffect(registerStartupLoading, []);
   useEffect(() => {
     const timer = window.setTimeout(() => setVisible(true), wait);
     return () => window.clearTimeout(timer);

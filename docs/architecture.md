@@ -15,7 +15,7 @@ src/
   experiments/  Optional typography, border, surface, and seasonal treatments
 build/          Backend alias selection, initial HTML shell, route preload hints
 supabase/       Database schema and incremental migrations
-public/         Static assets and font-only cache worker
+public/         Static assets, PWA manifest, launch images, and service worker
 docs/           Maintained setup, architecture, backend, UI, and operations docs
 soundEffects/   Bundled notification and vote audio
 ```

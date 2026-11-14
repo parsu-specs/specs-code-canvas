@@ -1,6 +1,4 @@
 node_modules
-agent.md
-design.md
 .env
 .env*.local
 .env.production

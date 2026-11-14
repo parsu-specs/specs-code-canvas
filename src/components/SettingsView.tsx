@@ -14,6 +14,7 @@ import { Button } from "./Button";
 import Input, { Textarea } from "./Input";
 import AppearanceControl from "./AppearanceControl";
 import SoundControl from "./SoundControl";
+import InstallApp from "./InstallApp";
 import FluidTextControl from "../experiments/fluidText";
 import BoldTextControl from "../experiments/boldText";
 import FontStyleControl from "../experiments/fontStyle";
@@ -355,6 +356,7 @@ export default function SettingsView({
         </div>
       </section>
       <SoundControl />
+      <InstallApp />
       <section className="toon-card toon-paper bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
         <div className="min-w-0 flex items-center gap-2 max-w-full">
           <Flask size={22} weight="duotone" aria-hidden="true" />
