@@ -30,7 +30,13 @@ export type AuthRepo = {
   /** Observe backend session changes; returns a cleanup function. */
   subscribeSession?(onChange: (user: User | null) => void): () => void;
   signin(email: string, password: string, captchaToken?: string): Promise<User>;
-  signup(name: string, email: string, password: string, captchaToken?: string): Promise<User>;
+  signup(
+    name: string,
+    email: string,
+    password: string,
+    captchaToken?: string,
+    fullName?: string,
+  ): Promise<User>;
   signinWithGoogleAccount(account: GoogleAccount): Promise<GoogleSignInResult>;
   signout(): Promise<void>;
   updateName(name: string): Promise<User>;
@@ -93,6 +99,7 @@ export type AppRepo = {
 };
 
 export type ProfilePatch = {
+  fullName?: string;
   bio?: string;
   color?: string;
   imageUrl?: string;

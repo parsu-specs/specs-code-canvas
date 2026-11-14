@@ -17,9 +17,35 @@ beforeEach(() => {
 });
 
 describe("updateProfile name guard", () => {
+  it("allows shared full names and preserves usernames across full-name edits and reloads", async () => {
+    const repo = createLocalProfileRepo();
+    const [a, b] = await repo.listProfiles();
+    await repo.updateProfile(a.id, { fullName: "Alex Reyes" }, a.id);
+    await repo.updateProfile(b.id, { fullName: "Alex Reyes" }, b.id);
+    const reloaded = createLocalProfileRepo();
+    expect(await reloaded.getProfileByName(a.name)).toMatchObject({
+      id: a.id,
+      name: a.name,
+      fullName: "Alex Reyes",
+    });
+    expect(await reloaded.getProfile(b.id)).toMatchObject({ name: b.name, fullName: "Alex Reyes" });
+    await reloaded.ensureUserProfile({
+      id: a.id,
+      name: a.name,
+      fullName: "Stale name",
+      email: "alex@example.com",
+    });
+    expect((await reloaded.getProfile(a.id)).fullName).toBe("Alex Reyes");
+    await expect(repo.updateProfile(a.id, { fullName: " " }, a.id)).rejects.toThrow(
+      "Full name is required",
+    );
+    await expect(repo.updateProfile(a.id, { fullName: "x".repeat(101) }, a.id)).rejects.toThrow(
+      "100 characters",
+    );
+  });
   it("starts new accounts as Guest and rejects role changes", async () => {
     const repo = createLocalProfileRepo();
-    const user = { id: "new-guest", name: "New Guest", email: "guest@example.com" };
+    const user = { id: "new-guest", name: "new-guest", email: "guest@example.com" };
     expect((await repo.ensureUserProfile(user)).role).toBe("Guest");
     await expect(
       repo.updateProfile(user.id, JSON.parse('{"role":"Member"}'), user.id),
@@ -40,7 +66,7 @@ describe("updateProfile name guard", () => {
     const all = await repo.listProfiles();
     const [a] = all;
     // Forge the duplicate-row situation (Google-linking orphans): two rows,
-    // one display name. Old code rejected EVERY save with "already taken".
+    // one username. Old code rejected EVERY save with "already taken".
     const raw = JSON.parse(store.get("cc.profiles.v1") as string) as Array<Record<string, unknown>>;
     const dup = { ...raw[1], id: "dup-1", name: (raw[0] as { name: string }).name };
     store.set("cc.profiles.v1", JSON.stringify([...raw, dup]));
@@ -52,7 +78,10 @@ describe("updateProfile name guard", () => {
     const repo = createLocalProfileRepo();
     const all = await repo.listProfiles();
     const [a, b] = all;
-    await expect(repo.updateProfile(a.id, { name: b.name }, a.id)).rejects.toThrow("already taken");
+    await repo.updateProfile(b.id, { name: "already-taken" }, b.id);
+    await expect(repo.updateProfile(a.id, { name: "already-taken" }, a.id)).rejects.toThrow(
+      "already taken",
+    );
   });
 
   it("creating a profile with a taken name fails", async () => {
@@ -68,7 +97,8 @@ describe("updateProfile name guard", () => {
 describe("mention persistence across renames", () => {
   it("keeps comment and description bindings through reloads, edits and name reuse", async () => {
     const profiles = createLocalProfileRepo();
-    const [original] = await profiles.listProfiles();
+    const [seed] = await profiles.listProfiles();
+    const original = await profiles.updateProfile(seed.id, { name: "original-developer" }, seed.id);
     const stored = JSON.parse(store.get("cc.profiles.v1")!) as Array<{ id: string; role: string }>;
     store.set(
       "cc.profiles.v1",
@@ -85,7 +115,7 @@ describe("mention persistence across renames", () => {
     const expected = [{ name: original.name, userId: original.id }];
     expect(app.mentions).toEqual(expected);
     expect(comment.mentions).toEqual(expected);
-    await profiles.updateProfile(original.id, { name: "Renamed Developer" }, original.id);
+    await profiles.updateProfile(original.id, { name: "renamed-developer" }, original.id);
     await profiles.ensureUserProfile({
       id: "new-owner",
       name: original.name,
@@ -103,11 +133,12 @@ describe("mention persistence across renames", () => {
 
   it("freezes legacy content before a rename without rewriting it", async () => {
     const profiles = createLocalProfileRepo();
-    const [original] = await profiles.listProfiles();
+    const [seed] = await profiles.listProfiles();
+    const original = await profiles.updateProfile(seed.id, { name: "original-developer" }, seed.id);
     const text = `Thanks @${original.name}!`;
     store.set("cc.apps.v1", JSON.stringify([{ id: "legacy", description: text }]));
     store.set("cc.comments.v1", JSON.stringify({ legacy: [{ body: text }] }));
-    await profiles.updateProfile(original.id, { name: "New Display Name" }, original.id);
+    await profiles.updateProfile(original.id, { name: "new-display-name" }, original.id);
     const app = JSON.parse(store.get("cc.apps.v1")!)[0];
     const comment = JSON.parse(store.get("cc.comments.v1")!).legacy[0];
     expect(app.description).toBe(text);

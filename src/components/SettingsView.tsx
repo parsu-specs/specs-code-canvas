@@ -39,12 +39,14 @@ const isLocalMode =
 function UserInfoForm({ profile, onChanged }: { profile: Profile; onChanged: () => void }) {
   const { user, updateName, updateCachedProfile } = useAuth();
   const { confirm, confirmationModal } = useDisplayNameConfirmation();
+  const [fullName, setFullName] = useState(profile.fullName ?? profile.name);
   const [name, setName] = useState(profile.name);
   const [bio, setBio] = useState(profile.bio);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
-  const dirty = name !== profile.name || bio !== profile.bio;
+  const dirty =
+    name !== profile.name || fullName !== (profile.fullName ?? profile.name) || bio !== profile.bio;
 
   const save = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -60,7 +62,7 @@ function UserInfoForm({ profile, onChanged }: { profile: Profile; onChanged: () 
       if (!(await confirmDisplayNameChange(getProfileRepo(), profile, name, confirm))) return;
       const updated = await getProfileRepo().updateProfile(
         user.id,
-        { name: name.trim(), bio: bio.trim() },
+        { name: name.trim(), fullName, bio: bio.trim() },
         user.id,
       );
       if (updated.name !== user.name) {
@@ -75,6 +77,7 @@ function UserInfoForm({ profile, onChanged }: { profile: Profile; onChanged: () 
       }
       updateCachedProfile(updated);
       setName(updated.name);
+      setFullName(updated.fullName ?? updated.name);
       setBio(updated.bio);
       setSaved(true);
       onChanged();
@@ -90,13 +93,24 @@ function UserInfoForm({ profile, onChanged }: { profile: Profile; onChanged: () 
       {confirmationModal}
       <fieldset disabled={saving} className="space-y-4">
         <label className="block">
-          <span className="mb-2 block text-sm font-black">Display name</span>
+          <span className="mb-2 block text-sm font-black">Full name</span>
+          <Input
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            autoComplete="name"
+            maxLength={100}
+            placeholder="e.g. Alex Reyes"
+            required
+          />
+        </label>
+        <label className="block">
+          <span className="mb-2 block text-sm font-black">Username</span>
           <DisplayNameInput
             profileId={profile.id}
             currentName={profile.name}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            autoComplete="nickname"
+            autoComplete="username"
             maxLength={40}
             required
           />

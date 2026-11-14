@@ -1,3 +1,5 @@
+import { validateUsername, usernamePattern } from "../../utils/username";
+import { validateFullName } from "../../utils/fullName";
 import { validateVersion } from "../../utils/projectVersions";
 import {
   accountRole,
@@ -61,13 +63,38 @@ async function authUid(): Promise<string | null> {
   return data.user?.id ?? null;
 }
 
-function sessionUser(id: string, email: string | undefined, name: unknown): User {
+function sessionUser(
+  id: string,
+  email: string | undefined,
+  name: unknown,
+  fullName?: unknown,
+  requiresProfileSetup?: boolean,
+): User {
   const cleanEmail = email ?? "";
   const display = (typeof name === "string" && name.trim()) || cleanEmail.split("@")[0] || "Member";
-  return { id, email: cleanEmail, name: display.slice(0, 40) };
+  return {
+    id,
+    email: cleanEmail,
+    name: display.slice(0, 40),
+    fullName: typeof fullName === "string" ? fullName : undefined,
+    ...(requiresProfileSetup ? { requiresProfileSetup: true } : {}),
+  };
 }
 
 // ── Auth ────────────────────────────────────────────────────────────────────
+
+/** Profile existence decides whether Google users need onboarding, including linked identities. */
+function isGoogleIdentity(user: {
+  app_metadata?: Record<string, unknown>;
+  identities?: { provider: string }[];
+}): boolean {
+  return (
+    user.app_metadata?.["provider"] === "google" ||
+    (Array.isArray(user.app_metadata?.["providers"]) &&
+      user.app_metadata["providers"].includes("google")) ||
+    !!user.identities?.some((identity) => identity.provider === "google")
+  );
+}
 
 export function createSupabaseAuthRepo(): AuthRepo {
   return {
@@ -75,7 +102,17 @@ export function createSupabaseAuthRepo(): AuthRepo {
       const { data } = getSupabase().auth.onAuthStateChange((_event, session) => {
         const user = session?.user;
         // Keep this callback synchronous: awaiting Auth calls here can deadlock refresh.
-        onChange(user ? sessionUser(user.id, user.email, user.user_metadata?.["name"]) : null);
+        onChange(
+          user
+            ? sessionUser(
+                user.id,
+                user.email,
+                user.user_metadata?.["username"] ?? user.user_metadata?.["name"],
+                user.user_metadata?.["full_name"],
+                isGoogleIdentity(user),
+              )
+            : null,
+        );
       });
       return () => data.subscription.unsubscribe();
     },
@@ -84,7 +121,13 @@ export function createSupabaseAuthRepo(): AuthRepo {
       const { data } = await getSupabase().auth.getSession();
       const user = data.session?.user;
       if (!user) return null;
-      return sessionUser(user.id, user.email, user.user_metadata?.["name"]);
+      return sessionUser(
+        user.id,
+        user.email,
+        user.user_metadata?.["username"] ?? user.user_metadata?.["name"],
+        user.user_metadata?.["full_name"],
+        isGoogleIdentity(user),
+      );
     },
 
     async signin(email: string, password: string, captchaToken?: string): Promise<User> {
@@ -94,7 +137,13 @@ export function createSupabaseAuthRepo(): AuthRepo {
         options: captchaToken ? { captchaToken } : undefined,
       });
       if (error || !data.user) throw new AuthError();
-      return sessionUser(data.user.id, data.user.email, data.user.user_metadata?.["name"]);
+      return sessionUser(
+        data.user.id,
+        data.user.email,
+        data.user.user_metadata?.["username"] ?? data.user.user_metadata?.["name"],
+        data.user.user_metadata?.["full_name"],
+        isGoogleIdentity(data.user),
+      );
     },
 
     async signup(
@@ -102,25 +151,27 @@ export function createSupabaseAuthRepo(): AuthRepo {
       email: string,
       password: string,
       captchaToken?: string,
+      fullName?: string,
     ): Promise<User> {
-      const cleanName = name.trim().slice(0, 40);
+      const cleanName = validateUsername(name);
+      const cleanFullName = fullName !== undefined ? validateFullName(fullName) : cleanName;
       if (!cleanName) throw new Error("Name is required.");
-      // Display names are unique across profiles: check before creating the
+      // Usernames are unique across profiles: check before creating the
       // auth account so nobody signs up with a doomed name. The unique index
       // behind ensureUserProfile stays as the race-condition backstop.
       const { data: clash, error: clashError } = await getSupabase()
         .from("profiles")
         .select("id")
-        .ilike("name", cleanName)
+        .ilike("name", usernamePattern(cleanName))
         .limit(1)
         .maybeSingle();
-      if (clashError) throw new Error("Could not check display name availability. Try again.");
-      if (clash) throw new Error("That display name is already taken. Try another.");
+      if (clashError) throw new Error("Could not check username availability. Try again.");
+      if (clash) throw new Error("That username is already taken. Try another.");
       const { data, error } = await getSupabase().auth.signUp({
         email: email.trim(),
         password,
         options: {
-          data: { name: cleanName },
+          data: { name: cleanName, username: cleanName, full_name: cleanFullName },
           ...(captchaToken ? { captchaToken } : {}),
         },
       });
@@ -140,7 +191,7 @@ export function createSupabaseAuthRepo(): AuthRepo {
       if (!data.session || !data.user) {
         throw new AuthError("Account created — check your email to confirm, then sign in.");
       }
-      return sessionUser(data.user.id, data.user.email, cleanName);
+      return { ...sessionUser(data.user.id, data.user.email, cleanName), fullName: cleanFullName };
     },
 
     // Google uses the OAuth redirect flow in Supabase mode (see Sign In).
@@ -203,8 +254,7 @@ export function createSupabaseAuthRepo(): AuthRepo {
 
     async updateName(name: string): Promise<User> {
       const clean = name.trim();
-      if (!clean) throw new Error("Name is required.");
-      if (clean.length > 40) throw new Error("Keep your name under 40 characters.");
+      validateUsername(clean);
       const supabase = getSupabase();
       const { data } = await supabase.auth.getUser();
       const user = data.user;
@@ -218,7 +268,7 @@ export function createSupabaseAuthRepo(): AuthRepo {
       // while leaving stale auth metadata behind, which then clobbered the
       // renamed profile row on the next sign in (see ensureUserProfile).
       const { error: metaError } = await supabase.auth.updateUser({
-        data: { name: clean },
+        data: { name: clean, username: clean },
       });
       if (metaError) throw new Error(metaError.message);
       return sessionUser(user.id, user.email, clean);
@@ -626,6 +676,7 @@ export function createSupabaseAppRepo(): AppRepo {
           toProfile({
             id: String(r["id"]),
             name: String(r["name"] ?? ""),
+            full_name: (r["full_name"] as string | null) ?? null,
             role: accountRole(String(r["role"] ?? "")),
             bio: String(r["bio"] ?? ""),
             color: String(r["color"] ?? "sky"),
@@ -843,6 +894,7 @@ export function createSupabaseProfileRepo(): ProfileRepo {
         toProfile({
           id: String(r["id"]),
           name: String(r["name"] ?? ""),
+          full_name: (r["full_name"] as string | null) ?? null,
           role: accountRole(String(r["role"] ?? "")),
           bio: String(r["bio"] ?? ""),
           color: String(r["color"] ?? "sky"),
@@ -856,16 +908,19 @@ export function createSupabaseProfileRepo(): ProfileRepo {
 
     async getProfile(id: string) {
       const supabase = getSupabase();
-      const exact = await supabase.from("profiles").select("*").eq("id", id).single();
-      let row = !exact.error && exact.data ? (exact.data as Record<string, unknown>) : null;
+      const exact = await supabase.from("profiles").select("*").eq("id", id).maybeSingle();
+      if (exact.error) throw new Error(exact.error.message);
+      let row = exact.data ? (exact.data as Record<string, unknown>) : null;
       if (!row) {
-        const fallback = await supabase.from("profiles").select("*").ilike("id", id).single();
-        if (fallback.error || !fallback.data) throw new NotFoundError("Developer not found.");
+        const fallback = await supabase.from("profiles").select("*").ilike("id", id).maybeSingle();
+        if (fallback.error) throw new Error(fallback.error.message);
+        if (!fallback.data) throw new NotFoundError("Developer not found.");
         row = fallback.data as Record<string, unknown>;
       }
       return toProfile({
         id: String(row["id"]),
         name: String(row["name"] ?? ""),
+        full_name: (row["full_name"] as string | null) ?? null,
         role: accountRole(String(row["role"] ?? "")),
         bio: String(row["bio"] ?? ""),
         color: String(row["color"] ?? "sky"),
@@ -882,15 +937,16 @@ export function createSupabaseProfileRepo(): ProfileRepo {
       const { data, error } = await getSupabase()
         .from("profiles")
         .select("*")
-        .ilike("name", clean)
+        .ilike("name", usernamePattern(clean))
         .limit(1)
         .maybeSingle();
-      if (error) throw new Error("Could not check display name availability. Try again.");
+      if (error) throw new Error("Could not check username availability. Try again.");
       if (!data) return null;
       const row = data as Record<string, unknown>;
       return toProfile({
         id: String(row["id"]),
         name: String(row["name"] ?? ""),
+        full_name: (row["full_name"] as string | null) ?? null,
         role: accountRole(String(row["role"] ?? "")),
         bio: String(row["bio"] ?? ""),
         color: String(row["color"] ?? "sky"),
@@ -903,23 +959,25 @@ export function createSupabaseProfileRepo(): ProfileRepo {
 
     async ensureUserProfile(user: User) {
       const supabase = getSupabase();
-      const { data: existing } = await supabase
+      // A missing profile is expected before either signup flow creates it.
+      const { data: existing, error: lookupError } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
+      if (lookupError) throw new Error(lookupError.message);
       if (existing) {
         const row = existing as Record<string, unknown>;
         const storedName = String(row["name"] ?? "");
         if (storedName !== user.name) {
           if (storedName.trim()) {
-            // The profile row is the source of truth for display names (it is
+            // The profile row is the source of truth for usernames (it is
             // what the user edits in-app). Heal the auth metadata toward it.
             // The old direction did the reverse and wiped renames on every
             // sign in whenever metadata drifted (failed updateUser call or an
             // OAuth provider refresh overwriting user_metadata).
             try {
-              await supabase.auth.updateUser({ data: { name: storedName } });
+              await supabase.auth.updateUser({ data: { name: storedName, username: storedName } });
             } catch {
               // Metadata is only a session cache — the row below still wins.
             }
@@ -930,25 +988,19 @@ export function createSupabaseProfileRepo(): ProfileRepo {
         }
         return this.getProfile(user.id);
       }
-      const { data, error } = await supabase
-        .from("profiles")
-        .insert({
-          id: user.id,
-          name: user.name,
-          role: "Guest",
-          bio: "Exploring digital creations across the community.",
-          color: "sky",
-        })
-        .select()
-        .single();
-      if (error || !data) {
-        // 23505 = the profiles_lower_name_unique index below: someone else
-        // holds this display name. Friendly message instead of raw SQL text.
-        if (error && (error as { code?: string }).code === "23505") {
-          throw new Error("That display name is already taken. Try another.");
-        }
-        throw new Error(error?.message ?? "Could not create profile.");
-      }
+      if (user.requiresProfileSetup) throw new Error("Complete your profile to continue.");
+      const name = validateUsername(user.name);
+      const fullName = validateFullName(user.fullName ?? user.name);
+      const { error } = await supabase.from("profiles").insert({
+        id: user.id,
+        name,
+        full_name: fullName,
+        role: "Guest",
+        bio: "Exploring digital creations across the community.",
+        color: "sky",
+      });
+      if (error?.code === "23505") throw new Error("That username is already taken. Try another.");
+      if (error) throw new Error(error.message);
       return this.getProfile(user.id);
     },
 
@@ -965,6 +1017,10 @@ export function createSupabaseProfileRepo(): ProfileRepo {
         throw new Error("You can only edit your own profile.");
       const current = await this.getProfile(id);
       const name = patch.name?.trim() || current.name;
+      const fullName =
+        patch.fullName !== undefined
+          ? validateFullName(patch.fullName)
+          : (current.fullName ?? current.name);
       const bio = patch.bio?.trim() ?? current.bio;
       const color = patch.color?.trim() ?? current.color;
       const imageUrl =
@@ -989,14 +1045,15 @@ export function createSupabaseProfileRepo(): ProfileRepo {
       if (name.length > 40) throw new Error("Keep your name under 40 characters.");
       if (bio.length > 280) throw new Error("Keep bio under 280 characters.");
       // Uniqueness is policed on rename only: palette/theme/bio-only saves
-      // must not trip over a legacy same-named row. Display names are UNIQUE
+      // must not trip over a legacy same-named row. Usernames are UNIQUE
       // (see migration_unique_names.sql), so a rename collision is a real
       // conflict, not a merge opportunity.
       if (name !== current.name) {
+        validateUsername(name);
         const { data: taken } = await supabase
           .from("profiles")
           .select("id")
-          .ilike("name", name)
+          .ilike("name", usernamePattern(name))
           .neq("id", id)
           .limit(1);
         if (taken && taken.length > 0)
@@ -1004,7 +1061,15 @@ export function createSupabaseProfileRepo(): ProfileRepo {
       }
       const { error } = await supabase
         .from("profiles")
-        .update({ name, bio, color, image_url: imageUrl || null, theme, palette })
+        .update({
+          name,
+          full_name: fullName,
+          bio,
+          color,
+          image_url: imageUrl || null,
+          theme,
+          palette,
+        })
         .eq("id", id);
       if (error) throw new Error(error.message);
       return this.getProfile(id);

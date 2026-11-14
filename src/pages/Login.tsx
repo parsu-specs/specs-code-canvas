@@ -8,7 +8,7 @@ import { ButtonLink, Button } from "../components/Button";
 import Input from "../components/Input";
 import DisplayNameInput, { type DisplayNameStatus } from "../components/DisplayNameInput";
 import Turnstile from "../components/Turnstile";
-import { getAuthRepo, getProfileRepo } from "../data/factory";
+import { getAuthRepo } from "../data/factory";
 import { getSupabase } from "../data/supabase/client";
 import type { GoogleAccount } from "../data/repositories";
 import { ROUTES } from "./routes";
@@ -56,6 +56,7 @@ function GoogleContinueButton({
 }) {
   const login = useGoogleLogin({
     flow: "implicit",
+    prompt: "select_account",
     scope: "openid email profile",
     onSuccess: async (token: TokenResponse) => {
       try {
@@ -103,6 +104,7 @@ function GoogleContinueButton({
 export default function Login() {
   const { signin, signup, signinWithGoogleAccount } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [fullName, setFullName] = useState("");
   const [name, setName] = useState("");
   const [nameStatus, setNameStatus] = useState<DisplayNameStatus>("idle");
   const [email, setEmail] = useState("");
@@ -125,7 +127,7 @@ export default function Login() {
   const [newPassword, setNewPassword] = useState("");
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (busy) return;
+    if (busy || googleBusy) return;
     setError(null);
     // Tokens are single-use: without a fresh one the server rejects the call.
     if (turnstileSiteKey && !captchaToken) {
@@ -133,17 +135,23 @@ export default function Login() {
       return;
     }
     if (mode === "signup" && nameStatus === "taken") {
-      setError("That display name is already taken. Pick another.");
+      setError("That username is already taken. Pick another.");
       return;
     }
     if (mode === "signup" && nameStatus === "checking") {
-      setError("Checking display name availability…");
+      setError("Checking username availability…");
       return;
     }
     setBusy(true);
     try {
       if (mode === "signup") {
-        const failure = await signup(name, email, password, captchaToken ?? undefined);
+        const failure = await signup(
+          name,
+          email,
+          password,
+          captchaToken ?? undefined,
+          fullName.trim(),
+        );
         setCaptchaToken(null);
         setCaptchaRound((r) => r + 1);
         if (failure) setError(failure);
@@ -259,7 +267,10 @@ export default function Login() {
     try {
       const { error } = await getSupabase().auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: `${window.location.origin}${ROUTES.discover}` },
+        options: {
+          redirectTo: `${window.location.origin}${ROUTES.discover}`,
+          queryParams: { prompt: "select_account" },
+        },
       });
       if (error) throw error;
     } catch (e) {
@@ -275,11 +286,6 @@ export default function Login() {
       setGoogleError(result.error ?? "Google sign-in failed. Try again.");
       setGoogleBusy(false);
       return;
-    }
-    try {
-      await getProfileRepo().ensureUserProfile(result.user);
-    } catch {
-      // Non-fatal: the profile syncs on the next app load.
     }
     window.history.replaceState({}, "", ROUTES.discover);
   };
@@ -303,7 +309,9 @@ export default function Login() {
       <div className="w-full max-w-md">
         <div className="mb-7 text-center">
           <Brand className="mb-6" />
-          <h1 className="mt-2 text-3xl font-black">Sign in to CodeCanvas</h1>
+          <h1 className="mt-2 text-3xl font-black">
+            {mode === "signup" ? "Join CodeCanvas" : "Welcome back"}
+          </h1>
           <p className="mt-2 text-muted">
             Discover creations and connect with the CodeCanvas community.
           </p>
@@ -325,10 +333,13 @@ export default function Login() {
                 variant="filter"
                 key={tab}
                 role="tab"
+                disabled={busy || googleBusy}
                 aria-selected={mode === tab}
                 onClick={() => {
                   setMode(tab);
                   setError(null);
+                  setGoogleError(null);
+                  setShowPassword(false);
                 }}
                 className="flex-1 bg-surface"
               >
@@ -336,23 +347,90 @@ export default function Login() {
               </Button>
             ))}
           </div>
+          <div className="mb-5">
+            {isSupabaseMode ? (
+              <div className="min-w-0 flex flex-col gap-2 max-w-full">
+                <Button
+                  variant="plain"
+                  type="button"
+                  onClick={() => void supabaseGoogle()}
+                  disabled={googleBusy || busy}
+                  className="min-w-0 flex w-full items-center justify-center gap-3 rounded-2xl bg-google-button px-5 py-3.5 text-base font-semibold text-metal-highlight transition hover:bg-black disabled:opacity-60"
+                >
+                  <GoogleMark />
+                  {googleBusy ? "Connecting…" : "Continue with Google"}
+                </Button>
+                {googleError && (
+                  <p
+                    role="alert"
+                    className="w-full rounded-xl border-[3px] border-outline bg-accent/50 px-4 py-3 text-sm font-bold"
+                  >
+                    {userFacingError(googleError)}
+                  </p>
+                )}
+              </div>
+            ) : googleClientId ? (
+              <div className="min-w-0 flex flex-col gap-2 max-w-full">
+                <GoogleOAuthProvider clientId={googleClientId}>
+                  <GoogleContinueButton
+                    disabled={googleBusy || busy}
+                    onAccount={(account) => void onGoogleAccount(account)}
+                    onError={setGoogleError}
+                  />
+                </GoogleOAuthProvider>
+                {googleError && (
+                  <p
+                    role="alert"
+                    className="w-full rounded-xl border-[3px] border-outline bg-accent/50 px-4 py-3 text-sm font-bold"
+                  >
+                    {userFacingError(googleError)}
+                  </p>
+                )}
+              </div>
+            ) : null}
+          </div>
+          {(isSupabaseMode || googleClientId) && (
+            <>
+              <p className="mb-5 text-center text-xs leading-5 text-muted">
+                New to CodeCanvas? Continue with Google, then set up your profile.
+              </p>
+              <div className="mb-5 flex items-center gap-3 text-xs font-bold text-muted">
+                <span className="h-px flex-1 bg-divider" />
+                or continue with email
+                <span className="h-px flex-1 bg-divider" />
+              </div>
+            </>
+          )}
           <form onSubmit={submit} className="space-y-5">
             {mode === "signup" && (
-              <label className="block">
-                <span className="mb-2 block text-xs font-black uppercase">Display name</span>
-                <DisplayNameInput
-                  value={name}
-                  profileId=""
-                  currentName=""
-                  onStatusChange={setNameStatus}
-                  onChange={(e) => setName(e.target.value)}
-                  type="text"
-                  autoComplete="nickname"
-                  maxLength={40}
-                  placeholder="what should we call you?"
-                  required
-                />
-              </label>
+              <>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-black">Full name</span>
+                  <Input
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    autoComplete="name"
+                    maxLength={100}
+                    placeholder="e.g. Alex Reyes"
+                    required
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-xs font-black uppercase">Username</span>
+                  <DisplayNameInput
+                    value={name}
+                    profileId=""
+                    currentName=""
+                    onStatusChange={setNameStatus}
+                    onChange={(e) => setName(e.target.value)}
+                    type="text"
+                    autoComplete="username"
+                    maxLength={40}
+                    placeholder="choose a unique username"
+                    required
+                  />
+                </label>
+              </>
             )}
             <label className="block">
               <span className="mb-2 block text-xs font-black uppercase">Email address</span>
@@ -360,7 +438,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 type="email"
-                autoComplete="off"
+                autoComplete="email"
                 placeholder="name@example.com"
                 required
               />
@@ -372,7 +450,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
                   minLength={mode === "signup" ? 8 : undefined}
                   placeholder={mode === "signup" ? "at least 8 characters" : "********"}
                   className="pr-12"
@@ -421,68 +499,15 @@ export default function Login() {
               type="submit"
               fullWidth
               disabled={
-                busy || (mode === "signup" && (nameStatus === "taken" || nameStatus === "checking"))
+                busy ||
+                googleBusy ||
+                (mode === "signup" && (nameStatus === "taken" || nameStatus === "checking"))
               }
             >
               {busy ? "Please wait…" : mode === "signup" ? "Create account" : "Continue"}{" "}
               <ArrowRight size={20} weight="bold" />
             </Button>
           </form>
-          <div className="mt-4">
-            {isSupabaseMode ? (
-              <div className="min-w-0 flex flex-col gap-2 max-w-full">
-                <Button
-                  variant="plain"
-                  type="button"
-                  onClick={() => void supabaseGoogle()}
-                  disabled={googleBusy}
-                  className="min-w-0 flex w-full items-center justify-center gap-3 rounded-2xl bg-google-button px-5 py-3.5 text-base font-semibold text-metal-highlight transition hover:bg-black disabled:opacity-60"
-                >
-                  <GoogleMark />
-                  {googleBusy ? "Connecting…" : "Continue with Google"}
-                </Button>
-                {googleError && (
-                  <p
-                    role="alert"
-                    className="w-full rounded-xl border-[3px] border-outline bg-accent/50 px-4 py-3 text-sm font-bold"
-                  >
-                    {userFacingError(googleError)}
-                  </p>
-                )}
-              </div>
-            ) : googleClientId ? (
-              <div className="min-w-0 flex flex-col gap-2 max-w-full">
-                <GoogleOAuthProvider clientId={googleClientId}>
-                  <GoogleContinueButton
-                    disabled={googleBusy}
-                    onAccount={(account) => void onGoogleAccount(account)}
-                    onError={setGoogleError}
-                  />
-                </GoogleOAuthProvider>
-                {googleError && (
-                  <p
-                    role="alert"
-                    className="w-full rounded-xl border-[3px] border-outline bg-accent/50 px-4 py-3 text-sm font-bold"
-                  >
-                    {userFacingError(googleError)}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="rounded-2xl border-2 border-dashed border-outline bg-background p-4 text-sm leading-6">
-                <span className="font-black">Google sign-in not configured.</span> To enable it,
-                create a Web OAuth client ID in Google Cloud Console, add it as{" "}
-                <code className="rounded bg-inverse px-1.5 py-0.5 text-xs text-inverse-foreground">
-                  VITE_GOOGLE_CLIENT_ID
-                </code>{" "}
-                in{" "}
-                <code className="rounded bg-inverse px-1.5 py-0.5 text-xs text-inverse-foreground">
-                  .env
-                </code>
-                , then restart the dev server. See .env.example.
-              </div>
-            )}
-          </div>
           {mode === "signin" && !forgotOpen && (
             <div className="mt-4 text-center">
               <Button
@@ -563,7 +588,7 @@ export default function Login() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       type="email"
-                      autoComplete="off"
+                      autoComplete="email"
                       placeholder="name@example.com"
                       required
                     />

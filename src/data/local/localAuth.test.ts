@@ -14,14 +14,23 @@ beforeEach(() => {
 });
 
 describe("duplicate emails", () => {
+  it("retains a separate full name through signup and sign-in", async () => {
+    const auth = createLocalAuthRepo();
+    await auth.signup("alexreyes", "alex@example.com", "secret123", undefined, "Alex Reyes");
+    await auth.signout();
+    expect(await auth.signin("alex@example.com", "secret123")).toMatchObject({
+      name: "alexreyes",
+      fullName: "Alex Reyes",
+    });
+  });
   it("rejects a manual signup reusing an existing email", async () => {
     const auth = createLocalAuthRepo();
     await auth.signup("Ann", "ann@example.com", "secret123");
-    await expect(auth.signup("Someone Else", "ann@example.com", "secret123")).rejects.toThrow(
+    await expect(auth.signup("someone-else", "ann@example.com", "secret123")).rejects.toThrow(
       "That email is already registered. Sign in instead.",
     );
     // Case-insensitive: same address, different casing.
-    await expect(auth.signup("Someone Else", "ANN@example.com", "secret123")).rejects.toThrow(
+    await expect(auth.signup("someone-else", "ANN@example.com", "secret123")).rejects.toThrow(
       "That email is already registered. Sign in instead.",
     );
   });
@@ -34,7 +43,7 @@ describe("duplicate emails", () => {
       name: "Mia",
       emailVerified: true,
     });
-    await expect(auth.signup("Mia Clone", "mia@example.com", "secret123")).rejects.toThrow(
+    await expect(auth.signup("mia-clone", "mia@example.com", "secret123")).rejects.toThrow(
       "That email is already registered. Sign in instead.",
     );
   });
@@ -50,22 +59,23 @@ describe("duplicate emails", () => {
   });
 });
 
-describe("duplicate display names", () => {
+describe("duplicate usernames", () => {
   it("rejects a signup name already owned by a seed profile, case-insensitively", async () => {
     const auth = createLocalAuthRepo();
-    await expect(auth.signup("Mia Santos", "new1@example.com", "secret123")).rejects.toThrow(
-      "That display name is already taken. Try another.",
+    store.set("cc.profiles.v1", JSON.stringify([{ id: "seed-mia", name: "mia-santos" }]));
+    await expect(auth.signup("mia-santos", "new1@example.com", "secret123")).rejects.toThrow(
+      "That username is already taken. Try another.",
     );
-    await expect(auth.signup("MIA SANTOS", "new2@example.com", "secret123")).rejects.toThrow(
-      "That display name is already taken. Try another.",
+    await expect(auth.signup("MIA-SANTOS", "new2@example.com", "secret123")).rejects.toThrow(
+      "That username is already taken. Try another.",
     );
   });
 
   it("rejects a name taken by an earlier signup before its profile row exists", async () => {
     const auth = createLocalAuthRepo();
-    await auth.signup("Ann Lee", "ann@example.com", "secret123");
-    await expect(auth.signup("Ann Lee", "other@example.com", "secret123")).rejects.toThrow(
-      "That display name is already taken. Try another.",
+    await auth.signup("ann-lee", "ann@example.com", "secret123");
+    await expect(auth.signup("ann-lee", "other@example.com", "secret123")).rejects.toThrow(
+      "That username is already taken. Try another.",
     );
   });
 
@@ -77,11 +87,12 @@ describe("duplicate display names", () => {
       name: "Nia Nguyen",
       emailVerified: true,
     });
-    await expect(auth.signup("Nia Nguyen", "x@example.com", "secret123")).rejects.toThrow(
-      "That display name is already taken. Try another.",
+    await auth.updateName("nia-nguyen");
+    await expect(auth.signup("nia-nguyen", "x@example.com", "secret123")).rejects.toThrow(
+      "That username is already taken. Try another.",
     );
-    const user = await auth.signup("Brand New Name", "fresh@example.com", "secret123");
-    expect(user.name).toBe("Brand New Name");
+    const user = await auth.signup("brand-new-name", "fresh@example.com", "secret123");
+    expect(user.name).toBe("brand-new-name");
   });
 });
 

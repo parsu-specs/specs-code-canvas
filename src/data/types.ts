@@ -9,6 +9,9 @@ export type User = {
   id: string;
   email: string;
   name: string;
+  fullName?: string;
+  /** New Google identities must choose their profile fields before entering the app. */
+  requiresProfileSetup?: boolean;
 };
 
 export const PROJECT_STAGES = [
@@ -149,6 +152,8 @@ export const AVATAR_COLORS = [
 export type Profile = {
   id: string;
   name: string;
+  /** Public full name; name remains the unique username for links and mentions. */
+  fullName?: string;
   /** Guest or Member, assigned by the separate admin console. */
   role: string;
   bio: string;

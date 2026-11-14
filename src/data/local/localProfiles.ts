@@ -1,3 +1,5 @@
+import { validateUsername } from "../../utils/username";
+import { validateFullName } from "../../utils/fullName";
 import { captureMentions } from "../../utils/mentions";
 import { accountRole, rejectRolePatch } from "../accountRoles";
 import { NotFoundError, type ProfileRepo } from "../repositories";
@@ -154,29 +156,16 @@ export function createLocalProfileRepo(): ProfileRepo {
       await delay(40);
       const profiles = loadProfiles();
       const existing = profiles.find((p) => p.id === user.id);
-      if (existing) {
-        // Keep display name in sync if the auth name changed — unless another
-        // row already owns that name (display names are unique now): then the
-        // stored name wins and the clash is left for the user to rename.
-        if (existing.name !== user.name) {
-          const clash = profiles.some(
-            (p) =>
-              p.id !== user.id && p.name.trim().toLowerCase() === user.name.trim().toLowerCase(),
-          );
-          if (!clash) {
-            const next = profiles.map((p) => (p.id === user.id ? { ...p, name: user.name } : p));
-            saveProfiles(next);
-            return { ...existing, name: user.name };
-          }
-        }
-        return existing;
-      }
+      if (existing) return existing;
       if (profiles.some((p) => p.name.trim().toLowerCase() === user.name.trim().toLowerCase())) {
-        throw new Error("That display name is already taken. Try signing in instead.");
+        throw new Error("That username is already taken. Try signing in instead.");
       }
+      if (user.requiresProfileSetup) throw new Error("Complete your profile to continue.");
+      validateUsername(user.name);
       const created: Profile = {
         id: user.id,
         name: user.name,
+        fullName: user.fullName ?? user.name,
         role: "Guest",
         bio: "Exploring digital creations across the community.",
         color: "sky",
@@ -193,6 +182,10 @@ export function createLocalProfileRepo(): ProfileRepo {
       const profiles = loadProfiles();
       const target = profiles.find((p) => p.id === id);
       if (!target) throw new NotFoundError("Developer not found.");
+      const fullName =
+        patch.fullName !== undefined
+          ? validateFullName(patch.fullName)
+          : (target.fullName ?? target.name);
       const bio = patch.bio?.trim() ?? target.bio;
       const color = patch.color?.trim() ?? target.color;
       const imageUrl =
@@ -203,6 +196,7 @@ export function createLocalProfileRepo(): ProfileRepo {
       // Same rule as the Supabase repo: uniqueness is policed on rename
       // only, so palette/theme/bio-only saves never trip over duplicates.
       if (name !== target.name) {
+        validateUsername(name);
         const taken = profiles.some(
           (p) => p.id !== id && p.name.trim().toLowerCase() === name.toLowerCase(),
         );
@@ -222,6 +216,7 @@ export function createLocalProfileRepo(): ProfileRepo {
       }
       const updated: Profile = {
         ...target,
+        fullName,
         name,
         bio,
         color,

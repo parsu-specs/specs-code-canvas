@@ -1,3 +1,4 @@
+import { validateUsername } from "../../utils/username";
 import { captureMentions } from "../../utils/mentions";
 import { rejectRolePatch } from "../accountRoles";
 import { validateProjectIcon } from "../../utils/projectIcon";
@@ -64,9 +65,16 @@ export function createHttpAuthRepo(): AuthRepo {
       }
     },
 
-    async signup(name: string, email: string, password: string): Promise<User> {
+    async signup(
+      name: string,
+      email: string,
+      password: string,
+      _captchaToken?: string,
+      fullName?: string,
+    ): Promise<User> {
+      validateUsername(name);
       // Pre-check with the same lookup the profile repo uses, so a taken
-      // display name is flagged before the server creates the account. The
+      // username is flagged before the server creates the account. The
       // server still owns final validation.
       let nameTaken = false;
       try {
@@ -75,11 +83,14 @@ export function createHttpAuthRepo(): AuthRepo {
       } catch (e) {
         if (!(e instanceof Error && e.message.includes("404"))) throw e;
       }
-      if (nameTaken) throw new Error("That display name is already taken. Try another.");
+      if (nameTaken) throw new Error("That username is already taken. Try another.");
       const { user, token } = await api<{
         user: { id: string; email: string; name: string };
         token: string;
-      }>("/auth/signup", { method: "POST", body: JSON.stringify({ name, email, password }) });
+      }>("/auth/signup", {
+        method: "POST",
+        body: JSON.stringify({ name, fullName, email, password }),
+      });
       setApiToken(token);
       return toUser(user);
     },
@@ -127,6 +138,7 @@ export function createHttpAuthRepo(): AuthRepo {
     },
 
     async updateName(name: string): Promise<User> {
+      validateUsername(name);
       const { user } = await api<{ user: { id: string; email: string; name: string } }>(
         "/auth/name",
         { method: "PATCH", body: JSON.stringify({ name }) },
@@ -370,13 +382,19 @@ export function createHttpProfileRepo(): ProfileRepo {
     async ensureUserProfile(user: User) {
       const { profile } = await api<{ profile: ProfileRow }>("/profiles/ensure", {
         method: "POST",
-        body: JSON.stringify({ id: user.id, email: user.email, name: user.name }),
+        body: JSON.stringify({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          fullName: user.fullName,
+        }),
       });
       return toProfile(profile);
     },
 
     async updateProfile(id: string, patch: ProfilePatch, _requesterId: string) {
       rejectRolePatch(patch);
+      if (patch.name !== undefined) validateUsername(patch.name);
       const { profile } = await api<{ profile: ProfileRow }>(
         `/profiles/${encodeURIComponent(id)}`,
         {
@@ -386,6 +404,7 @@ export function createHttpProfileRepo(): ProfileRepo {
             color: patch.color,
             image_url: patch.imageUrl,
             name: patch.name,
+            full_name: patch.fullName,
             theme: patch.theme !== undefined ? patch.theme.trim() || null : undefined,
             palette: patch.palette !== undefined ? patch.palette.trim() || null : undefined,
           }),

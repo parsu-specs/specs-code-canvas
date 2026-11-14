@@ -57,6 +57,13 @@ describe("mention search", () => {
 });
 
 describe("permanent mention bindings", () => {
+  it("treats hyphens and underscores as part of the username", () => {
+    const profiles = [profile("alex"), profile("alex-reyes"), profile("alex_reyes")];
+    expect(captureMentions("@alex-unknown @alex_other @alex-reyes @alex_reyes", profiles)).toEqual([
+      { name: "alex-reyes", userId: "alex-reyes" },
+      { name: "alex_reyes", userId: "alex_reyes" },
+    ]);
+  });
   it("retains the original user after rename and name reuse, including description edits", () => {
     const saved = captureMentions("Built with @Alice", [profile("Alice", "original")]);
     const current = [profile("Alicia", "original"), profile("Alice", "new-owner")];

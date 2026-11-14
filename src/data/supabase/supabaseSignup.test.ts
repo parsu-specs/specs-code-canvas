@@ -87,7 +87,65 @@ it("maps auth session events and unsubscribes from the backend", () => {
   expect(unsubscribe).toHaveBeenCalledOnce();
 });
 
+it.each([
+  { app_metadata: { provider: "google" } },
+  { app_metadata: { provider: "email", providers: ["email", "google"] } },
+  { identities: [{ provider: "google" }] },
+])(
+  "checks profile existence for Google identities regardless of cached username: %j",
+  (identity) => {
+    let notify!: (event: string, session: unknown) => void;
+    vi.mocked(getSupabase).mockReturnValue({
+      auth: {
+        onAuthStateChange: vi.fn((callback) => {
+          notify = callback;
+          return { data: { subscription: { unsubscribe: vi.fn() } } };
+        }),
+      },
+    } as never);
+    const listener = vi.fn();
+    createSupabaseAuthRepo().subscribeSession!(listener);
+    notify("SIGNED_IN", {
+      user: {
+        id: "google-user",
+        email: "alex@example.com",
+        user_metadata: { name: "Alex Reyes", username: "alex_reyes", full_name: "Alex Reyes" },
+        ...identity,
+      },
+    });
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requiresProfileSetup: true,
+        name: "alex_reyes",
+        fullName: "Alex Reyes",
+      }),
+    );
+  },
+);
+
 describe("supabase signup duplicate detection", () => {
+  it("stores the full name separately from the unique username in auth metadata", async () => {
+    mockSignUp({
+      data: {
+        user: { id: "u9", email: "alex@example.com", identities: [{ id: "i1" }] },
+        session: {},
+      },
+      error: null,
+    });
+    const user = await createSupabaseAuthRepo().signup(
+      "alexreyes",
+      "alex@example.com",
+      "secret123",
+      undefined,
+      "Alex Reyes",
+    );
+    expect(user).toMatchObject({ name: "alexreyes", fullName: "Alex Reyes" });
+    expect(getSupabase().auth.signUp).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: { data: { name: "alexreyes", username: "alexreyes", full_name: "Alex Reyes" } },
+      }),
+    );
+  });
   it("rejects an already-registered email instead of fake success", async () => {
     // Supabase anti-enumeration shape: obfuscated user, zero identities.
     mockSignUp({
@@ -133,7 +191,7 @@ describe("supabase signup display-name pre-check", () => {
       auth: { signUp },
     } as never);
     await expect(createSupabaseAuthRepo().signup("Ann", "a@x.com", "secret1")).rejects.toThrow(
-      "display name is already taken",
+      "username is already taken",
     );
     expect(signUp).not.toHaveBeenCalled();
   });
@@ -151,7 +209,7 @@ describe("supabase signup display-name pre-check", () => {
       auth: { signUp: vi.fn() },
     } as never);
     await expect(createSupabaseAuthRepo().signup("Ann", "a@x.com", "secret1")).rejects.toThrow(
-      "Could not check display name availability",
+      "Could not check username availability",
     );
   });
 });

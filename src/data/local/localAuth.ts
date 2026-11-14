@@ -1,3 +1,5 @@
+import { validateUsername } from "../../utils/username";
+import { validateFullName } from "../../utils/fullName";
 import { MOCK_USERS } from "../../auth/mockCredentials";
 import { loadProfiles } from "./localProfiles";
 import {
@@ -17,6 +19,7 @@ type LocalAccount = {
   id: string;
   email: string;
   name: string;
+  fullName?: string;
   salt: string;
   passwordHash: string;
 };
@@ -101,6 +104,14 @@ function loadNameOverrides(): Record<string, string> {
 }
 
 function applyOverride(user: User): User {
+  const profile = loadProfiles().find((entry) => entry.id === user.id);
+  if (profile)
+    return {
+      ...user,
+      name: profile.name,
+      fullName: profile.fullName ?? user.fullName,
+      requiresProfileSetup: false,
+    };
   const custom = loadNameOverrides()[user.id]?.trim();
   return custom ? { ...user, name: custom } : user;
 }
@@ -134,16 +145,28 @@ export function createLocalAuthRepo(): AuthRepo {
       }
       const local = loadLocalUsers().find((u) => u.email.toLowerCase() === normalizedEmail);
       if (local && (await hashPassword(password, local.salt)) === local.passwordHash) {
-        const user = applyOverride({ id: local.id, email: local.email, name: local.name });
+        const user = applyOverride({
+          id: local.id,
+          email: local.email,
+          name: local.name,
+          fullName: local.fullName,
+        });
         localStorage.setItem(SESSION_KEY, JSON.stringify(user));
         return user;
       }
       throw new AuthError();
     },
 
-    async signup(name: string, email: string, password: string): Promise<User> {
+    async signup(
+      name: string,
+      email: string,
+      password: string,
+      _captchaToken?: string,
+      fullName?: string,
+    ): Promise<User> {
       await delay();
-      const cleanName = name.trim().slice(0, 40);
+      const cleanName = validateUsername(name);
+      const cleanFullName = fullName !== undefined ? validateFullName(fullName) : cleanName;
       const cleanEmail = email.trim();
       if (!cleanName) throw new Error("Name is required.");
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail))
@@ -151,7 +174,7 @@ export function createLocalAuthRepo(): AuthRepo {
       if (password.length < 6) throw new Error("Password must be at least 6 characters.");
       if (emailTaken(cleanEmail))
         throw new Error("That email is already registered. Sign in instead.");
-      // Display names are unique across the whole local identity domain:
+      // Usernames are unique across the whole local identity domain:
       // profiles (including seeds), already-created accounts, Google users,
       // and renames stored in the override map. Profiles alone would miss the
       // window right after signup, before ensureUserProfile adds the row.
@@ -161,12 +184,13 @@ export function createLocalAuthRepo(): AuthRepo {
         loadLocalUsers().some((u) => u.name.trim().toLowerCase() === lowerName) ||
         Object.values(loadGoogleUsers()).some((r) => r.name.trim().toLowerCase() === lowerName) ||
         Object.values(loadNameOverrides()).some((n) => n.trim().toLowerCase() === lowerName);
-      if (nameClash) throw new Error("That display name is already taken. Try another.");
+      if (nameClash) throw new Error("That username is already taken. Try another.");
       const salt = randomSalt();
       const account: LocalAccount = {
         id: `local-${randomSalt()}`,
         email: cleanEmail,
         name: cleanName,
+        fullName: cleanFullName,
         salt,
         passwordHash: await hashPassword(password, salt),
       };
@@ -176,7 +200,12 @@ export function createLocalAuthRepo(): AuthRepo {
       } catch {
         throw new Error("Storage is full. Could not create your account.");
       }
-      const user = applyOverride({ id: account.id, email: account.email, name: account.name });
+      const user = applyOverride({
+        id: account.id,
+        email: account.email,
+        name: account.name,
+        fullName: account.fullName,
+      });
       localStorage.setItem(SESSION_KEY, JSON.stringify(user));
       return user;
     },
@@ -247,13 +276,19 @@ export function createLocalAuthRepo(): AuthRepo {
       // so the user automatically lands on their existing profile (still editable).
       // Unverified emails always get a separate account to prevent impersonation.
       let id = `google-${subject}`;
-      let name = (account.name.trim() || email.split("@")[0]).slice(0, 40);
+      let name = "";
+      let fullName = account.name.trim().slice(0, 100) || "Member";
       if (account.emailVerified === true) {
+        const localMatch = loadLocalUsers().find((u) => u.email.toLowerCase() === normalizedEmail);
         const mockMatch = MOCK_USERS.find((u) => u.email.toLowerCase() === normalizedEmail);
         const googleMatch = Object.values(stored).find(
           (record) => record.email.toLowerCase() === normalizedEmail,
         );
-        if (mockMatch) {
+        if (localMatch) {
+          id = localMatch.id;
+          name = localMatch.name;
+          fullName = localMatch.fullName ?? localMatch.name;
+        } else if (mockMatch) {
           id = mockMatch.id;
           name = mockMatch.name;
         } else if (googleMatch) {
@@ -262,9 +297,13 @@ export function createLocalAuthRepo(): AuthRepo {
         }
       }
       const known = stored[subject];
-      const record = { id, email, name: known?.name ?? name };
+      const record = { id, email, name: known?.name ?? name, fullName };
       localStorage.setItem(GOOGLE_USERS_KEY, JSON.stringify({ ...stored, [subject]: record }));
-      const user = applyOverride({ id, email, name: record.name });
+      const user = applyOverride({ id, email, name: record.name || fullName, fullName });
+      user.requiresProfileSetup =
+        !loadProfiles().some((profile) => profile.id === id) &&
+        !loadLocalUsers().some((entry) => entry.id === id) &&
+        !MOCK_USERS.some((entry) => entry.id === id);
       localStorage.setItem(SESSION_KEY, JSON.stringify(user));
       return { user, picture: account.picture };
     },
@@ -277,12 +316,11 @@ export function createLocalAuthRepo(): AuthRepo {
     async updateName(name: string): Promise<User> {
       await delay(80);
       const clean = name.trim();
-      if (!clean) throw new Error("Name is required.");
-      if (clean.length > 40) throw new Error("Keep your name under 40 characters.");
+      validateUsername(clean);
       const raw = localStorage.getItem(SESSION_KEY);
       if (!raw) throw new Error("You are not signed in.");
       const session = JSON.parse(raw) as User;
-      const updated: User = { ...session, name: clean };
+      const updated: User = { ...session, name: clean, requiresProfileSetup: false };
       localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
       const overrides = loadNameOverrides();
       localStorage.setItem(NAMES_KEY, JSON.stringify({ ...overrides, [session.id]: clean }));

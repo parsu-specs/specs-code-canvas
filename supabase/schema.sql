@@ -21,6 +21,7 @@ create extension if not exists "pgcrypto";
 create table if not exists profiles (
   id text primary key, -- matches auth user id (mock/google ids during prototype)
   name text not null,
+  full_name text check (full_name is null or char_length(btrim(full_name)) between 1 and 100),
   role text not null default 'Guest',
   bio text not null default '',
   color text not null default 'sky',
@@ -397,8 +398,8 @@ returns jsonb language sql stable set search_path = public as $$
     cross join lateral generate_series(1, length(content)) pos
     where c.name <> '' and substring(content from pos for 1) = '@'
       and lower(substring(content from pos + 1 for length(c.name))) = lower(c.name)
-      and (pos = 1 or substring(content from pos - 1 for 1) !~ '[[:alnum:]_@]')
-      and substring(content from pos + length(c.name) + 1 for 1) !~ '[[:alnum:]_]'
+      and (pos = 1 or substring(content from pos - 1 for 1) !~ '[[:alnum:]_@-]')
+      and substring(content from pos + length(c.name) + 1 for 1) !~ '[[:alnum:]_-]'
     order by pos, length(c.name) desc, c.priority, c.user_id
   ), matches as (
     select distinct on (lower(name)) name, user_id from hits order by lower(name), pos

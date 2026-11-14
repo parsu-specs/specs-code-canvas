@@ -5,6 +5,7 @@ import type { AppItem, Comment, Mention, FeedPost, Profile, User } from "../type
 import { accountRole } from "../accountRoles";
 
 export type ProfileRow = {
+  full_name?: string | null;
   id: string;
   name: string;
   role: string;
@@ -70,6 +71,7 @@ export function toProfile(row: ProfileRow): Profile {
   return {
     id: row.id,
     name: row.name,
+    fullName: row.full_name ?? undefined,
     role: accountRole(row.role),
     bio: row.bio,
     color: row.color,
@@ -136,6 +138,18 @@ export function toFeedPost(row: FeedPostRow): FeedPost {
   };
 }
 
-export function toUser(payload: { id: string; email: string; name: string }): User {
-  return { id: payload.id, email: payload.email, name: payload.name };
+export function toUser(payload: {
+  id: string;
+  email: string;
+  name: string;
+  fullName?: string;
+  requiresProfileSetup?: boolean;
+}): User {
+  return {
+    id: payload.id,
+    email: payload.email,
+    name: payload.name,
+    fullName: payload.fullName,
+    requiresProfileSetup: payload.requiresProfileSetup,
+  };
 }

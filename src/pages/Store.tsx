@@ -1,4 +1,5 @@
 import ErrorNotice from "../components/ErrorNotice";
+import { accountRole } from "../data/accountRoles";
 import { HalloweenDecorations } from "../experiments/halloweenTheme";
 import { createPortal } from "react-dom";
 import { Suspense, useMemo, useRef, useState } from "react";
@@ -431,7 +432,7 @@ export default function Store() {
                         {myProfile.name}
                       </span>
                       <span className="mt-1 block text-xs font-bold text-muted">
-                        Community member
+                        {accountRole(myProfile.role)}
                       </span>
                     </span>
                     {myTrophy !== undefined && <TrophyMark minimal place={myTrophy} size={28} />}

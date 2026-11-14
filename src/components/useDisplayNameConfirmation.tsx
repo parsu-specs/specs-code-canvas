@@ -24,7 +24,7 @@ export function useDisplayNameConfirmation() {
   const confirmationModal = message && (
     <Modal
       id="change-display-name"
-      title="Change display name?"
+      title="Change username?"
       description={message}
       onClose={() => finish(false)}
     >
@@ -33,7 +33,7 @@ export function useDisplayNameConfirmation() {
           Keep editing
         </Button>
         <Button variant="danger" onClick={() => finish(true)}>
-          Change display name
+          Change username
         </Button>
       </div>
     </Modal>

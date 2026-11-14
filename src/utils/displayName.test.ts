@@ -4,7 +4,7 @@ import { confirmDisplayNameChange } from "./displayName";
 
 afterEach(() => vi.unstubAllGlobals());
 
-describe("display name changes", () => {
+describe("username changes", () => {
   const profile = { id: "me", name: "Original" };
 
   function setup(existing: { id: string } | null = null, accepted = true) {
@@ -25,8 +25,8 @@ describe("display name changes", () => {
 
   it("checks the trimmed name and warns that the old name becomes available", async () => {
     const { repo, confirm, getProfileByName } = setup();
-    expect(await confirmDisplayNameChange(repo, profile, " New name ", confirm)).toBe(true);
-    expect(getProfileByName).toHaveBeenCalledWith("New name");
+    expect(await confirmDisplayNameChange(repo, profile, " new-name ", confirm)).toBe(true);
+    expect(getProfileByName).toHaveBeenCalledWith("new-name");
     expect(confirm).toHaveBeenCalledWith(
       expect.stringContaining("“Original”, will become available for others to take"),
     );
@@ -34,7 +34,7 @@ describe("display name changes", () => {
 
   it("allows the user to cancel", async () => {
     const { repo, confirm } = setup(null, false);
-    expect(await confirmDisplayNameChange(repo, profile, "New name", confirm)).toBe(false);
+    expect(await confirmDisplayNameChange(repo, profile, "new-name", confirm)).toBe(false);
   });
 
   it("does not check or prompt for an unchanged name", async () => {

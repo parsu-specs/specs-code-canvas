@@ -32,7 +32,7 @@ Vite selects the backend through `@data-backend` at build time, keeping unused S
 4. For the custom HTTP backend only, implement this endpoint contract. Supabase mode uses its SDK/PostgREST/RPCs directly and does not require this REST server:
    - `GET /auth/session` → `{ user }` (401 when signed out)
    - `POST /auth/signin {email, password}` → `{ user, token }`
-   - `POST /auth/signup {name, email, password}` → `{ user, token }` (existing email, case-insensitive → 409 `{ message }` naming the clash, never a second account)
+   - `POST /auth/signup {name, fullName, email, password}` → `{ user, token }` (existing email, case-insensitive → 409 `{ message }` naming the clash, never a second account)
    - `POST /auth/google {accessToken}` → `{ user, token, picture? }`.
      Server MUST fetch Google userinfo itself and match verified email → account.
      Never trust client-sent claims.
@@ -56,7 +56,7 @@ Vite selects the backend through `@data-backend` at build time, keeping unused S
    - `PUT /milestones/:id/cheer {liked: boolean}` → `{ milestone }` (idempotent desired state used by the UI)
    - `GET /profiles` → `{ profiles }` · `GET /profiles/:id` → `{ profile }`
    - `GET /profiles/by-name/:name` → `{ profile }` (404 → null)
-   - `POST /profiles/ensure {id, email, name}` → `{ profile }`
+   - `POST /profiles/ensure {id, email, name, fullName}` → `{ profile }`
    - `PATCH /profiles/:id` → `{ profile }` (owner only; reject role changes)
    - Errors as `{ message }` with proper HTTP status (404 drives not-found UI).
 
@@ -130,3 +130,9 @@ returning `{ milestone }` with the final counter and viewer state.
 ## Project versioning
 
 Existing Supabase databases must apply `supabase/migrations/20261113000100_project_versions.sql` before deploying the versioning UI. See [project versioning](project-versioning.md) for stage fields, atomic publication snapshots, retained images, and the extended HTTP contract.
+
+## Full names and usernames
+
+Apply `supabase/migrations/20261114000100_profile_full_names.sql` before deploying this version (including fresh setups after `schema.sql`). `profiles.name` remains the unique username for URLs and mentions; `profiles.full_name` is the non-unique full name, up to 100 characters. Existing usernames keep their links. New usernames and renames require 3-30 ASCII letters, numbers, underscores or hyphens, beginning and ending with a letter or number; uniqueness is case-insensitive.
+
+New Google accounts see a two-step onboarding card: Google connected, then Your profile. The full name is prefilled from Google and remains editable; the username starts empty and must pass format and availability checks. The card previews the public profile and identifies the connected Google account. A profile is created only after submission. Existing profiles skip onboarding, including linked Google identities and accounts with older metadata. The onboarding and recovery screens dismiss the startup splash themselves so an OAuth redirect cannot leave their controls covered. Users can change either field later in profile editing or Settings. Custom HTTP backends must enforce the same rules and return `fullName` on users and `full_name` on profile rows; `/auth/google` must return `requiresProfileSetup: true` for Google sessions requiring a profile check (also on session restoration). Actual profile existence determines whether onboarding appears. Profile creation must validate the chosen username after verifying the Google identity.

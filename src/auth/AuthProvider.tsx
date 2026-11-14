@@ -1,7 +1,10 @@
 import { authContext } from "./authContext";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { getAuthRepo, getProfileRepo } from "../data/factory";
-import type { GoogleAccount } from "../data/repositories";
+import { NotFoundError, type GoogleAccount } from "../data/repositories";
+import GoogleProfileSetup from "./GoogleProfileSetup";
+import { Button } from "../components/Button";
+import StartupReady from "../components/StartupReady";
 import type { Profile, User } from "../data/types";
 import { cacheProfile, loadCachedProfile, setActiveViewer } from "../utils/viewerCache";
 import { initializePalette, resolvePalette, setPalette } from "../utils/palette";
@@ -11,6 +14,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [setupState, setSetupState] = useState<"ready" | "checking" | "required" | "error">(
+    "ready",
+  );
   const userRef = useRef<User | null>(null);
   const sessionRevision = useRef(0);
   const profileRevision = useRef(0);
@@ -24,7 +30,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       session &&
       previous.id === session.id &&
       previous.email === session.email &&
-      previous.name === session.name
+      previous.name === session.name &&
+      previous.requiresProfileSetup === session.requiresProfileSetup
     ) {
       // Token refreshes must not reset cached presentation or pending edits.
       return;
@@ -39,6 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setActiveViewer(session?.id ?? null);
     const cached = session ? loadCachedProfile(session.id) : null;
     setProfile(cached);
+    setSetupState(session?.requiresProfileSetup ? "checking" : "ready");
     initializePalette();
     if (cached?.palette) setPalette(resolvePalette(cached.palette));
     setUser(session);
@@ -57,12 +65,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!current) return;
     if (profileRequest.current?.user === current) return profileRequest.current.promise;
     const revision = profileRevision.current;
-    const promise = getProfileRepo()
-      .ensureUserProfile(current)
+    const repo = getProfileRepo();
+    const promise = (
+      current.requiresProfileSetup
+        ? repo.getProfile(current.id).then(() => repo.ensureUserProfile(current))
+        : repo.ensureUserProfile(current)
+    )
       .then((next) => {
         // Ignore old sessions and responses superseded by a profile edit.
-        if (userRef.current === current && profileRevision.current === revision)
+        if (userRef.current === current && profileRevision.current === revision) {
           updateCachedProfile(next);
+          setSetupState("ready");
+        }
+      })
+      .catch((error) => {
+        if (
+          current.requiresProfileSetup &&
+          userRef.current === current &&
+          profileRevision.current === revision
+        ) {
+          setSetupState(error instanceof NotFoundError ? "required" : "error");
+          return;
+        }
+        throw error;
       });
     profileRequest.current = { user: current, promise };
     try {
@@ -117,9 +142,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Returns an error message on failure, null on success.
-  const signup = async (name: string, email: string, password: string, captchaToken?: string) => {
+  const signup = async (
+    name: string,
+    email: string,
+    password: string,
+    captchaToken?: string,
+    fullName?: string,
+  ) => {
     try {
-      const session = await getAuthRepo().signup(name, email, password, captchaToken);
+      const session = await getAuthRepo().signup(name, email, password, captchaToken, fullName);
       changeSession(session);
       return null;
     } catch (e) {
@@ -161,6 +192,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (profile) updateCachedProfile({ ...profile, name: updated.name });
   };
 
+  const completeGoogleProfile = async (fullName: string, name: string) => {
+    const current = userRef.current;
+    if (!current) return;
+    const next = { ...current, name, fullName, requiresProfileSetup: false };
+    const owner = await getProfileRepo().getProfileByName(name);
+    if (owner && owner.id !== current.id)
+      throw new Error("That username is already taken. Try another.");
+    const saved = await getProfileRepo().ensureUserProfile(next);
+    const updated = await getAuthRepo().updateName(name);
+    if (userRef.current?.id !== current.id) return;
+    userRef.current = { ...updated, fullName, requiresProfileSetup: false };
+    setUser(userRef.current);
+    updateCachedProfile(saved);
+    setSetupState("ready");
+  };
+
   return (
     <authContext.Provider
       value={{
@@ -176,7 +223,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateName,
       }}
     >
-      {children}
+      {setupState === "required" && user ? (
+        <GoogleProfileSetup
+          profileId={user.id}
+          email={user.email}
+          initialName={user.fullName ?? user.name}
+          onComplete={completeGoogleProfile}
+          onSignout={signout}
+        />
+      ) : setupState === "checking" ? (
+        <main className="grid min-h-screen place-items-center" role="status">
+          Checking your profile…
+        </main>
+      ) : setupState === "error" ? (
+        <main className="grid min-h-screen place-items-center">
+          <StartupReady />
+          <div className="space-y-4 text-center">
+            <p role="alert">Could not load your profile. Try again.</p>
+            <Button
+              onClick={() => {
+                setSetupState("checking");
+                void refreshProfile();
+              }}
+            >
+              Try again
+            </Button>
+            <Button variant="text" onClick={() => void signout()}>
+              Sign out
+            </Button>
+          </div>
+        </main>
+      ) : (
+        children
+      )}
     </authContext.Provider>
   );
 };

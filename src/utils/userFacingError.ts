@@ -1,8 +1,12 @@
+import { USERNAME_ERROR } from "./username";
+
 const fallback = "Something went wrong. Please try again.";
 
 // Only reviewed messages may pass through. Never display arbitrary server text,
 // even when it looks like a readable sentence.
 const safeMessages = new Set([
+  USERNAME_ERROR,
+  "Complete your profile to continue.",
   "Choose a valid project stage.",
   "Use a version like v0.1, v1.0, or v2.0-beta.",
   "Keep the version under 40 characters.",
@@ -15,7 +19,7 @@ const safeMessages = new Set([
 
   "Google sign-in failed. Try again.",
   "That Google sign-in was invalid. Try again.",
-  "Could not check display name availability. Try again.",
+  "Could not check username availability. Try again.",
   "Could not send reset email.",
   "Could not set password.",
   "Could not save password.",
@@ -39,14 +43,16 @@ const safeMessages = new Set([
   "Could not save like. Try again.",
   "Complete the human check first.",
   "Human check failed to load. Check your connection and reload the page.",
-  "Checking display name availability…",
+  "Checking username availability…",
   "That email and password don't match.",
   "Enter a valid email address.",
   "Name is required.",
-  "Display name is required.",
-  "That display name is already taken. Pick another.",
-  "That display name is already taken. Try another.",
-  "That display name is already taken. Try signing in instead.",
+  "Full name is required.",
+  "Keep your full name under 100 characters.",
+  "Username is required.",
+  "That username is already taken. Pick another.",
+  "That username is already taken. Try another.",
+  "That username is already taken. Try signing in instead.",
   "That name is already taken by another developer.",
   "That email is already registered. Sign in instead.",
   "Password must be at least 6 characters.",

@@ -59,27 +59,49 @@ function renderLogin() {
   act(() => {
     tabs.find((b) => b.textContent === "Create account")!.click();
   });
-  const name = container.querySelector('input[autocomplete="nickname"]') as HTMLInputElement;
+  const name = container.querySelector('input[autocomplete="username"]') as HTMLInputElement;
+  const fullName = container.querySelector('input[autocomplete="name"]') as HTMLInputElement;
+  setInput(fullName, "Alex Reyes");
   const email = container.querySelector('input[type="email"]') as HTMLInputElement;
   const password = container.querySelector('input[type="password"]') as HTMLInputElement;
   const submit = () => container.querySelector('button[type="submit"]') as HTMLButtonElement;
   return { container, name, email, password, submit };
 }
 
-it("flags a taken display name and blocks account creation", async () => {
+it("flags a taken username and blocks account creation", async () => {
   vi.useFakeTimers();
   const { container, name, email, password, submit } = renderLogin();
   lookup.mockResolvedValueOnce({ id: "someone-else" });
-  setInput(name, "Mia Santos");
+  setInput(name, "mia-santos");
   await act(async () => {
     await vi.advanceTimersByTimeAsync(400);
   });
   // The live flag from the availability checker is visible.
-  expect(container.textContent).toContain("That display name is already taken.");
+  expect(container.textContent).toContain("That username is already taken.");
   setInput(email, "newbie@example.com");
   setInput(password, "secret123");
   expect(submit().disabled).toBe(true);
   expect(signup).not.toHaveBeenCalled();
+});
+
+it("uses password-manager hints appropriate to sign-in and account creation", () => {
+  const { container } = renderLogin();
+  expect(container.querySelector('input[type="email"]')?.getAttribute("autocomplete")).toBe(
+    "email",
+  );
+  expect(container.querySelector('input[type="password"]')?.getAttribute("autocomplete")).toBe(
+    "new-password",
+  );
+  act(() => {
+    Array.from(container.querySelectorAll('button[role="tab"]'))
+      .find((button) => button.textContent === "Sign in")!
+      .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  });
+  expect(container.querySelector('input[type="password"]')?.getAttribute("autocomplete")).toBe(
+    "current-password",
+  );
+  expect(container.querySelector('input[autocomplete="name"]')).toBeNull();
+  expect(container.querySelector("h1")?.textContent).toBe("Welcome back");
 });
 
 it("reports the wait when submitting while the name check is still running", async () => {
@@ -92,7 +114,7 @@ it("reports the wait when submitting while the name check is still running", asy
         resolveLookup = resolve;
       }),
   );
-  setInput(name, "Mia Santos");
+  setInput(name, "mia-santos");
   setInput(email, "newbie@example.com");
   setInput(password, "secret123");
   // Still "checking": submitting through the form reports the wait.
@@ -100,7 +122,7 @@ it("reports the wait when submitting while the name check is still running", asy
   await act(async () => {
     form.dispatchEvent(new window.Event("submit", { bubbles: true, cancelable: true }));
   });
-  expect(container.textContent).toContain("Checking display name availability");
+  expect(container.textContent).toContain("Checking username availability");
   expect(signup).not.toHaveBeenCalled();
   await act(async () => {
     await vi.advanceTimersByTimeAsync(400);
@@ -110,11 +132,11 @@ it("reports the wait when submitting while the name check is still running", asy
   expect(signup).not.toHaveBeenCalled();
 });
 
-it("creates the account once a fresh display name is available", async () => {
+it("creates the account once a fresh username is available", async () => {
   vi.useFakeTimers();
   const { name, email, password, submit } = renderLogin();
   lookup.mockResolvedValueOnce(null);
-  setInput(name, "Fresh Name");
+  setInput(name, "fresh-name");
   await act(async () => {
     await vi.advanceTimersByTimeAsync(400);
   });
@@ -125,9 +147,10 @@ it("creates the account once a fresh display name is available", async () => {
     submit().click();
   });
   expect(signup).toHaveBeenCalledExactlyOnceWith(
-    "Fresh Name",
+    "fresh-name",
     "fresh@example.com",
     "secret123",
     undefined,
+    "Alex Reyes",
   );
 });

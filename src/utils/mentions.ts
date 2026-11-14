@@ -1,6 +1,6 @@
 import type { Mention, Profile } from "../data/types";
 
-/** The @query immediately before the caret; supports full display names. */
+/** The @query immediately before the caret; supports full usernames. */
 export function findMentionQuery(text: string, cursor: number) {
   const match = /(?:^|[\s(])@([^@\r\n]*)$/u.exec(text.slice(0, cursor));
   return match ? { query: match[1], start: cursor - match[1].length - 1 } : null;
@@ -29,7 +29,7 @@ export function mentionPattern(names: string[]): RegExp | null {
     .sort((a, b) => b.length - a.length)
     .map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   return escaped.length
-    ? new RegExp(`(?<![\\p{L}\\p{N}_@])(@(?:${escaped.join("|")}))(?![\\p{L}\\p{N}_])`, "giu")
+    ? new RegExp(`(?<![\\p{L}\\p{N}_@-])(@(?:${escaped.join("|")}))(?![\\p{L}\\p{N}_-])`, "giu")
     : null;
 }
 

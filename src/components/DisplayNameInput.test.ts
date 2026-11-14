@@ -86,12 +86,12 @@ it("reports status changes to the parent through onStatusChange", async () => {
       ),
     );
   lookup.mockResolvedValueOnce({ id: "someone-else" }).mockResolvedValueOnce(null);
-  render("Taken Name");
+  render("taken-name");
   await act(async () => {
     await vi.advanceTimersByTimeAsync(400);
   });
   expect(report).toHaveBeenLastCalledWith("taken");
-  render("Free Name");
+  render("free-name");
   await act(async () => {
     await vi.advanceTimersByTimeAsync(400);
   });

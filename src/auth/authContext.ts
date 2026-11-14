@@ -14,6 +14,7 @@ type AuthContext = {
     email: string,
     password: string,
     captchaToken?: string,
+    fullName?: string,
   ) => Promise<string | null>;
   signinWithGoogleAccount: (
     account: GoogleAccount,

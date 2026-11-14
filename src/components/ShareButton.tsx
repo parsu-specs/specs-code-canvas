@@ -34,7 +34,7 @@ export default function ShareButton({
       <Button
         variant={variant}
         size={size === "compact" && iconOnly ? "compact-icon" : size}
-        className={`${iconOnly ? "size-8 shrink-0 rounded-full max-sm:size-11" : ""} max-sm:min-h-11 max-sm:min-w-11 max-sm:gap-0 max-sm:border-0 max-sm:bg-transparent max-sm:p-2 max-sm:hover:bg-transparent`}
+        className={`${iconOnly ? "size-8 shrink-0 rounded-full max-sm:size-11" : ""} ${profile ? "w-full sm:w-auto" : "max-sm:min-h-11 max-sm:min-w-11 max-sm:gap-0 max-sm:border-0 max-sm:bg-transparent max-sm:p-2 max-sm:hover:bg-transparent"}`}
         onClick={() => setOpen(true)}
         aria-label={`Share ${title}`}
         title={`Share ${title}`}
@@ -42,7 +42,7 @@ export default function ShareButton({
         aria-expanded={open}
       >
         <ShareNetwork size={size === "compact" ? 16 : 18} weight="bold" aria-hidden="true" />
-        {!iconOnly && <span className="hidden sm:inline">Share</span>}
+        {!iconOnly && <span className={profile ? undefined : "hidden sm:inline"}>Share</span>}
       </Button>
       {open && (
         <Modal
