@@ -28,10 +28,10 @@ export function normalizePathname(pathname: string) {
   return clean;
 }
 
-/** Resolve canonical URLs and authentication without changing the public home page. */
+/** Resolve canonical URLs and choose the entry page for the current session. */
 export function resolveRoute(pathname: string, signedIn: boolean) {
   const path = normalizePathname(pathname);
-  if (signedIn && path === ROUTES.signin) return ROUTES.discover;
+  if (signedIn && (path === ROUTES.home || path === ROUTES.signin)) return ROUTES.discover;
   if (!signedIn && isProtectedRoute(path)) return ROUTES.signin;
   return path;
 }

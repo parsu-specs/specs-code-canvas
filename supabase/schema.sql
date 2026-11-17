@@ -28,6 +28,7 @@ create table if not exists profiles (
   image_url text,
   theme text,
   palette text,
+  appearance text check (appearance is null or appearance in ('light', 'dark', 'system')),
   created_at timestamptz not null default now()
 );
 

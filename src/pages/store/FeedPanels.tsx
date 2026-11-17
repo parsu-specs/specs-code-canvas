@@ -62,7 +62,7 @@ export default function FeedPanels({
           ref={highlightsRef}
           id="feed-highlights-panel"
           aria-label="Featured apps and official announcements"
-          className={`min-w-0 ${showHighlights ? "block" : "hidden"} @min-[52rem]/content:block @min-[52rem]/content:sticky @min-[52rem]/content:[--feed-highlights-bottom:calc(7rem+env(safe-area-inset-bottom,0px))] @min-[52rem]/content:top-[min(calc(var(--spacing-header)+2rem),calc(100dvh-var(--feed-highlights-height,0px)-var(--feed-highlights-bottom)))] lg:@min-[52rem]/content:[--feed-highlights-bottom:2rem]`}
+          className={`min-w-0 ${showHighlights ? "block" : "hidden"} @min-[52rem]/content:block @min-[52rem]/content:sticky @min-[52rem]/content:[--feed-highlights-bottom:calc(7rem+var(--app-bottom-inset))] @min-[52rem]/content:top-[min(calc(var(--spacing-header)+2rem),calc(100dvh-var(--feed-highlights-height,0px)-var(--feed-highlights-bottom)))] lg:@min-[52rem]/content:[--feed-highlights-bottom:2rem]`}
         >
           {highlights}
         </aside>

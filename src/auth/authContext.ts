@@ -1,6 +1,6 @@
 import { createContext, useContext, type Context } from "react";
 import type { GoogleAccount } from "../data/repositories";
-import type { Profile, User } from "../data/types";
+import type { Appearance, Profile, User } from "../data/types";
 
 type AuthContext = {
   user: User | null;
@@ -8,6 +8,9 @@ type AuthContext = {
   profile: Profile | null;
   refreshProfile: () => Promise<void>;
   updateCachedProfile: (profile: Profile) => void;
+  updateAppearance: (appearance: Appearance) => Promise<void>;
+  updatePalette: (palette: string) => Promise<void>;
+  appearanceSaving: boolean;
   signin: (email: string, password: string, captchaToken?: string) => Promise<boolean>;
   signup: (
     name: string,

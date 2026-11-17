@@ -14,9 +14,10 @@ type Props = {
   imageUrl?: string;
   onSave: (imageUrl: string) => Promise<void>;
   onClose: () => void;
+  exiting?: boolean;
 };
 
-export default function ProfilePhotoPicker({ name, imageUrl, onSave, onClose }: Props) {
+export default function ProfilePhotoPicker({ name, imageUrl, onSave, onClose, exiting }: Props) {
   const [draft, setDraft] = useState(imageUrl ?? "");
   const [editFile, setEditFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -25,6 +26,9 @@ export default function ProfilePhotoPicker({ name, imageUrl, onSave, onClose }: 
   const request = useRef<AbortController | null>(null);
   const saveLock = useRef(false);
   useEffect(() => () => request.current?.abort(), []);
+  useEffect(() => {
+    if (exiting) request.current?.abort();
+  }, [exiting]);
 
   const editPicture = async () => {
     if (!isSafeImageUrl(draft) || busy) return;
@@ -69,6 +73,7 @@ export default function ProfilePhotoPicker({ name, imageUrl, onSave, onClose }: 
   return (
     <Modal
       id="profile-photo-editor"
+      exiting={exiting}
       title="Edit profile picture"
       onClose={onClose}
       closeDisabled={saving}

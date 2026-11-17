@@ -1,7 +1,8 @@
 import { darkPaletteFor } from "./darkPalettes";
 import { activeViewerId, viewerSettingKey } from "./viewerCache";
+import type { Appearance } from "../data/types";
 
-export type Appearance = "light" | "dark" | "system";
+export type { Appearance } from "../data/types";
 
 const STORAGE_KEY = "cc.appearance.v1";
 const CHANGE_EVENT = "cc:appearance-change";

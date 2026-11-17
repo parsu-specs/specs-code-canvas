@@ -1,8 +1,10 @@
-import ProjectImage from "./ProjectImage";
+import AppCard from "./AppCard";
+import { PostTimeProvider } from "./PostTimestamp";
+import ErrorNotice from "./ErrorNotice";
+import { debouncedVotes } from "../utils/debouncedVotes";
+import { playVoteSound } from "../utils/sounds";
 import { accountRole, canSubmitProjects } from "../data/accountRoles";
-import VotersDialog from "./VotersDialog";
 import ShareButton from "./ShareButton";
-import ProjectPlaceholder from "./ProjectPlaceholder";
 import { userFacingError } from "../utils/userFacingError";
 import { AppCardsSkeleton, ProfileSkeleton } from "./Skeleton";
 import React, { useEffect, useRef, useState } from "react";
@@ -17,10 +19,9 @@ import {
 import Avatar from "./Avatar";
 import Input from "./Input";
 import ProfilePhotoPicker from "./ProfilePhotoPicker";
-import MentionText from "./MentionText";
+import { useSheetPresence } from "./useSheetPresence";
 import TrophyMark from "./TrophyMark";
 import { Button } from "./Button";
-import UploadStamp from "./UploadStamp";
 import { useAuth } from "../auth/authContext";
 import { getAppRepo, getProfileRepo } from "../data/factory";
 import { useScrollToForm } from "../utils/scroll";
@@ -75,6 +76,23 @@ export default function ProfileView({
   );
   const [profile, setProfile] = useState<Profile | null>(initialProfile);
   const [apps, setApps] = useState<AppItem[]>([]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [voteError, setVoteError] = useState<string | null>(null);
+  useEffect(
+    () =>
+      debouncedVotes.subscribe((update) => {
+        if (update.userId !== currentUser?.id) return;
+        setApps((items) =>
+          items.map((app) =>
+            app.id === update.appId
+              ? { ...app, votes: update.votes, viewerHasVoted: update.viewerHasVoted }
+              : app,
+          ),
+        );
+        if (update.error) setVoteError(update.error);
+      }),
+    [currentUser?.id],
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -86,6 +104,7 @@ export default function ProfileView({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [editingPhoto, setEditingPhoto] = useState(false);
+  const photoSheet = useSheetPresence(editingPhoto);
   const editFormRef = useRef<HTMLFormElement>(null);
   useScrollToForm(editing, editFormRef);
 
@@ -128,9 +147,11 @@ export default function ProfileView({
           setBio(p.bio);
         }
         setApps(
-          all.filter((a) =>
-            a.creatorId ? a.creatorId === p.id : a.creator.toLowerCase() === p.name.toLowerCase(),
-          ),
+          all
+            .filter((a) =>
+              a.creatorId ? a.creatorId === p.id : a.creator.toLowerCase() === p.name.toLowerCase(),
+            )
+            .map((app) => debouncedVotes.project(app, currentUser?.id)),
         );
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not load profile.");
@@ -284,8 +305,9 @@ export default function ProfileView({
           </div>
         </div>
 
-        {isSelf && editingPhoto && (
+        {isSelf && photoSheet.present && (
           <ProfilePhotoPicker
+            exiting={photoSheet.closing}
             name={profile.name}
             imageUrl={profile.imageUrl}
             onClose={() => setEditingPhoto(false)}
@@ -380,77 +402,37 @@ export default function ProfileView({
           {userFacingError(error)}
         </p>
       ) : apps.length ? (
-        <div className="min-w-0 flex flex-wrap justify-center gap-6 lg:justify-start max-w-full">
-          {apps.map((app) => (
-            <article
-              key={app.id}
-              className="app-card toon-card toon-paper bg-panel flex w-full min-w-0 max-w-sm flex-[1_1_18rem] flex-col p-4 text-left"
-            >
-              {app.screenshots?.[0] ? (
-                <span className="relative block h-48 w-full shrink-0 overflow-hidden rounded-xl border-[3px] border-outline bg-inverse">
-                  <ProjectImage
-                    src={app.screenshots[0]}
-                    alt=""
-                    aria-hidden="true"
-                    loading="lazy"
-                    className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-xl"
-                  />
-                  <ProjectImage
-                    src={app.screenshots[0]}
-                    alt={`${app.title} thumbnail`}
-                    loading="lazy"
-                    className="relative h-full w-full object-contain"
-                  />
-                </span>
-              ) : (
-                <ProjectPlaceholder
-                  title={app.title}
-                  color={app.color}
-                  className="h-48 shrink-0 rounded-xl border-[3px] border-outline"
-                />
-              )}
-              <p className="mb-3 mt-2 shrink-0 text-[10px] font-black uppercase text-primary">
-                {app.category}
-              </p>
-              <h4 className="flex min-w-0 max-w-full shrink-0 flex-wrap items-center gap-2 text-xl font-black">
-                <span className="min-w-0 max-w-full line-clamp-2 wrap-anywhere" title={app.title}>
-                  <Button variant="text" onClick={() => onOpenApp(app.id)}>
-                    {app.title}
-                  </Button>
-                </span>
-                {projectTrophies.get(app.id) !== undefined && (
-                  <TrophyMark minimal place={projectTrophies.get(app.id) as 1 | 2 | 3} size={20} />
-                )}
-              </h4>
-              <p className="my-4 min-h-0 line-clamp-4 flex-1 text-xs text-left text-pretty leading-6 text-muted/75">
-                <MentionText
-                  text={app.description}
-                  mentions={app.mentions ?? []}
-                  profiles={[...profiles.values()]}
-                  onOpenProfile={onOpenProfile}
-                />
-              </p>
-              <div className="min-w-0 mt-auto flex min-h-8 shrink-0 flex-wrap items-center gap-3 border-t-2 border-dashed border-divider pt-4 text-sm font-black max-w-full">
-                <span className="min-w-0 flex items-center gap-1 max-w-full">
-                  <Heart size={18} weight="duotone" />
-                  <VotersDialog
-                    appId={app.id}
-                    appTitle={app.title}
-                    totalVotes={app.votes}
-                    onOpenProfile={onOpenProfile}
-                  />
-                </span>
-                <span className="min-w-0 flex items-center gap-1 max-w-full">
-                  <ChatCircleDots size={18} weight="duotone" /> {app.comments}
-                </span>
-                <ShareButton app={app} size="compact" className="ml-auto" />
-              </div>
-              <div className="mt-1 shrink-0">
-                <UploadStamp createdAt={app.createdAt} />
-              </div>
-            </article>
-          ))}
-        </div>
+        <PostTimeProvider>
+          <div className="discovery-grid min-w-0 max-w-full">
+            {apps.map((app) => (
+              <AppCard
+                key={app.id}
+                app={app}
+                user={currentUser}
+                voted={Boolean(app.viewerHasVoted)}
+                onVote={() => {
+                  if (!currentUser) return;
+                  debouncedVotes.toggle(app, currentUser.id, (liked) =>
+                    getAppRepo().setVote(app.id, currentUser.id, liked),
+                  );
+                  playVoteSound();
+                }}
+                expanded={expandedId === app.id}
+                onToggle={(id) => setExpandedId((current) => (current === id ? null : id))}
+                onCommentAdded={(id, count) =>
+                  setApps((items) =>
+                    items.map((item) => (item.id === id ? { ...item, comments: count } : item)),
+                  )
+                }
+                profiles={profiles}
+                trophies={trophies}
+                projectRanks={projectTrophies}
+                onOpenProfile={onOpenProfile}
+                onOpenApp={onOpenApp}
+              />
+            ))}
+          </div>
+        </PostTimeProvider>
       ) : (
         <div className="toon-card toon-paper bg-panel p-10 text-center">
           {isSelf && (
@@ -478,6 +460,7 @@ export default function ProfileView({
           )}
         </div>
       )}
+      {voteError && <ErrorNotice message={voteError} onDismiss={() => setVoteError(null)} />}
     </div>
   );
 }

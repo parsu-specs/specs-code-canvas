@@ -28,10 +28,23 @@ afterEach(() => {
 });
 
 function paint() {
+  for (let frame = 0; frame < 2; frame++) {
+    const callbacks = [...frames.values()];
+    frames.clear();
+    callbacks.forEach((callback) => callback(0));
+  }
+}
+
+it("paints the cover before starting its fade on a fast startup", () => {
+  markStartupReady();
   const callbacks = [...frames.values()];
   frames.clear();
   callbacks.forEach((callback) => callback(0));
-}
+  expect(document.getElementById("app-splash")?.dataset.state).toBeUndefined();
+  expect(document.getElementById("root")!.inert).toBe(true);
+  paint();
+  expect(document.getElementById("app-splash")?.dataset.state).toBe("leaving");
+});
 
 it("keeps one splash until both the initial route and all nested loaders are ready", () => {
   const finishAuth = registerStartupLoading();

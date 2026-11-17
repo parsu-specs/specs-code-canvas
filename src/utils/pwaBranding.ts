@@ -28,7 +28,6 @@ export function initializePwaBranding() {
     const palette = SITE_PALETTE_IDS.find((id) => id === root.dataset.palette) ?? "candy";
     const theme = `${palette}-${root.dataset.mode === "dark" ? "dark" : "light"}`;
     if (theme === lastTheme) return;
-    const previous = lastTheme;
     lastTheme = theme;
     document.cookie = `cc_pwa_theme=${theme}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
     const base = `/pwa/themes/${theme}`;
@@ -43,8 +42,9 @@ export function initializePwaBranding() {
     const manifest = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
     if (manifest) {
       manifest.crossOrigin = "use-credentials";
-      // Initial parse already uses the cookie set by startup-theme.js. Refresh only on a change.
-      if (previous) manifest.replaceWith(manifest.cloneNode(true));
+      // A different href triggers manifest processing; reinserting an identical link may not.
+      // Keep the endpoint and app id stable, and make background fetches cookie-independent.
+      manifest.href = `/manifest.webmanifest?theme=${theme}`;
     }
   };
   sync();

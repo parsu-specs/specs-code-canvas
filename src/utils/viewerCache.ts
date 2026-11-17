@@ -1,4 +1,4 @@
-import type { Profile } from "../data/types";
+import { APPEARANCES, type Appearance, type Profile } from "../data/types";
 
 const backend = import.meta.env.VITE_DATA_SOURCE ?? "local";
 const ACTIVE_KEY = `cc.viewer.v1:${backend}`;
@@ -60,6 +60,9 @@ function profileFields(value: unknown, id: string): Profile | null {
     ...(typeof row.imageUrl === "string" ? { imageUrl: row.imageUrl } : {}),
     ...(typeof row.theme === "string" ? { theme: row.theme } : {}),
     ...(typeof row.palette === "string" ? { palette: row.palette } : {}),
+    ...(APPEARANCES.includes(row.appearance as Appearance)
+      ? { appearance: row.appearance as Appearance }
+      : {}),
   };
 }
 

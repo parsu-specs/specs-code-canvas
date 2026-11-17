@@ -2,6 +2,9 @@ export type Category = "Education" | "Productivity" | "Games" | "Creative";
 
 export type CategoryFilter = Category | "All";
 
+export const APPEARANCES = ["light", "dark", "system"] as const;
+export type Appearance = (typeof APPEARANCES)[number];
+
 /** Original mention label bound permanently to a profile ID. */
 export type Mention = { name: string; userId: string };
 
@@ -168,6 +171,8 @@ export type Profile = {
    * choice (backward compatible).
    */
   palette?: string;
+  /** Account appearance preference; absent keeps the device's existing choice. */
+  appearance?: Appearance;
   createdAt: string;
 };
 

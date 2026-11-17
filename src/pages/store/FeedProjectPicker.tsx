@@ -14,6 +14,7 @@ type Props = {
   selectedId: string;
   onSelect: (id: string) => void;
   onClose: () => void;
+  exiting?: boolean;
   loading?: boolean;
   error?: string | null;
   onRetry?: () => void;
@@ -26,6 +27,7 @@ export default function FeedProjectPicker({
   selectedId,
   onSelect,
   onClose,
+  exiting,
   loading = false,
   error,
   onRetry,
@@ -53,6 +55,7 @@ export default function FeedProjectPicker({
   return (
     <Modal
       id="feed-project-picker"
+      exiting={exiting}
       title="Link a project"
       description="Choose a personal project, a collaboration, or any project in the community."
       onClose={onClose}

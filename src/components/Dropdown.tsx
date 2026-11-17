@@ -1,4 +1,5 @@
 import { CloseButton } from "./CloseButton";
+import { useSheetPresence } from "./useSheetPresence";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { CaretDown, Check } from "@phosphor-icons/react";
@@ -41,6 +42,7 @@ export default function Dropdown(props: DropdownProps) {
     maxHeight: number;
   } | null>(null);
   const open = panel !== null && !disabled;
+  const sheet = useSheetPresence(open ? panel : null);
   const selected = options.filter((option) =>
     props.variant === "checkbox"
       ? props.value.includes(option.value)
@@ -123,9 +125,10 @@ export default function Dropdown(props: DropdownProps) {
   function renderPopup(centered: boolean) {
     return (
       <div
+        data-closing={centered && sheet.closing ? true : undefined}
         className={
           centered
-            ? "fixed inset-0 z-110 flex items-center justify-center bg-inverse/80 p-4 md:hidden"
+            ? "sheet-overlay fixed inset-0 z-110 flex justify-center bg-inverse/80 md:hidden"
             : "hidden md:contents"
         }
       >
@@ -135,7 +138,7 @@ export default function Dropdown(props: DropdownProps) {
           aria-modal={centered ? true : undefined}
           aria-label={label}
           id={`${id}-${centered ? "centered" : "anchored"}`}
-          style={centered ? undefined : (panel ?? undefined)}
+          style={centered ? undefined : sheet.value || undefined}
           className={
             centered
               ? "toon-card flex max-h-[85dvh] w-full max-w-sm flex-col overflow-hidden rounded-2xl bg-panel"
@@ -311,7 +314,7 @@ export default function Dropdown(props: DropdownProps) {
           }
         />
       </Button>
-      {open &&
+      {sheet.present &&
         createPortal(
           <div ref={portalRef} data-dropdown-portal="">
             {renderPopup(true)}

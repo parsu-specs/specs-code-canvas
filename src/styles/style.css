@@ -27,6 +27,51 @@
   overflow: visible;
 }
 
+/* Android already showed the installed app icon in its native launch screen. */
+html[data-native-splash] #app-splash svg {
+  display: none;
+}
+
+:root {
+  --app-bottom-inset: env(safe-area-inset-bottom, 0px);
+}
+
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+  :root {
+    --app-bottom-surface: var(--color-background);
+    background-color: var(--app-bottom-surface);
+  }
+
+  @media (width < 64rem) {
+    :root:has([data-app-bottom-nav]),
+    :root[data-startup-store]:has([data-startup-bottom-nav]) {
+      --app-bottom-surface: var(--color-brand-surface);
+    }
+  }
+
+  /* Installed windows must paint the native navigation area with the open sheet,
+     rather than the app tab bar behind its backdrop. Retain this during exit. */
+  :root:has(.sheet-overlay) {
+    --app-bottom-surface: var(--color-panel);
+  }
+
+  /* Paint the system gesture area even on routes without an app navigation bar.
+     This is the reserved inset itself; it adds no second spacer to the layout. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: auto 0 0;
+    height: var(--app-bottom-inset);
+    background: var(--app-bottom-surface);
+    pointer-events: none;
+    z-index: 51;
+  }
+
+  :root:not(:has([data-app-bottom-nav])) body {
+    padding-bottom: var(--app-bottom-inset);
+  }
+}
+
 #app-splash[data-state="leaving"] {
   opacity: 0;
   pointer-events: none;
@@ -43,6 +88,74 @@
     linear-gradient(var(--color-paper-line) 1px, transparent 1px),
     linear-gradient(90deg, var(--color-paper-line) 1px, transparent 1px);
   background-size: 36px 36px;
+}
+
+.sheet-overlay {
+  align-items: flex-end;
+  overflow: hidden;
+  padding: max(1rem, env(safe-area-inset-top, 0px)) 0 0;
+  animation: sheet-backdrop-in 220ms ease-out both;
+}
+
+.sheet-overlay > :first-child {
+  min-width: 0;
+  max-height: min(90dvh, calc(100dvh - max(1rem, env(safe-area-inset-top, 0px))));
+  margin-block: 0;
+  padding-bottom: var(--app-bottom-inset);
+  border-bottom: 0;
+  border-radius: 1.5rem 1.5rem 0 0;
+  clip-path: none;
+  /* Extend the surface below the viewport while the sheet settles above its edge. */
+  box-shadow: 0 calc(16px + var(--app-bottom-inset)) 0 var(--color-panel);
+  animation: sheet-slide-in 380ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.sheet-overlay[data-closing="true"] {
+  animation: sheet-backdrop-out 220ms ease-in both;
+}
+
+.sheet-overlay[data-closing="true"] > :first-child {
+  pointer-events: none;
+  animation: sheet-slide-out 220ms ease-in both;
+}
+
+@keyframes sheet-slide-in {
+  from {
+    transform: translateY(100%);
+  }
+  70% {
+    transform: translateY(-1px);
+    animation-timing-function: ease-in-out;
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes sheet-slide-out {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes sheet-backdrop-in {
+  from {
+    background-color: transparent;
+  }
+}
+@keyframes sheet-backdrop-out {
+  to {
+    background-color: transparent;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet-overlay,
+  .sheet-overlay > :first-child,
+  .sheet-overlay[data-closing="true"],
+  .sheet-overlay[data-closing="true"] > :first-child {
+    animation: none;
+  }
 }
 
 @utility scrollbar-minimal {
@@ -378,6 +491,10 @@ body:has([data-dropdown-portal]) {
   --color-podium-gold: #494025;
   --color-podium-silver: #353e50;
   --color-podium-bronze: #49372b;
+  --color-trophy-gold: #f5d76e;
+  --color-trophy-silver: #dce4f1;
+  --color-trophy-bronze: #efb27a;
+  --color-trophy-shadow: rgb(0 0 0 / 45%);
   --color-medal-silver: #434d60;
   --color-secondary: #3d304f;
   --color-success: #233e36;

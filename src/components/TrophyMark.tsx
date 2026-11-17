@@ -5,12 +5,13 @@ type Place = 1 | 2 | 3;
 
 const TIERS: Record<
   Place,
-  { light: string; mid: string; dark: string; glowClassName: string; label: string }
+  { light: string; mid: string; dark: string; ink: string; glowClassName: string; label: string }
 > = {
   1: {
     light: "var(--color-gold-light)",
     mid: "var(--color-gold-mid)",
     dark: "var(--color-gold-dark)",
+    ink: "var(--color-trophy-gold, var(--color-gold-dark))",
     glowClassName: "drop-shadow-[0_0_3px_var(--color-gold-glow)]",
     label: "Ranked #1",
   },
@@ -18,6 +19,7 @@ const TIERS: Record<
     light: "var(--color-metal-highlight)",
     mid: "var(--color-silver-mid)",
     dark: "var(--color-silver-dark)",
+    ink: "var(--color-trophy-silver, var(--color-silver-dark))",
     glowClassName: "drop-shadow-[0_0_3px_var(--color-silver-glow)]",
     label: "Ranked #2",
   },
@@ -25,6 +27,7 @@ const TIERS: Record<
     light: "var(--color-bronze-light)",
     mid: "var(--color-bronze-mid)",
     dark: "var(--color-bronze-dark)",
+    ink: "var(--color-trophy-bronze, var(--color-bronze-dark))",
     glowClassName: "drop-shadow-[0_0_3px_var(--color-bronze-glow)]",
     label: "Ranked #3",
   },
@@ -53,7 +56,7 @@ export default function TrophyMark({
         <span className="relative inline-flex rotate-4 -translate-y-0.5">
           <span
             className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-7/12 font-black"
-            style={{ color: tier.dark, fontSize: size * 0.3 }}
+            style={{ color: tier.ink, fontSize: size * 0.3 }}
           >
             {place}
           </span>
@@ -62,8 +65,8 @@ export default function TrophyMark({
             weight="duotone"
             aria-hidden="true"
             style={{
-              color: tier.dark,
-              filter: `drop-shadow(1px 2px 1px ${tier.mid})`,
+              color: tier.ink,
+              filter: `drop-shadow(1px 2px 1px var(--color-trophy-shadow, ${tier.mid}))`,
             }}
           />
         </span>

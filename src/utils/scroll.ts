@@ -12,7 +12,12 @@ export function useScrollToForm(open: boolean, ref: RefObject<HTMLElement | null
     const el = ref.current;
     if (!el) return;
     const frame = window.requestAnimationFrame(() => {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      el.scrollIntoView({
+        behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+          ? "instant"
+          : "smooth",
+        block: "start",
+      });
       const field = el.querySelector("input, select, textarea") as HTMLElement | null;
       field?.focus({ preventScroll: true });
     });

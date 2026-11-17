@@ -1,4 +1,5 @@
 import { userFacingError } from "../utils/userFacingError";
+import { useSheetPresence } from "./useSheetPresence";
 import { RowsSkeleton } from "./Skeleton";
 import { CloseButton } from "./CloseButton";
 import { Button } from "./Button";
@@ -34,6 +35,7 @@ export default function VotersDialog({
 }: VotersDialogProps) {
   const reaction = "like";
   const [open, setOpen] = useState(false);
+  const sheet = useSheetPresence(open);
   const [voters, setVoters] = useState<Profile[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +71,7 @@ export default function VotersDialog({
   }, [open, appId, target, attempt, totalVotes]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!sheet.present) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
@@ -79,7 +81,7 @@ export default function VotersDialog({
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open]);
+  }, [sheet.present]);
 
   const goProfile = (profileId: string) => {
     setOpen(false);
@@ -121,14 +123,15 @@ export default function VotersDialog({
         </span>
       </Button>
 
-      {open &&
+      {sheet.present &&
         createPortal(
           <div
             role="dialog"
             aria-modal="true"
             aria-label={`Likes for ${appTitle}`}
             onClick={() => setOpen(false)}
-            className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-inverse/80 p-4"
+            data-closing={sheet.closing || undefined}
+            className="sheet-overlay fixed inset-0 z-100 flex justify-center bg-inverse/80"
           >
             <div
               onClick={(e) => e.stopPropagation()}

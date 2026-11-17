@@ -45,8 +45,12 @@ function scheduleReveal(element: HTMLElement, state: SplashState) {
   if (!state.ready.size || state.pending.size || element.dataset.state === "leaving") return;
   // Check after this commit's effects, including new nested loaders and StrictMode remounts.
   state.frame = window.requestAnimationFrame(() => {
-    state.frame = undefined;
-    if (state.ready.size && !state.pending.size && element.isConnected) revealPage(element);
+    // Give the opaque cover a painted frame even on a warm/fast startup, so the
+    // browser transitions from opacity 1 instead of first painting opacity 0.
+    state.frame = window.requestAnimationFrame(() => {
+      state.frame = undefined;
+      if (state.ready.size && !state.pending.size && element.isConnected) revealPage(element);
+    });
   });
 }
 

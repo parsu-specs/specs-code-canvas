@@ -32,6 +32,22 @@ afterEach(async () => {
 });
 
 describe("opening shared links", () => {
+  it.each([false, true])("resolves the root after restoring signedIn=%s", async (signedIn) => {
+    window.history.replaceState({}, "", "/?source=bookmark");
+    vi.mocked(useAuth).mockReturnValue({ user: null, loading: true } as ReturnType<typeof useAuth>);
+    await act(async () => root.render(<Main />));
+    expect(window.location.pathname).toBe("/");
+    expect(container.textContent).not.toContain("Home");
+    vi.mocked(useAuth).mockReturnValue({
+      user: signedIn ? { id: "viewer", name: "Viewer", email: "viewer@example.com" } : null,
+      loading: false,
+    } as ReturnType<typeof useAuth>);
+    await act(async () => root.render(<Main />));
+    expect(window.location.pathname).toBe(signedIn ? "/discover" : "/");
+    expect(window.location.search).toBe("?source=bookmark");
+    expect(container.textContent).toContain(signedIn ? "Store" : "Home");
+  });
+
   it("uses a cached viewer only for the loading shell until the session is restored", async () => {
     window.history.replaceState({}, "", "/discover");
     setActiveViewer("viewer");

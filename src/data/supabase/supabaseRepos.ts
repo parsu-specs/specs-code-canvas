@@ -28,6 +28,7 @@ import { isSafeImageUrl } from "../../utils/urls";
 import { validateProjectIcon } from "../../utils/projectIcon";
 import {
   AVATAR_COLORS,
+  APPEARANCES,
   PROFILE_THEMES,
   SITE_PALETTE_IDS,
   type AppInput,
@@ -118,7 +119,8 @@ export function createSupabaseAuthRepo(): AuthRepo {
     },
 
     async getSession(): Promise<User | null> {
-      const { data } = await getSupabase().auth.getSession();
+      const { data, error } = await getSupabase().auth.getSession();
+      if (error) throw error;
       const user = data.session?.user;
       if (!user) return null;
       return sessionUser(
@@ -683,6 +685,7 @@ export function createSupabaseAppRepo(): AppRepo {
             image_url: (r["image_url"] as string | null) ?? null,
             theme: (r["theme"] as string | null) ?? null,
             palette: (r["palette"] as string | null) ?? null,
+            appearance: (r["appearance"] as string | null) ?? null,
             created_at: String(r["created_at"] ?? new Date().toISOString()),
           }),
         )
@@ -901,6 +904,7 @@ export function createSupabaseProfileRepo(): ProfileRepo {
           image_url: (r["image_url"] as string | null) ?? null,
           theme: (r["theme"] as string | null) ?? null,
           palette: (r["palette"] as string | null) ?? null,
+          appearance: (r["appearance"] as string | null) ?? null,
           created_at: String(r["created_at"] ?? new Date().toISOString()),
         }),
       );
@@ -927,6 +931,7 @@ export function createSupabaseProfileRepo(): ProfileRepo {
         image_url: (row["image_url"] as string | null) ?? null,
         theme: (row["theme"] as string | null) ?? null,
         palette: (row["palette"] as string | null) ?? null,
+        appearance: (row["appearance"] as string | null) ?? null,
         created_at: String(row["created_at"] ?? new Date().toISOString()),
       });
     },
@@ -953,6 +958,7 @@ export function createSupabaseProfileRepo(): ProfileRepo {
         image_url: (row["image_url"] as string | null) ?? null,
         theme: (row["theme"] as string | null) ?? null,
         palette: (row["palette"] as string | null) ?? null,
+        appearance: (row["appearance"] as string | null) ?? null,
         created_at: String(row["created_at"] ?? new Date().toISOString()),
       });
     },
@@ -1035,6 +1041,9 @@ export function createSupabaseProfileRepo(): ProfileRepo {
       if (palette !== null && !(SITE_PALETTE_IDS as readonly string[]).includes(palette)) {
         throw new Error("Pick a valid website palette.");
       }
+      if (patch.appearance !== undefined && !APPEARANCES.includes(patch.appearance)) {
+        throw new Error("Pick a valid appearance.");
+      }
       if (!(AVATAR_COLORS as readonly string[]).includes(color)) {
         throw new Error("Pick a valid avatar color.");
       }
@@ -1069,6 +1078,7 @@ export function createSupabaseProfileRepo(): ProfileRepo {
           image_url: imageUrl || null,
           theme,
           palette,
+          ...(patch.appearance !== undefined ? { appearance: patch.appearance } : {}),
         })
         .eq("id", id);
       if (error) throw new Error(error.message);

@@ -33,6 +33,11 @@ beforeEach(() => {
             ? String(row.id) === value
             : String(row.id).toLowerCase() === value.toLowerCase(),
         );
+        if (request.method === "PATCH") {
+          const patch = await request.json();
+          matches.forEach((row) => Object.assign(row, patch));
+          return new Response(null, { status: 204 });
+        }
         if (request.headers.get("Accept") === "application/vnd.pgrst.object+json") {
           return matches.length === 1
             ? Response.json(matches[0])
@@ -49,6 +54,37 @@ beforeEach(() => {
 });
 
 describe("new account profile lookups", () => {
+  it("saves and reloads appearance and preserves it during unrelated edits", async () => {
+    rows = [
+      {
+        id: "appearance-user",
+        name: "alex",
+        full_name: "Alex Reyes",
+        role: "Guest",
+        bio: "",
+        color: "sky",
+      },
+    ];
+    vi.spyOn(getSupabase().auth, "getUser").mockResolvedValue({
+      data: { user: { id: "appearance-user" } },
+      error: null,
+    } as never);
+    const repo = createSupabaseProfileRepo();
+    for (const appearance of ["dark", "light", "system"] as const) {
+      expect(
+        (await repo.updateProfile("appearance-user", { appearance }, "appearance-user")).appearance,
+      ).toBe(appearance);
+      expect(
+        (await repo.updateProfile("appearance-user", { bio: "Updated" }, "appearance-user"))
+          .appearance,
+      ).toBe(appearance);
+    }
+    await expect(
+      repo.updateProfile("appearance-user", { appearance: "invalid" } as never, "appearance-user"),
+    ).rejects.toThrow("valid appearance");
+    expect(requests.filter((r) => r.method === "PATCH")).toHaveLength(6);
+  });
+
   it("treats a new Google account as missing without issuing a singular request that returns 406", async () => {
     const repo = createSupabaseProfileRepo();
     await expect(repo.getProfile("new-google")).rejects.toBeInstanceOf(NotFoundError);

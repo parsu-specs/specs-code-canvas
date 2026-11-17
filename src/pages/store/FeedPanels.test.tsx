@@ -86,7 +86,7 @@ it("opens the curated Document Binder project and displays the official launch a
     container.querySelector<HTMLButtonElement>('[aria-label="Open Document Binder"]')!.click(),
   );
   expect(openApp).toHaveBeenCalledWith("3db46c6c-b342-48d7-b214-3d19467eeaba");
-  expect(container.textContent).toContain("November 18, 2026");
+  expect(container.textContent).toContain("November 19, 2026");
   expect(container.textContent).toContain("CodeCanvas opens to everyone");
   expect(container.textContent).not.toContain("\u2014");
 });

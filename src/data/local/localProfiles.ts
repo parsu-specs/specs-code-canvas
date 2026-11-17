@@ -4,6 +4,7 @@ import { captureMentions } from "../../utils/mentions";
 import { accountRole, rejectRolePatch } from "../accountRoles";
 import { NotFoundError, type ProfileRepo } from "../repositories";
 import {
+  APPEARANCES,
   AVATAR_COLORS,
   PROFILE_THEMES,
   SITE_PALETTE_IDS,
@@ -214,6 +215,10 @@ export function createLocalProfileRepo(): ProfileRepo {
       if (palette !== undefined && !(SITE_PALETTE_IDS as readonly string[]).includes(palette)) {
         throw new Error("Pick a valid website palette.");
       }
+      const appearance = patch.appearance !== undefined ? patch.appearance : target.appearance;
+      if (appearance !== undefined && !APPEARANCES.includes(appearance)) {
+        throw new Error("Pick a valid appearance.");
+      }
       const updated: Profile = {
         ...target,
         fullName,
@@ -223,6 +228,7 @@ export function createLocalProfileRepo(): ProfileRepo {
         imageUrl: imageUrl || undefined,
         theme,
         palette,
+        appearance,
       };
       freezeLegacyLocalMentions();
       saveProfiles(profiles.map((p) => (p.id === id ? updated : p)));

@@ -1,7 +1,16 @@
 // Database row shapes (snake_case, as returned by the API / Supabase)
 // and mappers to the app's camelCase domain types. The UI never imports this.
 
-import type { AppItem, Comment, Mention, FeedPost, Profile, User } from "../types";
+import {
+  APPEARANCES,
+  type AppItem,
+  type Comment,
+  type Mention,
+  type FeedPost,
+  type Profile,
+  type User,
+  type Appearance,
+} from "../types";
 import { accountRole } from "../accountRoles";
 
 export type ProfileRow = {
@@ -14,6 +23,7 @@ export type ProfileRow = {
   image_url: string | null;
   theme: string | null;
   palette: string | null;
+  appearance?: string | null;
   created_at: string;
 };
 
@@ -78,6 +88,9 @@ export function toProfile(row: ProfileRow): Profile {
     imageUrl: row.image_url ?? undefined,
     theme: row.theme ?? undefined,
     palette: row.palette ?? undefined,
+    appearance: APPEARANCES.includes(row.appearance as Appearance)
+      ? (row.appearance as Appearance)
+      : undefined,
     createdAt: row.created_at,
   };
 }

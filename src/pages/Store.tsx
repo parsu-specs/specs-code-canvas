@@ -1,4 +1,5 @@
 import ErrorNotice from "../components/ErrorNotice";
+import { useSheetPresence } from "../components/useSheetPresence";
 import { accountRole } from "../data/accountRoles";
 import { HalloweenDecorations } from "../experiments/halloweenTheme";
 import { createPortal } from "react-dom";
@@ -72,6 +73,8 @@ export default function Store() {
     voteNotice,
     setVoteNotice,
   } = store;
+  const bonusSheet = useSheetPresence(publishBonus);
+  const displayedBonus = bonusSheet.value;
   const [dismissedPromptFor, setDismissedPromptFor] = useState<string | null>(null);
   const [confirmPromptDismissal, setConfirmPromptDismissal] = useState(false);
   const submitButtonRef = useRef<HTMLButtonElement>(null);
@@ -107,7 +110,8 @@ export default function Store() {
           <Brand light text size="navigation" />
         </div>
         <nav
-          className="fixed inset-x-0 bottom-0 z-50 grid h-[calc(4.5rem+env(safe-area-inset-bottom,0px))] grid-cols-4 gap-1 border-t-2 border-outline bg-brand-surface p-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] sm:gap-2 lg:static lg:mt-12 lg:flex lg:h-auto lg:shrink-0 lg:flex-col lg:gap-2 lg:border-0 lg:bg-transparent lg:p-0 lg:pr-1 max-w-full"
+          data-app-bottom-nav=""
+          className="fixed inset-x-0 bottom-0 z-50 grid h-[calc(4.5rem+var(--app-bottom-inset))] grid-cols-4 gap-1 border-t-2 border-outline bg-brand-surface p-2 pb-[calc(0.5rem+var(--app-bottom-inset))] sm:gap-2 lg:static lg:mt-12 lg:flex lg:h-auto lg:shrink-0 lg:flex-col lg:gap-2 lg:border-0 lg:bg-transparent lg:p-0 lg:pr-1 max-w-full"
           aria-label="Main navigation"
         >
           <ButtonLink
@@ -194,6 +198,7 @@ export default function Store() {
       {confirmPromptDismissal && (
         <Modal
           id="dismiss-submission-prompt"
+          confirmation
           title="Hide project reminder?"
           description="You can still submit a project using the button beside projects."
           onClose={() => setConfirmPromptDismissal(false)}
@@ -216,7 +221,7 @@ export default function Store() {
       {confirmSignOut &&
         createPortal(
           <div
-            role="dialog"
+            role="alertdialog"
             aria-modal="true"
             aria-label="Confirm sign out"
             onClick={() => setConfirmSignOut(false)}
@@ -260,14 +265,15 @@ export default function Store() {
           document.body,
         )}
 
-      {publishBonus &&
+      {displayedBonus &&
         createPortal(
           <div
             role="dialog"
             aria-modal="true"
             aria-label="Project published"
+            data-closing={bonusSheet.closing || undefined}
             onClick={() => setPublishBonus(null)}
-            className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-inverse/80 p-4"
+            className="sheet-overlay fixed inset-0 z-100 flex justify-center bg-inverse/80"
           >
             <div
               onClick={(e) => e.stopPropagation()}
@@ -279,7 +285,7 @@ export default function Store() {
               </div>
               <div className="modal-grid bg-panel p-6">
                 <p className="mt-1 text-sm font-bold text-muted">
-                  {publishBonus.title} is live — plus 20 pts on the developer leaderboard.
+                  {displayedBonus.title} is live — plus 20 pts on the developer leaderboard.
                 </p>
                 <div className="min-w-0 mt-5 flex justify-center gap-3 max-w-full">
                   <Button
@@ -294,7 +300,7 @@ export default function Store() {
                     variant="secondary"
                     size="small"
                     onClick={() => {
-                      openApp(publishBonus.id);
+                      openApp(displayedBonus.id);
                       setPublishBonus(null);
                     }}
                   >
@@ -495,7 +501,7 @@ export default function Store() {
             </div>
           </div>
         </header>
-        <div className="min-w-0 max-w-full px-4 pb-[calc(5.75rem+env(safe-area-inset-bottom,0px))] pt-[calc(var(--spacing-header)+1.5rem)] sm:px-8 sm:pb-[calc(6.25rem+env(safe-area-inset-bottom,0px))] sm:pt-[calc(var(--spacing-header)+2rem)] lg:ml-sidebar lg:p-10 lg:pt-[calc(var(--spacing-header)+2.5rem)]">
+        <div className="min-w-0 max-w-full px-4 pb-[calc(5.75rem+var(--app-bottom-inset))] pt-[calc(var(--spacing-header)+1.5rem)] sm:px-8 sm:pb-[calc(6.25rem+var(--app-bottom-inset))] sm:pt-[calc(var(--spacing-header)+2rem)] lg:ml-sidebar lg:p-10 lg:pt-[calc(var(--spacing-header)+2.5rem)]">
           {(pageTitle || pageDescription) && (
             <header id="discover" className="mx-auto max-w-6xl scroll-mt-5">
               <div className="min-w-0 flex flex-wrap items-center justify-between gap-3 max-w-full">

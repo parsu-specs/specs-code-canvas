@@ -1,4 +1,5 @@
 import { Suspense, useId, useState } from "react";
+import { useSheetPresence } from "./useSheetPresence";
 import { ShareNetwork } from "@phosphor-icons/react";
 import { Button, type ButtonVariant } from "./Button";
 import Modal from "./Modal";
@@ -24,6 +25,7 @@ export default function ShareButton({
   iconOnly = false,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const sheet = useSheetPresence(open);
   const id = useId();
   const title = app?.title ?? profile!.name;
   return (
@@ -44,9 +46,10 @@ export default function ShareButton({
         <ShareNetwork size={size === "compact" ? 16 : 18} weight="bold" aria-hidden="true" />
         {!iconOnly && <span className={profile ? undefined : "hidden sm:inline"}>Share</span>}
       </Button>
-      {open && (
+      {sheet.present && (
         <Modal
           id={`share-${id}`}
+          exiting={sheet.closing}
           title={`Share ${title}`}
           description={
             app

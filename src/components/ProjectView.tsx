@@ -121,7 +121,7 @@ export default function ProjectView({
   const [repositoryReadme, setRepositoryReadme] = useState<string | null>(null);
   const [readmeLoading, setReadmeLoading] = useState(false);
   const [readmeError, setReadmeError] = useState<string | null>(null);
-  const [editing, setEditing] = useState(startEditing);
+  const [editing, setEditing] = useState(false);
   const [publishingUpdate, setPublishingUpdate] = useState(false);
   const [eStage, setEStage] = useState<ProjectStage | "">("");
   const [eVersion, setEVersion] = useState("");
@@ -151,6 +151,7 @@ export default function ProjectView({
   const [eError, setEError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<number | null>(null);
 
   useEffect(() => {
@@ -228,7 +229,9 @@ export default function ProjectView({
     }, 6000);
   };
   const editFormRef = useRef<HTMLFormElement>(null);
-  useScrollToForm(editing, editFormRef);
+  useScrollToForm(editing && !loading && !error && !!app, editFormRef);
+  const deleteConfirmationRef = useRef<HTMLElement>(null);
+  useScrollToForm(confirmDelete && !loading && !error && !!app, deleteConfirmationRef);
 
   // Restore a server-side vote pause after a page refresh: the pause lives
   // in the database (vote_timeouts), so it must reappear without waiting for
@@ -359,11 +362,11 @@ export default function ProjectView({
   };
   const initializedEdit = useRef<string | null>(null);
   useEffect(() => {
-    if (startEditing && app && initializedEdit.current !== app.id) {
+    if (startEditing && isOwner && app && initializedEdit.current !== app.id) {
       initializedEdit.current = app.id;
       beginEdit();
     }
-  }, [startEditing, app?.id]);
+  }, [startEditing, app?.id, isOwner]);
 
   // Docs import source: the repo link, falling back to the app link for
   // older projects that stored a GitHub URL there.
@@ -443,14 +446,14 @@ export default function ProjectView({
   };
 
   const deleteProject = async () => {
-    if (!app || !currentUser || deleting) return;
+    if (!app || !currentUser || !isOwner || !confirmDelete || deleting) return;
     setDeleting(true);
-    setEError(null);
+    setDeleteError(null);
     try {
       await getAppRepo().deleteApp(app.id, currentUser);
       onDeleted();
     } catch (err) {
-      setEError(err instanceof Error ? err.message : "Could not delete project.");
+      setDeleteError(err instanceof Error ? err.message : "Could not delete project.");
     } finally {
       setDeleting(false);
     }
@@ -746,6 +749,17 @@ export default function ProjectView({
               <Button variant="secondary" size="small" onClick={() => beginEdit()}>
                 <PencilSimple size={18} weight="bold" /> Edit project details
               </Button>
+              <Button
+                variant="danger"
+                size="small"
+                onClick={() => {
+                  setDeleteError(null);
+                  setConfirmDelete(true);
+                }}
+                disabled={confirmDelete}
+              >
+                <Trash size={18} weight="bold" /> Delete project
+              </Button>
             </div>
           )}
         </div>
@@ -753,11 +767,13 @@ export default function ProjectView({
 
       <ProjectVersionHistory versions={app.versions ?? []} />
 
-      {editing && (
+      {editing && isOwner && (
         <form
+          id="edit-project-details"
+          aria-label={publishingUpdate ? "Publish an update" : "Edit project details"}
           ref={editFormRef}
           onSubmit={(e) => void saveEdit(e)}
-          className="min-w-0 toon-card toon-paper mt-6 grid scroll-mt-28 gap-5 bg-info p-4 pt-10 @min-[36rem]/content:mt-8 @min-[36rem]/content:grid-cols-2 @min-[36rem]/content:p-6 @min-[36rem]/content:pt-10 max-w-full"
+          className="min-w-0 w-full toon-card toon-paper mt-6 grid grid-cols-[minmax(0,1fr)] scroll-mt-[calc(var(--spacing-header)+1.5rem)] gap-5 bg-info p-4 pt-10 [&>*]:min-w-0 [&>*]:max-w-full @min-[36rem]/content:mt-8 @min-[36rem]/content:grid-cols-2 @min-[36rem]/content:p-6 @min-[36rem]/content:pt-10 max-w-full"
         >
           <div className="@min-[36rem]/content:col-span-2">
             <PencilSimple size={32} weight="duotone" />
@@ -1000,7 +1016,7 @@ export default function ProjectView({
                   />
                 </ButtonLabel>
                 {eDocsFile && (
-                  <p className="mt-2 text-sm font-bold text-muted">
+                  <p className="mt-2 wrap-anywhere text-sm font-bold text-muted">
                     {eDocsFile} · {eDocs.length} chars
                   </p>
                 )}
@@ -1070,7 +1086,7 @@ export default function ProjectView({
                                 }
                                 className="mt-1 shrink-0"
                               />
-                              <span className="break-all">{path}</span>
+                              <span className="min-w-0 wrap-anywhere">{path}</span>
                             </label>
                           ))}
                         </div>
@@ -1127,47 +1143,59 @@ export default function ProjectView({
             >
               Cancel
             </Button>
-            {!confirmDelete ? (
+            {!confirmDelete && (
               <Button
                 variant="surface"
                 size="small"
                 type="button"
-                onClick={() => setConfirmDelete(true)}
+                onClick={() => {
+                  setDeleteError(null);
+                  setConfirmDelete(true);
+                }}
                 className="ml-auto text-danger"
               >
                 <Trash size={18} weight="bold" /> Delete project
               </Button>
-            ) : (
-              <div
-                role="alert"
-                className="min-w-0 flex w-full flex-wrap items-center gap-3 rounded-2xl border-[3px] border-outline bg-surface p-4"
-              >
-                <p className="w-full text-sm font-black">
-                  Delete “{app.title}” forever? Its screenshots, docs, and feedback go with it. This
-                  cannot be undone.
-                </p>
-                <Button
-                  variant="danger"
-                  size="small"
-                  type="button"
-                  onClick={() => void deleteProject()}
-                  disabled={deleting}
-                >
-                  <Trash size={16} weight="bold" /> {deleting ? "Deleting…" : "Yes, delete it"}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="small"
-                  type="button"
-                  onClick={() => setConfirmDelete(false)}
-                  disabled={deleting}
-                >
-                  Keep it
-                </Button>
-              </div>
             )}
           </div>
         </form>
+      )}
+
+      {isOwner && confirmDelete && (
+        <section
+          ref={deleteConfirmationRef}
+          role="alert"
+          aria-label="Confirm project deletion"
+          className="mt-6 flex min-w-0 scroll-mt-[calc(var(--spacing-header)+1.5rem)] flex-wrap items-center gap-3 rounded-2xl border-[3px] border-outline bg-surface p-4"
+        >
+          <p className="w-full text-sm font-black">
+            Delete “{app.title}” forever? Its screenshots, docs, and feedback go with it. This
+            cannot be undone.
+          </p>
+          {deleteError && (
+            <p role="alert" className="w-full text-sm font-bold text-danger">
+              {userFacingError(deleteError)}
+            </p>
+          )}
+          <Button
+            variant="danger"
+            size="small"
+            type="button"
+            onClick={() => void deleteProject()}
+            disabled={deleting}
+          >
+            <Trash size={16} weight="bold" /> {deleting ? "Deleting…" : "Yes, delete it"}
+          </Button>
+          <Button
+            variant="secondary"
+            size="small"
+            type="button"
+            onClick={() => setConfirmDelete(false)}
+            disabled={deleting}
+          >
+            Keep it
+          </Button>
+        </section>
       )}
 
       {lightbox !== null && (

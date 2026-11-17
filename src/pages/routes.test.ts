@@ -27,10 +27,10 @@ describe("routes", () => {
     expect(isProtectedRoute(ROUTES.home)).toBe(false);
   });
   it.each(["/", "/home", "/landing", "/landing/"])(
-    "keeps %s on public Home for every session",
+    "opens %s as Home for visitors and Discover for signed-in users",
     (path) => {
       expect(resolveRoute(path, false)).toBe(ROUTES.home);
-      expect(resolveRoute(path, true)).toBe(ROUTES.home);
+      expect(resolveRoute(path, true)).toBe(ROUTES.discover);
     },
   );
 

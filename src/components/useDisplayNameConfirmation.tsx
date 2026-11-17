@@ -24,6 +24,7 @@ export function useDisplayNameConfirmation() {
   const confirmationModal = message && (
     <Modal
       id="change-display-name"
+      confirmation
       title="Change username?"
       description={message}
       onClose={() => finish(false)}

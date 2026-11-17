@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
-import { act, createElement } from "react";
+import { act, createElement, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
 import { AuthProvider } from "./AuthProvider";
 import { useAuth } from "./authContext";
 import type { User } from "../data/types";
 import { NotFoundError } from "../data/repositories";
+import { loadAppearance } from "../utils/appearance";
+import { loadCachedProfile } from "../utils/viewerCache";
 
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
@@ -14,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   getProfile: vi.fn(),
   getProfileByName: vi.fn(),
   updateName: vi.fn(),
+  updateProfile: vi.fn(),
   unsubscribe: vi.fn(),
 }));
 vi.mock("../data/factory", () => ({
@@ -23,7 +26,257 @@ vi.mock("../data/factory", () => ({
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
+it("restores and saves account appearance, rolls back failed saves, and isolates visitors", async () => {
+  vi.useFakeTimers();
+  vi.clearAllMocks();
+  localStorage.clear();
+  const user = { id: "mode-user", email: "member@example.com", name: "Member" };
+  const profile = {
+    ...user,
+    role: "Guest",
+    bio: "",
+    color: "sky",
+    createdAt: "2026-11-17",
+    appearance: "dark" as const,
+  };
+  mocks.getSession.mockResolvedValue(user);
+  let notify!: (user: User | null) => void;
+  mocks.subscribeSession.mockImplementation((callback) => {
+    notify = callback;
+    return mocks.unsubscribe;
+  });
+  mocks.ensureUserProfile.mockResolvedValue(profile);
+  let auth!: ReturnType<typeof useAuth>;
+  function Probe() {
+    auth = useAuth();
+    return null;
+  }
+  const root = createRoot(document.createElement("div"));
+  try {
+    await act(async () => root.render(createElement(AuthProvider, null, createElement(Probe))));
+    expect(loadAppearance()).toBe("dark");
+    expect(document.documentElement.dataset.mode).toBe("dark");
+
+    let save!: () => void;
+    mocks.updateProfile.mockReturnValue(
+      new Promise((resolve) => {
+        save = () => resolve({ ...profile, appearance: "light", palette: "ocean" });
+      }),
+    );
+    let pending!: Promise<void>;
+    await act(async () => {
+      pending = auth.updateAppearance("light");
+    });
+    expect(loadAppearance()).toBe("light");
+    expect(auth.appearanceSaving).toBe(true);
+    expect(mocks.updateProfile).not.toHaveBeenCalled();
+    await act(async () => {
+      void auth.updateAppearance("system");
+      void auth.updateAppearance("light");
+      void auth.updatePalette("ocean");
+      auth.updateCachedProfile(profile);
+      await vi.advanceTimersByTimeAsync(4_999);
+    });
+    expect(loadAppearance()).toBe("light");
+    expect(auth.profile?.palette).toBe("ocean");
+    expect(mocks.updateProfile).not.toHaveBeenCalled();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    expect(mocks.updateProfile).toHaveBeenCalledOnce();
+    expect(mocks.updateProfile).toHaveBeenCalledWith(
+      user.id,
+      { appearance: "light", palette: "ocean" },
+      user.id,
+    );
+    await act(async () => {
+      save();
+      await pending;
+    });
+    expect(auth.appearanceSaving).toBe(false);
+    expect(auth.profile?.appearance).toBe("light");
+    expect(loadCachedProfile(user.id)?.appearance).toBe("light");
+
+    mocks.updateProfile.mockRejectedValue(new Error("Unavailable"));
+    await act(async () => {
+      const failure = expect(auth.updateAppearance("system")).rejects.toThrow("Unavailable");
+      await vi.advanceTimersByTimeAsync(5_000);
+      await failure;
+    });
+    expect(loadAppearance()).toBe("light");
+    expect(auth.profile?.appearance).toBe("light");
+
+    await act(async () => notify(null));
+    expect(loadAppearance()).toBe("system");
+    await act(async () => auth.updateAppearance("dark"));
+    expect(loadAppearance()).toBe("dark");
+    expect(mocks.updateProfile).toHaveBeenCalledTimes(2);
+  } finally {
+    await act(async () => root.unmount());
+    vi.useRealTimers();
+    localStorage.clear();
+  }
+});
+
+it("does not apply an appearance save to a different session", async () => {
+  vi.useFakeTimers();
+  vi.clearAllMocks();
+  localStorage.clear();
+  const user = { id: "mode-old", email: "member@example.com", name: "Member" };
+  const profile = { ...user, role: "Guest", bio: "", color: "sky", createdAt: "2026-11-17" };
+  mocks.getSession.mockResolvedValue(user);
+  let notify!: (user: User | null) => void;
+  mocks.subscribeSession.mockImplementation((callback) => {
+    notify = callback;
+    return mocks.unsubscribe;
+  });
+  mocks.ensureUserProfile.mockResolvedValue(profile);
+  let save!: () => void;
+  mocks.updateProfile.mockReturnValue(
+    new Promise((resolve) => {
+      save = () => resolve({ ...profile, appearance: "dark" });
+    }),
+  );
+  let auth!: ReturnType<typeof useAuth>;
+  function Probe() {
+    auth = useAuth();
+    return null;
+  }
+  const root = createRoot(document.createElement("div"));
+  try {
+    await act(async () => root.render(createElement(AuthProvider, null, createElement(Probe))));
+    let pending!: Promise<void>;
+    await act(async () => {
+      pending = auth.updateAppearance("dark");
+      await vi.advanceTimersByTimeAsync(5_000);
+    });
+    await act(async () => notify(null));
+    await act(async () => {
+      save();
+      await pending;
+    });
+    expect(auth.profile).toBeNull();
+    expect(loadAppearance()).toBe("system");
+  } finally {
+    await act(async () => root.unmount());
+    vi.useRealTimers();
+    localStorage.clear();
+  }
+});
+
+it.each(["focus", "popstate", "storage", "visibilitychange", "navigation"])(
+  "clears stale login state on %s without a page reload",
+  async (trigger) => {
+    vi.clearAllMocks();
+    const user = { id: "u1", email: "member@example.com", name: "Member" };
+    mocks.getSession.mockResolvedValue(user);
+    mocks.subscribeSession.mockReturnValue(mocks.unsubscribe);
+    mocks.ensureUserProfile.mockResolvedValue({ ...user, role: "Builder", bio: "", color: "sky" });
+    let auth!: ReturnType<typeof useAuth>;
+    function Probe() {
+      auth = useAuth();
+      return createElement(
+        "a",
+        { href: "/discover", onClick: (e) => e.preventDefault() },
+        "Discover",
+      );
+    }
+    const container = document.createElement("div");
+    document.body.append(container);
+    const root = createRoot(container);
+    try {
+      await act(async () => root.render(createElement(AuthProvider, null, createElement(Probe))));
+      expect(auth.user).toEqual(user);
+      mocks.getSession.mockResolvedValue(null);
+      await act(async () => {
+        if (trigger === "navigation") container.querySelector("a")!.click();
+        else if (trigger === "visibilitychange") {
+          vi.spyOn(document, "visibilityState", "get").mockReturnValue("visible");
+          document.dispatchEvent(new Event(trigger));
+        } else window.dispatchEvent(new Event(trigger));
+      });
+      expect(auth.user).toBeNull();
+      expect(auth.profile).toBeNull();
+      expect(auth.loading).toBe(false);
+      expect(mocks.getSession).toHaveBeenCalledTimes(2);
+      await act(async () => root.unmount());
+      window.dispatchEvent(new Event("focus"));
+      expect(mocks.getSession).toHaveBeenCalledTimes(2);
+    } finally {
+      container.remove();
+      vi.restoreAllMocks();
+      localStorage.clear();
+    }
+  },
+);
+
+it("shares concurrent checks and ignores results from an older session", async () => {
+  vi.clearAllMocks();
+  const user = { id: "u1", email: "member@example.com", name: "Member" };
+  mocks.getSession.mockResolvedValue(user);
+  let notify!: (user: User | null) => void;
+  mocks.subscribeSession.mockImplementation((callback) => {
+    notify = callback;
+    return mocks.unsubscribe;
+  });
+  mocks.ensureUserProfile.mockResolvedValue({ ...user, role: "Builder", bio: "", color: "sky" });
+  let auth!: ReturnType<typeof useAuth>;
+  function Probe() {
+    auth = useAuth();
+    return null;
+  }
+  const root = createRoot(document.createElement("div"));
+  try {
+    await act(async () =>
+      root.render(
+        createElement(StrictMode, null, createElement(AuthProvider, null, createElement(Probe))),
+      ),
+    );
+    expect(mocks.getSession).toHaveBeenCalledOnce();
+    let resolve!: (user: User | null) => void;
+    mocks.getSession.mockReturnValue(new Promise((done) => (resolve = done)));
+    await act(async () => {
+      window.dispatchEvent(new Event("focus"));
+      window.dispatchEvent(new Event("popstate"));
+      window.dispatchEvent(new Event("storage"));
+    });
+    expect(mocks.getSession).toHaveBeenCalledTimes(2);
+    await act(async () => {
+      notify(null);
+      resolve(user);
+    });
+    expect(auth.user).toBeNull();
+  } finally {
+    await act(async () => root.unmount());
+    localStorage.clear();
+  }
+});
+
+it("keeps the current session when a background check fails temporarily", async () => {
+  vi.clearAllMocks();
+  const user = { id: "u1", email: "member@example.com", name: "Member" };
+  mocks.getSession.mockResolvedValue(user);
+  mocks.subscribeSession.mockReturnValue(mocks.unsubscribe);
+  mocks.ensureUserProfile.mockResolvedValue({ ...user, role: "Builder", bio: "", color: "sky" });
+  let auth!: ReturnType<typeof useAuth>;
+  function Probe() {
+    auth = useAuth();
+    return null;
+  }
+  const root = createRoot(document.createElement("div"));
+  try {
+    await act(async () => root.render(createElement(AuthProvider, null, createElement(Probe))));
+    mocks.getSession.mockRejectedValue(new Error("Offline"));
+    await act(async () => window.dispatchEvent(new Event("focus")));
+    expect(auth.user).toEqual(user);
+  } finally {
+    await act(async () => root.unmount());
+    localStorage.clear();
+  }
+});
+
 it("follows session changes, preserves profile on token refresh, and ignores stale restoration", async () => {
+  vi.clearAllMocks();
   let restore!: (user: User | null) => void;
   let notify!: (user: User | null) => void;
   mocks.getSession.mockReturnValue(new Promise((resolve) => (restore = resolve)));

@@ -2,11 +2,11 @@ import { expect, it } from "vitest";
 import handler from "../../api/pwa-manifest.js";
 import themes from "../data/pwaThemes.json";
 
-function requestManifest(cookie?: string) {
+function requestManifest(cookie?: string, url?: string) {
   const headers = new Map<string, string>();
   let body = "";
   handler(
-    { headers: { cookie } },
+    { url, headers: { cookie } },
     {
       setHeader: (key, value) => {
         headers.set(key, value);
@@ -37,6 +37,27 @@ it.each(Object.entries(themes))(
     expect(headers.get("Vary")).toBe("Cookie");
   },
 );
+
+it.each(Object.entries(themes))(
+  "preserves %s for Android background requests without cookies",
+  (theme, colors) => {
+    const { manifest } = requestManifest(undefined, `/manifest.webmanifest?theme=${theme}`);
+    expect(manifest.background_color).toBe(colors.background);
+    expect(manifest.icons[0].src).toContain(`/${theme}/`);
+    expect(manifest.id).toBe("/");
+  },
+);
+
+it("prefers the explicit theme over cookies and validates it", () => {
+  expect(
+    requestManifest("cc_pwa_theme=candy-light", "/manifest.webmanifest?theme=forest-dark").manifest
+      .icons[0].src,
+  ).toContain("/forest-dark/");
+  expect(
+    requestManifest("cc_pwa_theme=forest-dark", "/manifest.webmanifest?theme=__proto__").manifest
+      .icons[0].src,
+  ).toContain("/candy-light/");
+});
 
 it.each([
   undefined,

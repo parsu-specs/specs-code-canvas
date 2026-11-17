@@ -90,7 +90,10 @@ function PageLoader({ store = false }: { store?: boolean }) {
               </div>
             </div>
           </div>
-          <div className="fixed inset-x-0 bottom-0 h-[calc(4.5rem+env(safe-area-inset-bottom,0px))] border-t-2 border-outline bg-brand-surface lg:hidden" />
+          <div
+            data-app-bottom-nav=""
+            className="fixed inset-x-0 bottom-0 h-[calc(4.5rem+var(--app-bottom-inset))] border-t-2 border-outline bg-brand-surface lg:hidden"
+          />
         </SkeletonDelayContext.Provider>
       </LoadingRegion>
     );
@@ -176,7 +179,7 @@ export default function Main({ fontsReady = true }: { fontsReady?: boolean }) {
   if (loading || !fontsReady)
     return <PageLoader store={isProtectedRoute(path) && Boolean(activeViewerId())} />;
 
-  const normalizedPath = normalizePathname(path);
+  const normalizedPath = resolveRoute(path, Boolean(user));
 
   let page: React.ReactNode;
   if (normalizedPath === ROUTES.about || normalizedPath === ROUTES.home)

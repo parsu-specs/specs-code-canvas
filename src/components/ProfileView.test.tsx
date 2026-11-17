@@ -192,6 +192,11 @@ describe("profile picture editor", () => {
   const user: User = { id: profile.id, name: profile.name, email: "alex@example.com" };
   const originalPhoto = "https://example.com/original.jpg";
   const dialog = () => document.querySelector('[role="dialog"]');
+  const finishSheetExit = async () => {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 240));
+    });
+  };
   const photo = () => (dialog() ?? container).querySelector<HTMLImageElement>("img.rounded-full");
   const button = (text: string) =>
     Array.from((dialog() ?? container).querySelectorAll("button")).find(
@@ -238,6 +243,7 @@ describe("profile picture editor", () => {
       { imageUrl: uploadedPhoto },
       profile.id,
     );
+    await finishSheetExit();
     expect(document.querySelector("#profile-photo-editor")).toBeNull();
     expect(photo()?.getAttribute("src")).toBe(uploadedPhoto);
   });
@@ -262,6 +268,7 @@ describe("profile picture editor", () => {
     await openEditor();
     await act(async () => button("Use initials").click());
     await act(async () => button("Cancel").click());
+    await finishSheetExit();
     expect(photo()?.getAttribute("src")).toBe(originalPhoto);
     expect(repo.updateProfile).not.toHaveBeenCalled();
     await openEditor();
@@ -284,6 +291,7 @@ describe("profile picture editor", () => {
         new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
       );
     });
+    await finishSheetExit();
     expect(dialog()).toBeNull();
     expect(document.activeElement).toBe(trigger);
     expect(photo()?.getAttribute("src")).toBe(originalPhoto);
@@ -349,6 +357,7 @@ describe("profile picture editor", () => {
     const signal = fetchImage.mock.calls[0][1].signal as AbortSignal;
     await act(async () => button("Cancel").click());
     expect(signal.aborted).toBe(true);
+    await finishSheetExit();
     expect(dialog()).toBeNull();
     expect(repo.updateProfile).not.toHaveBeenCalled();
   });

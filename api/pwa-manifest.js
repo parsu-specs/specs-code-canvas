@@ -10,7 +10,12 @@ const themes = JSON.parse(
 // Only the public palette/mode preference is used; no account or authentication state.
 export default function handler(request, response) {
   const cookie = request.headers.cookie?.match(/(?:^|;\s*)cc_pwa_theme=([^;]+)/)?.[1];
-  const theme = Object.hasOwn(themes, cookie ?? "") ? cookie : "candy-light";
+  // Android's WebAPK service can fetch the manifest without the browser's cookies.
+  const requestedTheme = new URL(request.url ?? "/", "https://codecanvas.invalid").searchParams.get(
+    "theme",
+  );
+  const preference = requestedTheme ?? cookie;
+  const theme = Object.hasOwn(themes, preference ?? "") ? preference : "candy-light";
   const colors = themes[theme];
   const icon = (name) => `/pwa/themes/${theme}/${name}.png?v=3`;
   response.setHeader("Content-Type", "application/manifest+json; charset=utf-8");

@@ -17,6 +17,21 @@ beforeEach(() => {
 });
 
 describe("updateProfile name guard", () => {
+  it("persists account appearance across reloads and unrelated profile edits", async () => {
+    const repo = createLocalProfileRepo();
+    const [user] = await repo.listProfiles();
+    for (const appearance of ["dark", "light", "system"] as const) {
+      await repo.updateProfile(user.id, { appearance }, user.id);
+      const reloaded = createLocalProfileRepo();
+      expect((await reloaded.getProfile(user.id)).appearance).toBe(appearance);
+      expect((await reloaded.updateProfile(user.id, { bio: "New bio" }, user.id)).appearance).toBe(
+        appearance,
+      );
+    }
+    await expect(
+      repo.updateProfile(user.id, { appearance: "invalid" } as never, user.id),
+    ).rejects.toThrow("valid appearance");
+  });
   it("allows shared full names and preserves usernames across full-name edits and reloads", async () => {
     const repo = createLocalProfileRepo();
     const [a, b] = await repo.listProfiles();

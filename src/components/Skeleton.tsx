@@ -240,7 +240,7 @@ export function PasswordSkeleton() {
 export function SubmissionFormSkeleton() {
   return (
     <LoadingRegion label="Loading project form">
-      <div className="grid min-w-0 gap-5 @min-[36rem]/content:grid-cols-2">
+      <div className="grid min-w-0 grid-cols-1 gap-5 @min-[36rem]/content:grid-cols-2 [&>*]:min-w-0">
         {["name", "description", "collaborators"].map((field, index) => (
           <div key={field} className="space-y-2 @min-[36rem]/content:col-span-2">
             <SkeletonBlock className="h-4 w-2/5" />
@@ -256,9 +256,9 @@ export function SubmissionFormSkeleton() {
         <div className="space-y-3 @min-[36rem]/content:col-span-2">
           <SkeletonBlock className="h-4 w-32" />
           <SkeletonBlock className="h-12 w-40" />
-          <div className="flex gap-3">
-            <SkeletonBlock className="h-24 w-32" />
-            <SkeletonBlock className="h-24 w-32" />
+          <div className="grid grid-cols-2 gap-3">
+            <SkeletonBlock className="h-24 w-full" />
+            <SkeletonBlock className="h-24 w-full" />
           </div>
         </div>
         <div className="space-y-3 @min-[36rem]/content:col-span-2">

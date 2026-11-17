@@ -1,4 +1,5 @@
 import { userFacingError } from "../../utils/userFacingError";
+import { useSheetPresence } from "../../components/useSheetPresence";
 import { FeedSkeleton } from "../../components/Skeleton";
 import { CloseButton } from "../../components/CloseButton";
 import { useEffect, useRef, useState } from "react";
@@ -89,6 +90,7 @@ export default function FeedsPage({
 }: Props) {
   const projectLinkButtonRef = useRef<HTMLButtonElement>(null);
   const [projectPickerOpen, setProjectPickerOpen] = useState(false);
+  const pickerSheet = useSheetPresence(projectPickerOpen);
   const [pickerProjects, setPickerProjects] = useState<AppItem[]>([]);
   const [pickerLoading, setPickerLoading] = useState(false);
   const [pickerError, setPickerError] = useState<string | null>(null);
@@ -99,7 +101,8 @@ export default function FeedsPage({
   const linkedProject = availableProjects.find((app) => app.id === feedPostAppId);
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const threadIds = JSON.stringify(feedPosts.map((m) => `ms:${m.id}`));
-  const activeThread = feedPosts.find((m) => openThreads.has(m.id));
+  const threadSheet = useSheetPresence(feedPosts.find((m) => openThreads.has(m.id)));
+  const activeThread = threadSheet.value;
   const activeAuthorName = activeThread
     ? (profilesLookup.get(activeThread.authorId)?.name ?? activeThread.authorName)
     : "";
@@ -154,7 +157,11 @@ export default function FeedsPage({
   useEffect(() => {
     if (!activeThread) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || (event.target as Element)?.closest("[data-popover-portal]"))
+      if (
+        threadSheet.closing ||
+        event.defaultPrevented ||
+        (event.target as Element)?.closest("[data-popover-portal]")
+      )
         return;
       if (event.key === "Escape") toggleThread(activeThread.id);
     };
@@ -165,7 +172,7 @@ export default function FeedsPage({
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = previousOverflow;
     };
-  }, [activeThread, toggleThread]);
+  }, [activeThread, threadSheet.closing, toggleThread]);
 
   useEffect(() => {
     let cancelled = false;
@@ -448,8 +455,9 @@ export default function FeedsPage({
           </div>
         </section>
       </FeedPanels>
-      {projectPickerOpen && (
+      {pickerSheet.present && (
         <FeedProjectPicker
+          exiting={pickerSheet.closing}
           projects={availableProjects}
           loading={pickerLoading}
           error={pickerError}
@@ -467,7 +475,8 @@ export default function FeedsPage({
             role="dialog"
             aria-modal="true"
             aria-label={`Comments for update by ${activeAuthorName}`}
-            className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-inverse/80 p-2 sm:p-4"
+            data-closing={threadSheet.closing || undefined}
+            className="sheet-overlay fixed inset-0 z-100 flex justify-center bg-inverse/80"
           >
             <div
               id={`comments-ms-${activeThread.id}`}

@@ -1,4 +1,5 @@
 import { userFacingError } from "../../utils/userFacingError";
+import { useSheetPresence } from "../../components/useSheetPresence";
 import { LockKey, MagnifyingGlass } from "@phosphor-icons/react";
 import ProjectSubmissionPrompt from "./ProjectSubmissionPrompt";
 import AppCard from "../../components/AppCard";
@@ -74,6 +75,7 @@ export default function DiscoverPage(props: Props) {
     user,
     vote,
   } = props;
+  const submissionSheet = useSheetPresence(showForm && props.canSubmitProject);
   return (
     <PostTimeProvider>
       {user && props.canSubmitProject && !props.promptDismissed && (
@@ -85,7 +87,9 @@ export default function DiscoverPage(props: Props) {
           className="mb-5 lg:hidden"
         />
       )}
-      {showForm && props.canSubmitProject && <SubmitProjectModal {...props} />}
+      {submissionSheet.present && (
+        <SubmitProjectModal {...props} exiting={submissionSheet.closing} />
+      )}
       {user && !props.canSubmitProject && (
         <p className="mb-5 rounded-xl border-2 border-outline bg-surface p-4 text-sm font-bold">
           Your account is a Guest. You can browse and post in the feed. An admin must approve your
@@ -198,7 +202,6 @@ export default function DiscoverPage(props: Props) {
                 projectRanks={projectRanks}
                 onOpenProfile={openProfile}
                 onOpenApp={(id) => openApp(id)}
-                onEditApp={(id) => openApp(id, true)}
               />
             ))}
           </div>

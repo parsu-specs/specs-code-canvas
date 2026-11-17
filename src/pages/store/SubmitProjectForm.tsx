@@ -140,7 +140,7 @@ export default function SubmitProjectForm({
   return (
     <form
       onSubmit={(event) => event.preventDefault()}
-      className="grid min-w-0 max-w-full gap-5 @min-[36rem]/content:grid-cols-2 motion-safe:animate-content-in"
+      className="grid min-w-0 max-w-full grid-cols-1 gap-5 @min-[36rem]/content:grid-cols-2 [&>*]:min-w-0 motion-safe:animate-content-in"
     >
       <ProjectStageFields
         stage={projectStage}
@@ -371,7 +371,7 @@ export default function SubmitProjectForm({
         </span>
       </div>
       <div className="@min-[36rem]/content:col-span-2">
-        <div className="min-w-0 mb-3 flex flex-wrap items-center gap-2 max-w-full">
+        <div className="mb-3 grid min-w-0 max-w-full grid-cols-2 gap-2 @min-[36rem]/content:flex @min-[36rem]/content:flex-wrap @min-[36rem]/content:items-center">
           {(["write", "upload", "repository"] as const).map((tab) => (
             <Button
               key={tab}
@@ -383,7 +383,7 @@ export default function SubmitProjectForm({
                 setDocsTab(tab);
               }}
               aria-pressed={docsTab === tab}
-              className="capitalize"
+              className="min-h-11 capitalize"
             >
               {tab === "upload" ? "Upload .md" : tab === "repository" ? "GitHub repository" : tab}
             </Button>
@@ -400,7 +400,7 @@ export default function SubmitProjectForm({
               }
             }}
             aria-pressed={docsTab === "preview"}
-            className="ml-auto"
+            className="min-h-11 @min-[36rem]/content:ml-auto"
           >
             {docsTab === "preview" ? (
               <>
@@ -445,7 +445,7 @@ export default function SubmitProjectForm({
             </span>
             {docsFile && (
               <div className="mt-3 rounded-xl border-2 border-dashed border-divider p-3">
-                <p className="text-sm font-black">✓ {docsFile} loaded</p>
+                <p className="wrap-anywhere text-sm font-black">✓ {docsFile} loaded</p>
                 <p className="mt-1 text-sm font-bold text-muted">
                   {docs.length} chars —{" "}
                   <Button
@@ -549,7 +549,9 @@ export default function SubmitProjectForm({
         {docsTab === "preview" && (
           <div className="rounded-2xl border-[3px] border-outline bg-surface p-4">
             {docsFile && docs.trim() && (
-              <p className="mb-3 text-xs font-black uppercase text-muted">Preview of {docsFile}</p>
+              <p className="mb-3 wrap-anywhere text-xs font-black uppercase text-muted">
+                Preview of {docsFile}
+              </p>
             )}
             {docs.length > 50000 && (
               <div
@@ -603,7 +605,7 @@ export default function SubmitProjectForm({
           repositoryFilesLoading ||
           repositoryFilesImporting
         }
-        className="@min-[36rem]/content:col-span-2 @min-[36rem]/content:justify-self-start"
+        className="w-full @min-[36rem]/content:col-span-2 @min-[36rem]/content:w-auto @min-[36rem]/content:justify-self-start"
       >
         {submitting
           ? "Publishing…"

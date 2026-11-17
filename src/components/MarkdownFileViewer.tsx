@@ -1,4 +1,5 @@
 import { userFacingError } from "../utils/userFacingError";
+import { useSheetPresence } from "./useSheetPresence";
 import { CloseButton } from "./CloseButton";
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -18,6 +19,7 @@ export default function MarkdownFileViewer({
   buttonLabel = "Open a Markdown file",
 }: MarkdownFileViewerProps) {
   const [open, setOpen] = useState(false);
+  const sheet = useSheetPresence(open);
   const [fileName, setFileName] = useState<string | null>(initialDocument?.name ?? null);
   const [text, setText] = useState(initialDocument?.text ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export default function MarkdownFileViewer({
   }, [initialDocument?.name, initialDocument?.text]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!sheet.present) return;
 
     const previousOverflow = document.body.style.overflow;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -47,7 +49,7 @@ export default function MarkdownFileViewer({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [sheet.present]);
 
   const loadFile = async (file: File | undefined) => {
     if (!file) return;
@@ -70,14 +72,15 @@ export default function MarkdownFileViewer({
         <BookOpenText size={20} weight="duotone" />
         {buttonLabel}
       </Button>
-      {open &&
+      {sheet.present &&
         createPortal(
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby={`${inputId}-title`}
             onClick={() => setOpen(false)}
-            className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-inverse/80 p-3 sm:p-6"
+            data-closing={sheet.closing || undefined}
+            className="sheet-overlay fixed inset-0 z-100 flex justify-center bg-inverse/80"
           >
             <section
               onClick={(event) => event.stopPropagation()}
@@ -91,7 +94,10 @@ export default function MarkdownFileViewer({
                       Markdown file viewer
                     </h2>
                     {fileName && (
-                      <p className="truncate text-sm font-bold text-primary-foreground/85" title={fileName}>
+                      <p
+                        className="truncate text-sm font-bold text-primary-foreground/85"
+                        title={fileName}
+                      >
                         {fileName}
                       </p>
                     )}

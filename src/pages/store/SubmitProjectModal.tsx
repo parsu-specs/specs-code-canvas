@@ -8,10 +8,11 @@ export type { SubmitProjectModalProps } from "./SubmitProjectForm";
 
 const SubmitProjectForm = lazyPage(() => import("./SubmitProjectForm"));
 
-export default function SubmitProjectModal(props: SubmitProjectModalProps) {
+export default function SubmitProjectModal(props: SubmitProjectModalProps & { exiting?: boolean }) {
   return (
     <Modal
       id="submit-project"
+      exiting={props.exiting}
       title="Submit a project"
       description="Add a concise description and a link to your project."
       onClose={props.closeSubmission}
@@ -20,7 +21,7 @@ export default function SubmitProjectModal(props: SubmitProjectModalProps) {
     >
       <Suspense
         fallback={
-          <div className="min-h-[90dvh]">
+          <div className="min-w-0">
             <SubmissionFormSkeleton />
           </div>
         }

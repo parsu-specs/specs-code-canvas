@@ -245,6 +245,9 @@ describe("sharing projects and developers", () => {
           new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }),
         ),
     );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 240));
+    });
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 });

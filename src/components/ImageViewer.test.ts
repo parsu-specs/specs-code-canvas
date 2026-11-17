@@ -99,6 +99,10 @@ it("uses modal scroll locking, explicit dismissal, and focus restoration", async
       .querySelector('[role="dialog"]')!
       .dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
   );
+  expect(onClose).not.toHaveBeenCalled();
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 240));
+  });
   expect(onClose).toHaveBeenCalledOnce();
   await act(async () => root.render(null));
   expect(document.body.style.overflow).toBe("auto");

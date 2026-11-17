@@ -1,5 +1,6 @@
 import type {
   AppInput,
+  Appearance,
   AppItem,
   AppUpdate,
   Builder,
@@ -108,6 +109,7 @@ export type ProfilePatch = {
   theme?: string;
   /** Website palette for the account; empty string clears it back to device choice. */
   palette?: string;
+  appearance?: Appearance;
 };
 
 export type ProfileRepo = {

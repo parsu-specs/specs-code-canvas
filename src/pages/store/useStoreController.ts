@@ -1126,7 +1126,8 @@ export default function useStoreController() {
     setSelectedProfileId(null);
     setSelectedAppId(appId);
     setProjectEdit(edit);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Finish the route reset before the loaded editor performs its own scroll.
+    window.scrollTo({ top: 0, behavior: edit ? "instant" : "smooth" });
   }, []);
   const navClass = (item: Exclude<StoreView, "profile" | "project">) =>
     `flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl border-2 px-1 py-0 text-center text-[10px] font-black leading-tight max-lg:[&>svg]:size-4 lg:w-full lg:flex-row lg:justify-start lg:gap-3 lg:px-4 lg:py-3 lg:text-left lg:text-base ${view === item ? "border-outline bg-secondary text-foreground shadow-[2px_2px_0_var(--color-outline)]" : "border-transparent shadow-[2px_2px_0_transparent] hover:bg-surface/15"}`;

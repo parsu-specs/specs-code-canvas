@@ -407,6 +407,7 @@ export function createHttpProfileRepo(): ProfileRepo {
             full_name: patch.fullName,
             theme: patch.theme !== undefined ? patch.theme.trim() || null : undefined,
             palette: patch.palette !== undefined ? patch.palette.trim() || null : undefined,
+            appearance: patch.appearance,
           }),
         },
       );

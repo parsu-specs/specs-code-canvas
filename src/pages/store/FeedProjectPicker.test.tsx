@@ -90,12 +90,16 @@ it("searches projects and creators, and shows an empty state", () => {
   expect(document.querySelector('[role="status"]')?.textContent).toContain("No matching projects");
 });
 
-it("dismisses without changing the selection and keeps unlinking outside the picker", () => {
+it("dismisses without changing the selection and keeps unlinking outside the picker", async () => {
   const { button, onSelect, onClose } = renderPicker("Personal");
   expect(button("Personal").getAttribute("aria-pressed")).toBe("true");
   act(() =>
     document.querySelector<HTMLButtonElement>('[aria-label="Close link a project"]')!.click(),
   );
+  expect(onClose).not.toHaveBeenCalled();
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 240));
+  });
   expect(onClose).toHaveBeenCalledOnce();
   expect(onSelect).not.toHaveBeenCalled();
   expect(document.body.textContent).not.toContain("No linked project");

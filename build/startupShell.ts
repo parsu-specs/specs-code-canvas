@@ -64,8 +64,9 @@ export function startupShell() {
       ),
     ),
     el("div", {
+      "data-startup-bottom-nav": "",
       className:
-        "fixed inset-x-0 bottom-0 h-[calc(4.5rem+env(safe-area-inset-bottom,0px))] border-t-2 border-outline bg-brand-surface lg:hidden",
+        "fixed inset-x-0 bottom-0 h-[calc(4.5rem+var(--app-bottom-inset))] border-t-2 border-outline bg-brand-surface lg:hidden",
     }),
   );
   const publicShell = el(

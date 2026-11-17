@@ -16,6 +16,9 @@ Vite selects the backend through `@data-backend` at build time, keeping unused S
 ## Backend configuration
 
 1. Create the Supabase project. Run `supabase/schema.sql` in the SQL editor.
+   Existing databases need `supabase/migrations/20261117000100_profile_appearance.sql`
+   to sync light/dark/system appearance across devices. Accounts without a saved
+   appearance retain their device preference until they choose a mode.
 2. Auth: Authentication → Providers → enable **Google** with your Google Cloud
    OAuth client ID + secret, and add `http://localhost:3000/discover` (plus the
    production URL later) under URL Configuration → Redirect URLs.
@@ -57,7 +60,7 @@ Vite selects the backend through `@data-backend` at build time, keeping unused S
    - `GET /profiles` → `{ profiles }` · `GET /profiles/:id` → `{ profile }`
    - `GET /profiles/by-name/:name` → `{ profile }` (404 → null)
    - `POST /profiles/ensure {id, email, name, fullName}` → `{ profile }`
-   - `PATCH /profiles/:id` → `{ profile }` (owner only; reject role changes)
+   - `PATCH /profiles/:id` → `{ profile }` (owner only; reject role changes). Accept optional `appearance` (`light`, `dark`, or `system`) and return it in profile responses.
    - Errors as `{ message }` with proper HTTP status (404 drives not-found UI).
 
    New profiles must start as `Guest`. Only `Member` accounts approved through

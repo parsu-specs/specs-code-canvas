@@ -28,9 +28,9 @@ it("publishes the device preference and network artwork before requesting a mani
     document.querySelector('link[rel="apple-touch-startup-image"]')?.getAttribute("href"),
   ).toBe("/pwa/themes/forest-dark/splash-1170-2532.png?v=3");
   const updated = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
-  expect(updated).not.toBe(original);
+  expect(updated).toBe(original);
   expect(updated?.crossOrigin).toBe("use-credentials");
-  expect(updated?.getAttribute("href")).toBe("/manifest.webmanifest");
+  expect(updated?.getAttribute("href")).toBe("/manifest.webmanifest?theme=forest-dark");
   window.dispatchEvent(new Event("cc:appearance-change"));
   expect(document.querySelector('link[rel="manifest"]')).toBe(updated);
 });

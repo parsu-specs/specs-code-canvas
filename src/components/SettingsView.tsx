@@ -1,6 +1,6 @@
 import { userFacingError } from "../utils/userFacingError";
 import { FormSkeleton, PasswordSkeleton } from "./Skeleton";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   ArrowCounterClockwise,
   Eye,
@@ -25,7 +25,7 @@ import GlassThemeControl from "../experiments/glassTheme";
 import HalloweenThemeControl from "../experiments/halloweenTheme";
 import { appearanceSnapshot, subscribeAppearance } from "../utils/appearance";
 import { palettesForMode } from "../utils/darkPalettes";
-import { loadPalette, PALETTES, resolvePalette, setPalette } from "../utils/palette";
+import { loadPalette, PALETTES, resolvePalette } from "../utils/palette";
 import { getAuthRepo, getProfileRepo } from "../data/factory";
 import { useAuth } from "../auth/authContext";
 import type { Profile } from "../data/types";
@@ -231,7 +231,7 @@ export default function SettingsView({
   hasPassword: boolean | null;
   onPasswordUpdated: () => void;
 }) {
-  const { user, updateCachedProfile } = useAuth();
+  const { user, updatePalette } = useAuth();
   const appearance = useSyncExternalStore(
     subscribeAppearance,
     appearanceSnapshot,
@@ -241,8 +241,6 @@ export default function SettingsView({
   const palettes = palettesForMode(mode, PALETTES);
   const [palette, setPaletteState] = useState(() => loadPalette());
   const [paletteError, setPaletteError] = useState<string | null>(null);
-  const [paletteSaving, setPaletteSaving] = useState(false);
-  const paletteInFlight = useRef(false);
   const [armReset, setArmReset] = useState(false);
 
   // Follow the account choice when it arrives (e.g. fresh sign in on a new
@@ -252,25 +250,15 @@ export default function SettingsView({
   }, [user?.id, profile?.palette]);
 
   const pickPalette = async (id: string) => {
-    if (paletteInFlight.current || id === palette) return;
-    const previous = loadPalette();
-    setPalette(id);
-    setPaletteState(loadPalette());
+    if (id === palette) return;
+    setPaletteState(id);
     setPaletteError(null);
-    if (!user) return;
-    paletteInFlight.current = true;
-    setPaletteSaving(true);
     try {
-      const updated = await getProfileRepo().updateProfile(user.id, { palette: id }, user.id);
-      updateCachedProfile(updated);
-      onChanged();
+      await updatePalette(id);
+      setPaletteError(null);
     } catch (e) {
-      setPalette(previous);
-      setPaletteState(previous);
+      setPaletteState(loadPalette());
       setPaletteError(e instanceof Error ? e.message : "Could not save palette.");
-    } finally {
-      paletteInFlight.current = false;
-      setPaletteSaving(false);
     }
   };
 
@@ -316,7 +304,8 @@ export default function SettingsView({
         </div>
         <h3 className="mt-4 text-base font-black">Appearance</h3>
         <p className="mt-1 text-sm font-bold text-muted">
-          Choose light or dark, or follow your system. Saved on this device.
+          Choose light or dark, or follow your system.{" "}
+          {user ? "Saved to your account." : "Saved on this device."}
         </p>
         <AppearanceControl />
         <h3 className="mt-6 text-base font-black">
@@ -345,7 +334,6 @@ export default function SettingsView({
                 key={p.id}
                 type="button"
                 onClick={() => void pickPalette(p.id)}
-                disabled={paletteSaving}
                 aria-pressed={active}
                 className={`min-w-0 flex flex-wrap items-center gap-3 rounded-xl border-[3px] p-3 text-left ${active ? "border-outline bg-secondary shadow-[3px_3px_0_var(--color-outline)]" : "border-divider bg-surface hover:bg-background"} max-w-full`}
               >

@@ -2,6 +2,7 @@ import { CloseButton } from "./CloseButton";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "./Button";
+import { useSheetClose } from "./useSheetPresence";
 
 type ModalProps = {
   id: string;
@@ -11,6 +12,9 @@ type ModalProps = {
   closeDisabled?: boolean;
   closeConfirmation?: string;
   fixedHeight?: boolean;
+  confirmation?: boolean;
+  /** Parent retains the dialog through its exit (including successful saves). */
+  exiting?: boolean;
   children: ReactNode;
 };
 
@@ -22,18 +26,22 @@ export default function Modal({
   closeDisabled = false,
   closeConfirmation,
   fixedHeight = false,
+  confirmation = false,
+  exiting,
   children,
 }: ModalProps) {
   const labelId = useId();
   const descriptionId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const [confirmingClose, setConfirmingClose] = useState(false);
+  const centered = confirmation || confirmingClose;
+  const { closing, close } = useSheetClose(onClose, centered || exiting !== undefined);
   const keepEditingRef = useRef<HTMLButtonElement>(null);
   const previousConfirmationFocus = useRef<HTMLElement | null>(null);
   const requestClose = () => {
-    if (closeDisabled) return;
+    if (closeDisabled || closing || exiting) return;
     if (closeConfirmation) setConfirmingClose(true);
-    else onClose();
+    else close();
   };
   const closeRef = useRef(onClose);
   closeRef.current = () => {
@@ -106,16 +114,19 @@ export default function Modal({
   }, []);
 
   return createPortal(
-    <div className="fixed inset-0 z-80 flex items-center justify-center bg-inverse/80 p-3 sm:p-6">
+    <div
+      data-closing={closing || exiting || undefined}
+      className={`fixed inset-0 z-80 flex justify-center bg-inverse/80 ${centered ? "items-center p-3 sm:p-6" : "sheet-overlay"}`}
+    >
       <div
         ref={panelRef}
         id={id}
-        role={confirmingClose ? "alertdialog" : "dialog"}
+        role={centered ? "alertdialog" : "dialog"}
         aria-modal="true"
         aria-labelledby={labelId}
         aria-describedby={description || confirmingClose ? descriptionId : undefined}
         tabIndex={-1}
-        className={`toon-card flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden bg-panel outline-none ${fixedHeight ? "h-[min(40rem,90dvh)]" : ""}`}
+        className={`toon-card flex min-w-0 w-full ${centered ? "max-w-lg" : "max-w-3xl"} max-h-[90dvh] flex-col overflow-hidden bg-panel outline-none ${fixedHeight && !centered ? "h-[min(40rem,85dvh)]" : ""}`}
       >
         <div className="flex shrink-0 items-center justify-between gap-4 border-b-[3px] border-outline bg-primary text-primary-foreground p-4 sm:p-6">
           <div className="min-w-0">
@@ -135,7 +146,7 @@ export default function Modal({
           />
         </div>
         <div
-          className={`modal-grid scrollbar-minimal @container/content min-h-0 min-w-0 overscroll-contain bg-panel p-4 sm:p-6 ${fixedHeight ? "flex flex-1 flex-col overflow-hidden" : "overflow-y-auto"}`}
+          className={`modal-grid scrollbar-minimal @container/content min-h-0 min-w-0 overscroll-contain bg-panel p-4 sm:p-6 ${fixedHeight && !centered ? "flex flex-1 flex-col overflow-hidden" : "overflow-y-auto"}`}
         >
           <div
             hidden={confirmingClose}

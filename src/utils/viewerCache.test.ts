@@ -27,6 +27,7 @@ const profile: Profile = {
   color: "sky",
   imageUrl: "https://example.com/avatar.png",
   palette: "ocean",
+  appearance: "dark",
   createdAt: "2026-01-01",
 };
 

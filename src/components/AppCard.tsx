@@ -1,15 +1,10 @@
 import ProjectImage from "./ProjectImage";
+import { useSheetPresence } from "./useSheetPresence";
 import ProjectIcon from "./ProjectIcon";
 import { CloseButton } from "./CloseButton";
 import React, { Suspense, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import {
-  ArrowUpRight,
-  ChatCircleDots,
-  Heart,
-  PencilSimple,
-  User as UserIcon,
-} from "@phosphor-icons/react";
+import { ArrowUpRight, ChatCircleDots, Heart, User as UserIcon } from "@phosphor-icons/react";
 import { lazyPage } from "../utils/lazyPage";
 import { RowsSkeleton } from "./Skeleton";
 import MentionText from "./MentionText";
@@ -38,7 +33,6 @@ type AppCardProps = {
   projectRanks: Map<string, number>;
   onOpenProfile: (profileId: string) => void;
   onOpenApp: (appId: string) => void;
-  onEditApp: (appId: string) => void;
   priority?: boolean;
   eager?: boolean;
 };
@@ -56,14 +50,19 @@ export default function AppCard({
   projectRanks,
   onOpenProfile,
   onOpenApp,
-  onEditApp,
   priority = false,
   eager = false,
 }: AppCardProps) {
+  const commentsSheet = useSheetPresence(expanded);
   useEffect(() => {
-    if (!expanded) return;
+    if (!commentsSheet.present) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.defaultPrevented || (e.target as Element)?.closest("[data-popover-portal]")) return;
+      if (
+        !expanded ||
+        e.defaultPrevented ||
+        (e.target as Element)?.closest("[data-popover-portal]")
+      )
+        return;
       if (e.key === "Escape") onToggle(app.id);
     };
     window.addEventListener("keydown", onKey);
@@ -72,7 +71,7 @@ export default function AppCard({
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [expanded, app.id, onToggle]);
+  }, [commentsSheet.present, expanded, app.id, onToggle]);
 
   const panelId = `comments-${app.id}`;
   const creatorProfile = profileForApp(app, profiles);
@@ -83,7 +82,6 @@ export default function AppCard({
   const projectRank = projectRanks.get(app.id);
   const trophyPlace =
     projectRank === 1 || projectRank === 2 || projectRank === 3 ? projectRank : undefined;
-  const isOwner = user && (app.creatorId ? app.creatorId === user.id : app.creator === user.name);
   const pressPos = useRef<{ x: number; y: number } | null>(null);
 
   // Whole-card open: any press on the card itself opens the project, except
@@ -248,18 +246,6 @@ export default function AppCard({
           </span>
           <span className="min-w-0 ml-auto flex items-center gap-1 max-w-full">
             <ShareButton app={app} size="compact" iconOnly variant="outline-flat" />
-            {isOwner && (
-              <Button
-                variant="icon"
-                size="compact"
-                className="size-8 max-sm:size-11"
-                onClick={() => onEditApp(app.id)}
-                aria-label={`Edit ${app.title}`}
-                title={`Edit ${app.title}`}
-              >
-                <PencilSimple size={16} weight="duotone" aria-hidden="true" />
-              </Button>
-            )}
             {isSafeHttpUrl(app.url) && (
               <ButtonLink
                 href={app.url as string}
@@ -277,14 +263,15 @@ export default function AppCard({
           </span>
         </div>
 
-        {expanded &&
+        {commentsSheet.present &&
           createPortal(
             <div
               role="dialog"
               aria-modal="true"
               aria-label={`Comments for ${app.title}`}
               onClick={(e) => e.stopPropagation()}
-              className="fixed inset-0 z-100 flex items-center justify-center overflow-y-auto bg-inverse/80 p-4"
+              data-closing={commentsSheet.closing || undefined}
+              className="sheet-overlay fixed inset-0 z-100 flex justify-center bg-inverse/80"
             >
               <div
                 id={panelId}
