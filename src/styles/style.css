@@ -49,9 +49,9 @@ html[data-native-splash] #app-splash svg {
   }
 }
 
-/* Public, authentication, and loading pages need safe spacing in browser tabs
-   as well as installed windows. App navigation owns its own inset. */
-:root:not(:has([data-app-bottom-nav], [data-startup-bottom-nav])) body {
+/* Authentication and loading pages need safe spacing in browser tabs as well
+   as installed windows. App navigation and the public footer own their insets. */
+:root:not(:has([data-app-bottom-nav], [data-startup-bottom-nav], [data-safe-area-footer])) body {
   padding-bottom: var(--app-bottom-inset);
 }
 

@@ -21,7 +21,10 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="mt-16 border-t-2 border-dashed border-brand-foreground/25 bg-brand-surface text-brand-foreground">
+    <footer
+      data-safe-area-footer=""
+      className="mt-16 border-t-2 border-dashed border-brand-foreground/25 bg-brand-surface pb-[var(--app-bottom-inset)] text-brand-foreground"
+    >
       <div className="min-w-0 mx-auto grid max-w-7xl gap-10 px-5 py-12 sm:px-8 md:grid-cols-[minmax(0,1.2fr)_minmax(0,.8fr)_minmax(0,1fr)] lg:px-10">
         <div>
           <Brand light />
