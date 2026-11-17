@@ -13,14 +13,14 @@ const profile: Profile = {
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => vi.useRealTimers());
 
-it("combines palette and mode changes five seconds after the last selection", async () => {
+it("combines palette and mode changes 500 ms after the last selection", async () => {
   const save = vi.fn().mockResolvedValue(profile);
   const queue = createDebouncedTheme(save);
   const first = queue.schedule("u1", { palette: "ocean" });
-  await vi.advanceTimersByTimeAsync(4_000);
+  await vi.advanceTimersByTimeAsync(400);
   const second = queue.schedule("u1", { appearance: "dark" });
   const third = queue.schedule("u1", { palette: "forest", appearance: "light" });
-  await vi.advanceTimersByTimeAsync(4_999);
+  await vi.advanceTimersByTimeAsync(499);
   expect(save).not.toHaveBeenCalled();
   expect(queue.pending()).toEqual({ palette: "forest", appearance: "light" });
   await vi.advanceTimersByTimeAsync(1);
@@ -42,9 +42,9 @@ it("serializes slow saves and preserves newer pending choices", async () => {
     .mockResolvedValue(profile);
   const queue = createDebouncedTheme(save);
   const first = queue.schedule("u1", { palette: "ocean", appearance: "dark" });
-  await vi.advanceTimersByTimeAsync(5_000);
+  await vi.advanceTimersByTimeAsync(500);
   const second = queue.schedule("u1", { appearance: "light" });
-  await vi.advanceTimersByTimeAsync(5_000);
+  await vi.advanceTimersByTimeAsync(500);
   expect(save).toHaveBeenCalledOnce();
   expect(queue.pending()).toEqual({ palette: "ocean", appearance: "light" });
   finish(profile);
@@ -64,11 +64,11 @@ it("cancels unsent saves and ignores responses after session cancellation", asyn
   const queue = createDebouncedTheme(save);
   const unsent = queue.schedule("u1", { appearance: "dark" });
   queue.cancel();
-  await vi.advanceTimersByTimeAsync(5_000);
+  await vi.advanceTimersByTimeAsync(500);
   expect(await unsent).toBeUndefined();
   expect(save).not.toHaveBeenCalled();
   const sent = queue.schedule("u1", { appearance: "light" });
-  await vi.advanceTimersByTimeAsync(5_000);
+  await vi.advanceTimersByTimeAsync(500);
   queue.cancel();
   finish(profile);
   expect(await sent).toBeUndefined();
@@ -79,10 +79,10 @@ it("reports failed saves and allows the next selection to save", async () => {
   const save = vi.fn().mockRejectedValueOnce(new Error("Offline")).mockResolvedValue(profile);
   const queue = createDebouncedTheme(save);
   const failed = expect(queue.schedule("u1", { palette: "ocean" })).rejects.toThrow("Offline");
-  await vi.advanceTimersByTimeAsync(5_000);
+  await vi.advanceTimersByTimeAsync(500);
   await failed;
   const retry = queue.schedule("u1", { palette: "forest" });
-  await vi.advanceTimersByTimeAsync(5_000);
+  await vi.advanceTimersByTimeAsync(500);
   expect(await retry).toEqual(profile);
   expect(save).toHaveBeenCalledTimes(2);
 });

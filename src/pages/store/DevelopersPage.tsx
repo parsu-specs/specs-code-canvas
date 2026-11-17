@@ -1,12 +1,16 @@
-import { useState } from "react";
+﻿import { useState } from "react";
+import { Code, SlidersHorizontal } from "@phosphor-icons/react";
 import { DeveloperCardsSkeleton } from "../../components/Skeleton";
 import { userFacingError } from "../../utils/userFacingError";
-import { ListBullets, MagnifyingGlass, SquaresFour } from "@phosphor-icons/react";
+import { useViewLayout } from "../../utils/useViewLayout";
 import Avatar from "../../components/Avatar";
 import { Button, ButtonLink } from "../../components/Button";
-import Input from "../../components/Input";
+import Dropdown from "../../components/Dropdown";
+import SearchField from "../../components/SearchField";
+import ViewLayoutControl from "../../components/ViewLayoutControl";
 import TrophyMark from "../../components/TrophyMark";
 import ShareButton from "../../components/ShareButton";
+import { accountRole, type AccountRole } from "../../data/accountRoles";
 import { developerProfilePath } from "../routes";
 import type { StoreController } from "./useStoreController";
 
@@ -23,6 +27,11 @@ type Props = Pick<
   | "profilesError"
   | "setProfileTick"
 >;
+const roles = [
+  { value: "All", label: "All developers" },
+  { value: "Member", label: "Members" },
+  { value: "Guest", label: "Guests" },
+] as const;
 
 export default function DevelopersPage({
   countFor,
@@ -35,132 +44,175 @@ export default function DevelopersPage({
   profilesError,
   setProfileTick,
 }: Props) {
-  const [layout, setLayout] = useState<"grid" | "list">("grid");
+  const [layout, setLayout] = useViewLayout("developers");
+  const [role, setRole] = useState<AccountRole | "All">("All");
+  const developers = filteredProfiles.filter(
+    (profile) => role === "All" || accountRole(profile.role) === role,
+  );
+  const loading = profilesLoading;
 
   return (
-    <>
-      <section id="developers" className="scroll-mt-6">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <label className="relative block w-full max-w-md">
-            <span className="sr-only">Search developers</span>
-            <MagnifyingGlass
-              size={20}
-              weight="bold"
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-muted"
-            />
-            <Input
-              type="search"
-              value={devQuery}
-              onChange={(event) => setDevQuery(event.target.value)}
-              className="py-2.5 pl-11 text-sm truncate"
-              placeholder="Search name or role…"
-            />
-          </label>
-          <div role="group" aria-label="Developer view" className="flex shrink-0 gap-2">
-            <Button
-              variant="outline-flat"
-              className="px-3 py-2"
-              aria-pressed={layout === "grid"}
-              onClick={() => setLayout("grid")}
-            >
-              <SquaresFour size={20} aria-hidden="true" />
-              Grid
-            </Button>
-            <Button
-              variant="outline-flat"
-              className="px-3 py-2"
-              aria-pressed={layout === "list"}
-              onClick={() => setLayout("list")}
-            >
-              <ListBullets size={20} aria-hidden="true" />
-              List
-            </Button>
-          </div>
+    <section id="developers" className="mx-auto w-full min-w-0 max-w-5xl scroll-mt-6">
+      <SearchField
+        aria-label="Search developers"
+        value={devQuery}
+        onChange={(event) => setDevQuery(event.target.value)}
+        placeholder="Search name or role..."
+      >
+        <div className="shrink-0 md:hidden">
+          <Dropdown
+            label="Developer roles"
+            value={role}
+            onChange={(value) => setRole(value as AccountRole | "All")}
+            options={[...roles]}
+            triggerVariant="minimal"
+            mobileIcon={<SlidersHorizontal size={20} weight="duotone" aria-hidden="true" />}
+          />
         </div>
-        <div
-          className={`min-w-0 toon-card toon-paper bg-panel grid max-w-full ${layout === "grid" ? "gap-4 p-4 pt-10 sm:p-8 sm:pt-12 grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))]" : "grid-cols-1 gap-1 p-3 pt-10 sm:p-4 sm:pt-12"}`}
+      </SearchField>
+      <div
+        className="mt-4 hidden flex-wrap gap-2 md:flex"
+        role="group"
+        aria-label="Developer roles"
+      >
+        {roles.map(({ value, label }) => (
+          <Button
+            key={value}
+            variant="outline-flat"
+            size="small"
+            aria-pressed={role === value}
+            onClick={() => setRole(value)}
+          >
+            {label}
+          </Button>
+        ))}
+      </div>
+      <div className="my-3 flex min-w-0 items-center justify-between gap-3">
+        <p role="status" className="min-w-0 text-sm text-muted">
+          {loading
+            ? "Loading developers..."
+            : profilesError
+              ? "Developers unavailable"
+              : `${developers.length} developer${developers.length === 1 ? "" : "s"}${role !== "All" ? ` · ${roles.find((item) => item.value === role)?.label}` : ""}`}
+        </p>
+        <ViewLayoutControl label="Developer view" value={layout} onChange={setLayout} />
+      </div>
+      {loading ? (
+        <div className={layout === "list" ? "mx-auto w-full min-w-0 max-w-2xl" : "min-w-0"}>
+          <DeveloperCardsSkeleton layout={layout} />
+        </div>
+      ) : profilesError ? (
+        <div role="alert" className="toon-card bg-surface p-5 text-center">
+          <h3 className="text-lg font-black">Could not load developers</h3>
+          <p className="mt-1 text-sm text-muted">{userFacingError(profilesError)}</p>
+          <Button
+            variant="secondary"
+            className="mt-4"
+            onClick={() => setProfileTick((tick) => tick + 1)}
+          >
+            Retry
+          </Button>
+        </div>
+      ) : developers.length ? (
+        <ul
+          aria-label="Developers"
+          className={`grid min-w-0 gap-3 ${layout === "grid" ? "grid-cols-[repeat(auto-fill,minmax(min(100%,18rem),1fr))]" : "mx-auto w-full max-w-2xl grid-cols-1"}`}
         >
-          {profilesLoading ? (
-            <div className="col-span-full">
-              <DeveloperCardsSkeleton layout={layout} />
-            </div>
-          ) : profilesError ? (
-            <div role="alert" className="col-span-full">
-              <p className="font-bold text-muted">{userFacingError(profilesError)}</p>
-              <Button
-                variant="secondary"
-                className="mt-4"
-                onClick={() => setProfileTick((tick) => tick + 1)}
-              >
-                Retry
-              </Button>
-            </div>
-          ) : (
-            filteredProfiles.map((p) => {
-              const place = trophies.get(p.id);
-              return (
-                <article
-                  key={p.id}
-                  className={`min-w-0 motion-safe:animate-content-in rounded-xl border-[3px] ${place !== undefined ? "border-outline" : "border-transparent"} ${place === 1 ? "bg-podium-gold" : place === 2 ? "bg-podium-silver" : place === 3 ? "bg-podium-bronze" : ""} ${layout === "list" ? "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-3 py-2 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto]" : "p-4"}`}
-                >
-                  <div
-                    className={`min-w-0 flex items-center max-w-full ${layout === "list" ? "col-span-2 gap-2 sm:col-span-1" : "gap-3"}`}
-                  >
+          {developers.map((profile) => {
+            const place = trophies.get(profile.id);
+            const projectCount = countFor(profile);
+            return (
+              <li key={profile.id} className="min-w-0 motion-safe:animate-content-in">
+                <article className="toon-card flex h-full min-w-0 flex-col bg-surface p-4 sm:p-5">
+                  <div className="flex min-w-0 items-start gap-3">
                     <ButtonLink
                       variant="plain"
-                      href={developerProfilePath(p.name)}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        openProfile(p.id);
+                      href={developerProfilePath(profile.name)}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        openProfile(profile.id);
                       }}
-                      aria-label={`View ${p.name}'s profile`}
-                      className="shrink-0"
+                      aria-label={`View ${profile.name}'s profile`}
+                      className="shrink-0 rounded-full"
                     >
                       <Avatar
-                        name={p.name}
-                        color={p.color}
-                        imageUrl={p.imageUrl}
-                        size={layout === "list" ? "sm" : "md"}
+                        name={profile.name}
+                        color={profile.color}
+                        imageUrl={profile.imageUrl}
+                        size="md"
+                        className="size-11 sm:size-14"
                       />
                     </ButtonLink>
-                    <h3
-                      className={`min-w-0 flex-1 wrap-break-word font-black ${layout === "list" ? "text-sm" : "text-lg"}`}
-                    >
-                      <ButtonLink
-                        variant="text"
-                        href={developerProfilePath(p.name)}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          openProfile(p.id);
-                        }}
-                      >
-                        {p.name}
-                      </ButtonLink>
-                    </h3>
-                    {place !== undefined && <TrophyMark minimal place={place as 1 | 2 | 3} />}
-                    <ShareButton profile={p} size="compact" />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="min-w-0 text-base font-black leading-6 wrap-anywhere">
+                        <ButtonLink
+                          variant="text"
+                          href={developerProfilePath(profile.name)}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            openProfile(profile.id);
+                          }}
+                        >
+                          {profile.name}
+                        </ButtonLink>
+                        {place !== undefined && <TrophyMark minimal place={place} size={18} />}
+                      </h3>
+                      {profile.fullName && profile.fullName !== profile.name && (
+                        <p className="mt-0.5 text-sm text-body wrap-anywhere">{profile.fullName}</p>
+                      )}
+                      <span className="mt-1 inline-flex max-w-full rounded-full bg-panel px-2 py-0.5 text-xs font-bold text-muted">
+                        {accountRole(profile.role)}
+                      </span>
+                    </div>
+                    <ShareButton
+                      profile={profile}
+                      size="compact"
+                      iconOnly
+                      variant="minimal"
+                      className="shrink-0"
+                    />
                   </div>
-                  <p
-                    className={`min-w-0 wrap-break-word text-muted ${layout === "grid" ? "mt-2 text-sm" : "text-xs"}`}
-                  >
-                    {p.role}
-                  </p>
-                  <p
-                    className={`text-xs font-black uppercase ${layout === "grid" ? "mt-3" : "text-right"}`}
-                  >
-                    {countFor(p)} project{countFor(p) === 1 ? "" : "s"} shared
-                  </p>
+                  {layout === "grid" && profile.bio.trim() && (
+                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-body wrap-anywhere">
+                      {profile.bio}
+                    </p>
+                  )}
+                  {layout === "grid" && (
+                    <div className="mt-auto pt-4">
+                      <p className="flex min-w-0 items-center gap-2 border-t border-divider pt-3 text-xs font-bold text-muted">
+                        <Code size={18} weight="duotone" aria-hidden="true" className="shrink-0" />
+                        {projectCount} project{projectCount === 1 ? "" : "s"} shared
+                      </p>
+                    </div>
+                  )}
                 </article>
-              );
-            })
-          )}
-          {!profilesLoading && !profilesError && filteredProfiles.length === 0 && (
-            <p className="font-bold text-muted col-span-full">
-              No developers match “{devQuery.trim()}”.
-            </p>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <div className="toon-card bg-surface p-5 text-center">
+          <h3 className="text-lg font-black">No developers found</h3>
+          <p className="mt-1 text-sm text-muted wrap-anywhere">
+            {devQuery.trim()
+              ? `No developers match “${devQuery.trim()}” with these filters.`
+              : "There are no developers in this group yet."}
+          </p>
+          {(role !== "All" || devQuery.trim()) && (
+            <Button
+              variant="minimal"
+              size="small"
+              className="mt-3 min-h-11"
+              onClick={() => {
+                setRole("All");
+                setDevQuery("");
+              }}
+            >
+              Clear filters
+            </Button>
           )}
         </div>
-      </section>
-    </>
+      )}
+    </section>
   );
 }

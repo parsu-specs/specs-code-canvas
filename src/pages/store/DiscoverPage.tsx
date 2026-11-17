@@ -1,13 +1,15 @@
 import { userFacingError } from "../../utils/userFacingError";
+import { useViewLayout } from "../../utils/useViewLayout";
 import { useSheetPresence } from "../../components/useSheetPresence";
-import { LockKey, MagnifyingGlass } from "@phosphor-icons/react";
+import { LockKey, MagnifyingGlass, SlidersHorizontal } from "@phosphor-icons/react";
 import ProjectSubmissionPrompt from "./ProjectSubmissionPrompt";
 import AppCard from "../../components/AppCard";
+import ViewLayoutControl from "../../components/ViewLayoutControl";
 import { AppCardsSkeleton } from "../../components/Skeleton";
 import { PostTimeProvider } from "../../components/PostTimestamp";
 import NoticeBanner from "../../components/NoticeBanner";
 import { Button } from "../../components/Button";
-import Input from "../../components/Input";
+import SearchField from "../../components/SearchField";
 import Dropdown from "../../components/Dropdown";
 import SubmitProjectModal, { type SubmitProjectModalProps } from "./SubmitProjectModal";
 import type { StoreController } from "./useStoreController";
@@ -76,6 +78,7 @@ export default function DiscoverPage(props: Props) {
     vote,
   } = props;
   const submissionSheet = useSheetPresence(showForm && props.canSubmitProject);
+  const [layout, setLayout] = useViewLayout("discover");
   return (
     <PostTimeProvider>
       {user && props.canSubmitProject && !props.promptDismissed && (
@@ -113,37 +116,32 @@ export default function DiscoverPage(props: Props) {
             </Button>
           </NoticeBanner>
         )}
-        <label className="relative mb-6 block">
-          <span className="sr-only">Search projects</span>
-          <MagnifyingGlass
-            size={20}
-            weight="bold"
-            aria-hidden="true"
-            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted"
-          />
-          <Input
-            type="search"
+        <div className="mb-4 md:mb-6">
+          <SearchField
+            aria-label="Search projects"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            className="py-3 pl-11 text-sm truncate"
             placeholder="Search projects or developers..."
-          />
-        </label>
-        <div className="mb-6 md:hidden">
-          <Dropdown
-            label="Project categories"
-            value={category}
-            onChange={(value) => {
-              const selected = categories.find(({ label }) => label === value);
-              if (selected) setCategory(selected.label);
-            }}
-            options={categories.map(({ label, Icon }) => ({
-              value: label,
-              label,
-              icon: <Icon size={19} weight="duotone" />,
-            }))}
-            variant="icons"
-          />
+          >
+            <div className="shrink-0 md:hidden">
+              <Dropdown
+                triggerVariant="minimal"
+                mobileIcon={<SlidersHorizontal size={20} weight="duotone" aria-hidden="true" />}
+                label="Project categories"
+                value={category}
+                onChange={(value) => {
+                  const selected = categories.find(({ label }) => label === value);
+                  if (selected) setCategory(selected.label);
+                }}
+                options={categories.map(({ label, Icon }) => ({
+                  value: label,
+                  label,
+                  icon: <Icon size={19} weight="duotone" />,
+                }))}
+                variant="icons"
+              />
+            </div>
+          </SearchField>
         </div>
         <div
           className="min-w-0 mb-6 hidden flex-wrap gap-2 max-w-full md:flex"
@@ -163,8 +161,18 @@ export default function DiscoverPage(props: Props) {
             </Button>
           ))}
         </div>
+        <div className="mb-3 flex min-w-0 items-center justify-between gap-3">
+          <p role="status" className="min-w-0 text-sm text-muted">
+            {appsLoading
+              ? "Loading projects..."
+              : appsError
+                ? "Projects unavailable"
+                : `${apps.length} project${apps.length === 1 ? "" : "s"}`}
+          </p>
+          <ViewLayoutControl label="Project view" value={layout} onChange={setLayout} />
+        </div>
         {appsLoading && apps.length === 0 ? (
-          <AppCardsSkeleton />
+          <AppCardsSkeleton layout={layout} />
         ) : appsError ? (
           <div className="toon-card toon-paper bg-panel p-10 text-center">
             <h3 className="mt-3 text-xl font-black">Could not load projects</h3>
@@ -176,12 +184,13 @@ export default function DiscoverPage(props: Props) {
         ) : apps.length ? (
           <div
             aria-busy={appsLoading}
-            className="discovery-grid min-w-0 max-w-full motion-safe:[&>*:nth-child(-n+6)]:animate-content-in"
+            className={`min-w-0 motion-safe:[&>*:nth-child(-n+6)]:animate-content-in ${layout === "list" ? "mx-auto grid w-full max-w-3xl grid-cols-1 gap-3" : "discovery-grid max-w-full"}`}
           >
             {apps.map((app, index) => (
               <AppCard
                 key={app.id}
                 app={app}
+                layout={layout}
                 priority={index === 0}
                 eager={index < 3}
                 voted={Boolean(app.viewerHasVoted)}

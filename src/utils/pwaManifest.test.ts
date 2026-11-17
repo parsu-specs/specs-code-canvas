@@ -48,16 +48,26 @@ it.each(Object.entries(themes))(
   },
 );
 
-it("prefers the explicit theme over cookies and validates it", () => {
+it("uses the current device theme when a desktop updater revisits an older manifest URL", () => {
   expect(
-    requestManifest("cc_pwa_theme=candy-light", "/manifest.webmanifest?theme=forest-dark").manifest
+    requestManifest("cc_pwa_theme=forest-dark", "/manifest.webmanifest?theme=candy-light").manifest
       .icons[0].src,
   ).toContain("/forest-dark/");
   expect(
     requestManifest("cc_pwa_theme=forest-dark", "/manifest.webmanifest?theme=__proto__").manifest
       .icons[0].src,
-  ).toContain("/candy-light/");
+  ).toContain("/forest-dark/");
 });
+
+it.each(["unknown", "__proto__", "../../secrets"])(
+  "ignores invalid cookie %s and uses the valid theme URL",
+  (cookie) => {
+    expect(
+      requestManifest(`cc_pwa_theme=${cookie}`, "/manifest.webmanifest?theme=ocean-dark").manifest
+        .icons[0].src,
+    ).toContain("/ocean-dark/");
+  },
+);
 
 it.each([
   undefined,

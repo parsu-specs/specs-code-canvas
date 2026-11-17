@@ -36,6 +36,8 @@ import TrophyMark from "./TrophyMark";
 import MarkdownTextarea from "./MarkdownTextarea";
 import PagedMarkdown from "./PagedMarkdown";
 import VotersDialog from "./VotersDialog";
+import Modal from "./Modal";
+import { useSheetPresence } from "./useSheetPresence";
 import ShareButton from "./ShareButton";
 import ProjectPlaceholder from "./ProjectPlaceholder";
 import { Button, ButtonLabel, ButtonLink } from "./Button";
@@ -228,10 +230,7 @@ export default function ProjectView({
       voteNoticeTimer.current = null;
     }, 6000);
   };
-  const editFormRef = useRef<HTMLFormElement>(null);
-  useScrollToForm(editing && !loading && !error && !!app, editFormRef);
   const deleteConfirmationRef = useRef<HTMLElement>(null);
-  useScrollToForm(confirmDelete && !loading && !error && !!app, deleteConfirmationRef);
 
   // Restore a server-side vote pause after a page refresh: the pause lives
   // in the database (vote_timeouts), so it must reappear without waiting for
@@ -333,6 +332,17 @@ export default function ProjectView({
     currentUser &&
     app &&
     (app.creatorId ? app.creatorId === currentUser.id : app.creator === currentUser.name);
+
+  const editSheet = useSheetPresence(editing && isOwner);
+  useScrollToForm(
+    confirmDelete && !editSheet.present && !loading && !error && !!app,
+    deleteConfirmationRef,
+  );
+  const closeEditor = () => {
+    if (eSaving || eBusy) return;
+    setEditing(false);
+    setEError(null);
+  };
 
   const beginEdit = (publish = false) => {
     if (!app) return;
@@ -741,12 +751,17 @@ export default function ProjectView({
               <ArrowRight size={20} weight="bold" className="ml-auto shrink-0" />
             </Button>
           )}
-          {isOwner && !editing && (
+          {isOwner && (
             <div className="mt-5 grid min-w-0 gap-2 @min-[36rem]/content:flex @min-[36rem]/content:flex-wrap">
-              <Button size="small" onClick={() => beginEdit(true)}>
+              <Button size="small" onClick={() => beginEdit(true)} disabled={editSheet.present}>
                 Publish an update
               </Button>
-              <Button variant="secondary" size="small" onClick={() => beginEdit()}>
+              <Button
+                variant="secondary"
+                size="small"
+                onClick={() => beginEdit()}
+                disabled={editSheet.present}
+              >
                 <PencilSimple size={18} weight="bold" /> Edit project details
               </Button>
               <Button
@@ -756,7 +771,7 @@ export default function ProjectView({
                   setDeleteError(null);
                   setConfirmDelete(true);
                 }}
-                disabled={confirmDelete}
+                disabled={confirmDelete || editSheet.present}
               >
                 <Trash size={18} weight="bold" /> Delete project
               </Button>
@@ -767,398 +782,405 @@ export default function ProjectView({
 
       <ProjectVersionHistory versions={app.versions ?? []} />
 
-      {editing && isOwner && (
-        <form
-          id="edit-project-details"
-          aria-label={publishingUpdate ? "Publish an update" : "Edit project details"}
-          ref={editFormRef}
-          onSubmit={(e) => void saveEdit(e)}
-          className="min-w-0 w-full toon-card toon-paper mt-6 grid grid-cols-[minmax(0,1fr)] scroll-mt-[calc(var(--spacing-header)+1.5rem)] gap-5 bg-info p-4 pt-10 [&>*]:min-w-0 [&>*]:max-w-full @min-[36rem]/content:mt-8 @min-[36rem]/content:grid-cols-2 @min-[36rem]/content:p-6 @min-[36rem]/content:pt-10 max-w-full"
+      {editSheet.present && isOwner && (
+        <Modal
+          id="edit-project-modal"
+          title={publishingUpdate ? "Publish an update" : "Edit project details"}
+          description={
+            publishingUpdate
+              ? "Share what changed in this version of your project."
+              : "Update your project details, collaborators, images, and documentation."
+          }
+          onClose={closeEditor}
+          closeDisabled={eSaving || eBusy}
+          exiting={editSheet.closing}
         >
-          <div className="@min-[36rem]/content:col-span-2">
-            <PencilSimple size={32} weight="duotone" />
-            <h3 className="mt-2 text-2xl font-black">
-              {publishingUpdate ? "Publish an update" : "Edit project details"}
-            </h3>
-            <p className="text-body">Only you can see this form — you own this project.</p>
-          </div>
-          <ProjectStageFields
-            stage={eStage}
-            onStageChange={setEStage}
-            version={eVersion}
-            onVersionChange={publishingUpdate ? setEVersion : undefined}
-            versionRequired
-            currentVersion={app.version}
-            disabled={eSaving}
-          />
-          {publishingUpdate && (
-            <label className="@min-[36rem]/content:col-span-2">
-              <span className="mb-2 block text-xs font-black uppercase">What changed?</span>
-              <MarkdownTextarea
-                value={eNotes}
-                onChange={(event) => setENotes(event.target.value)}
+          <form
+            id="edit-project-details"
+            aria-label={publishingUpdate ? "Publish an update" : "Edit project details"}
+            onSubmit={(e) => void saveEdit(e)}
+            className="grid min-w-0 w-full max-w-full grid-cols-[minmax(0,1fr)] gap-5 [&>*]:min-w-0 [&>*]:max-w-full @min-[36rem]/content:grid-cols-2"
+          >
+            <ProjectStageFields
+              stage={eStage}
+              onStageChange={setEStage}
+              version={eVersion}
+              onVersionChange={publishingUpdate ? setEVersion : undefined}
+              versionRequired
+              currentVersion={app.version}
+              disabled={eSaving}
+            />
+            {publishingUpdate && (
+              <label className="@min-[36rem]/content:col-span-2">
+                <span className="mb-2 block text-xs font-black uppercase">What changed?</span>
+                <MarkdownTextarea
+                  value={eNotes}
+                  onChange={(event) => setENotes(event.target.value)}
+                  required
+                  maxLength={2000}
+                  placeholder="Describe what is new in this version"
+                />
+                <p className="mt-2 text-xs text-muted">
+                  Current version: {app.version || "Unversioned"}. Suggested starting version:{" "}
+                  {suggestedVersion(eStage, app.version)}.
+                </p>
+              </label>
+            )}
+            <label>
+              <span className="mb-2 block text-xs font-black uppercase">Project name</span>
+              <Input
+                value={eTitle}
+                onChange={(e) => setETitle(e.target.value)}
                 required
-                maxLength={2000}
-                placeholder="Describe what is new in this version"
+                maxLength={80}
+                placeholder="Project name"
               />
-              <p className="mt-2 text-xs text-muted">
-                Current version: {app.version || "Unversioned"}. Suggested starting version:{" "}
-                {suggestedVersion(eStage, app.version)}.
-              </p>
             </label>
-          )}
-          <label>
-            <span className="mb-2 block text-xs font-black uppercase">Project name</span>
-            <Input
-              value={eTitle}
-              onChange={(e) => setETitle(e.target.value)}
-              required
-              maxLength={80}
-              placeholder="Project name"
-            />
-          </label>
-          <label>
-            <span className="mb-2 block text-xs font-black uppercase">Category</span>
-            <Select value={eCategory} onChange={(e) => setECategory(e.target.value as Category)}>
-              <option value="Education">Education</option>
-              <option value="Productivity">Productivity</option>
-              <option value="Games">Games</option>
-              <option value="Creative">Creative</option>
-            </Select>
-          </label>
-          <label className="@min-[36rem]/content:col-span-2">
-            <span className="mb-2 block text-xs font-black uppercase">
-              What does it do? (type @ to mention developers)
-            </span>
-            <MentionInput
-              value={eDesc}
-              onChange={setEDesc}
-              profiles={[...profiles.values()]}
-              required
-              maxLength={280}
-              placeholder="One clear sentence — @ a collaborator"
-            />
-          </label>
-          <div className="@min-[36rem]/content:col-span-2">
-            <span className="mb-2 block text-xs font-black uppercase">
-              Collaborators (optional)
-            </span>
-            <CollaboratorPicker
-              profiles={[...profiles.values()]}
-              selected={eCollabIds}
-              onChange={setECollabIds}
-            />
-          </div>
-          <label className="@min-[36rem]/content:col-span-2">
-            <span className="mb-2 block text-xs font-black uppercase">App link</span>
-            <span className="relative block">
-              <LinkSimple
-                size={21}
-                weight="bold"
-                className="absolute left-4 top-1/2 -translate-y-1/2"
+            <label>
+              <span className="mb-2 block text-xs font-black uppercase">Category</span>
+              <Select value={eCategory} onChange={(e) => setECategory(e.target.value as Category)}>
+                <option value="Education">Education</option>
+                <option value="Productivity">Productivity</option>
+                <option value="Games">Games</option>
+                <option value="Creative">Creative</option>
+              </Select>
+            </label>
+            <label className="@min-[36rem]/content:col-span-2">
+              <span className="mb-2 block text-xs font-black uppercase">
+                What does it do? (type @ to mention developers)
+              </span>
+              <MentionInput
+                value={eDesc}
+                onChange={setEDesc}
+                profiles={[...profiles.values()]}
+                required
+                maxLength={280}
+                placeholder="One clear sentence — @ a collaborator"
               />
-              <Input
-                className="pl-12"
-                type="url"
-                value={eUrl}
-                onChange={(e) => {
-                  setEUrl(e.target.value);
-                  eResetRepositoryFiles();
-                }}
-                placeholder="https://project.example"
+            </label>
+            <div className="@min-[36rem]/content:col-span-2">
+              <span className="mb-2 block text-xs font-black uppercase">
+                Collaborators (optional)
+              </span>
+              <CollaboratorPicker
+                profiles={[...profiles.values()]}
+                selected={eCollabIds}
+                onChange={setECollabIds}
               />
-            </span>
-            <span className="mt-2 block text-xs text-body">
-              The live demo or project page behind the Open app button.
-            </span>
-          </label>
-          <label className="@min-[36rem]/content:col-span-2">
-            <span className="mb-2 block text-xs font-black uppercase">
-              GitHub project repo link (optional)
-            </span>
-            <span className="relative block">
-              <LinkSimple
-                size={21}
-                weight="bold"
-                className="absolute left-4 top-1/2 -translate-y-1/2"
-              />
-              <Input
-                className="pl-12"
-                type="url"
-                value={eRepoUrl}
-                onChange={(e) => {
-                  setERepoUrl(e.target.value);
-                  eResetRepositoryFiles();
-                }}
-                placeholder="https://github.com/you/project"
-              />
-            </span>
-            <span className="mt-2 block text-xs text-body">
-              Only used to import documentation. Never shown on the Open app button.
-            </span>
-          </label>
-          <div className="@min-[36rem]/content:col-span-2">
-            <span className="mb-2 block text-xs font-black uppercase">
-              Thumbnails (up to 3, first is the cover)
-            </span>
-            <ButtonLabel variant="surface" size="small" className="cursor-pointer">
-              <Images size={20} weight="duotone" />
-              {eBusy ? "Processing…" : "Choose from gallery"}
-              <FileInput
-                accept="image/*"
-                multiple
-                disabled={eBusy || eShots.length >= 3}
-                onChange={(e) => {
-                  void pickShots(e.target.files);
-                  e.target.value = "";
-                }}
-              />
-            </ButtonLabel>
-            {eImgError && (
-              <p role="alert" className="mt-2 text-sm font-bold">
-                {userFacingError(eImgError)}
-              </p>
-            )}
-            {eShots.length > 0 && (
-              <SortableThumbnails
-                images={eShots}
-                onReorder={setEShots}
-                onRemove={(i) => setEShots((prev) => prev.filter((_, j) => j !== i))}
-              />
-            )}
-          </div>
-          <div className="@min-[36rem]/content:col-span-2">
-            <span className="mb-2 block text-xs font-black uppercase">
-              Documentation (optional, markdown supported)
-            </span>
-            <div className="min-w-0 mb-3 flex flex-wrap items-center gap-2 max-w-full">
-              {(["write", "upload", "repository"] as const).map((tab) => (
+            </div>
+            <label className="@min-[36rem]/content:col-span-2">
+              <span className="mb-2 block text-xs font-black uppercase">App link</span>
+              <span className="relative block">
+                <LinkSimple
+                  size={21}
+                  weight="bold"
+                  className="absolute left-4 top-1/2 -translate-y-1/2"
+                />
+                <Input
+                  className="pl-12"
+                  type="url"
+                  value={eUrl}
+                  onChange={(e) => {
+                    setEUrl(e.target.value);
+                    eResetRepositoryFiles();
+                  }}
+                  placeholder="https://project.example"
+                />
+              </span>
+              <span className="mt-2 block text-xs text-body">
+                The live demo or project page behind the Open app button.
+              </span>
+            </label>
+            <label className="@min-[36rem]/content:col-span-2">
+              <span className="mb-2 block text-xs font-black uppercase">
+                GitHub project repo link (optional)
+              </span>
+              <span className="relative block">
+                <LinkSimple
+                  size={21}
+                  weight="bold"
+                  className="absolute left-4 top-1/2 -translate-y-1/2"
+                />
+                <Input
+                  className="pl-12"
+                  type="url"
+                  value={eRepoUrl}
+                  onChange={(e) => {
+                    setERepoUrl(e.target.value);
+                    eResetRepositoryFiles();
+                  }}
+                  placeholder="https://github.com/you/project"
+                />
+              </span>
+              <span className="mt-2 block text-xs text-body">
+                Only used to import documentation. Never shown on the Open app button.
+              </span>
+            </label>
+            <div className="@min-[36rem]/content:col-span-2">
+              <span className="mb-2 block text-xs font-black uppercase">
+                Thumbnails (up to 3, first is the cover)
+              </span>
+              <ButtonLabel variant="surface" size="small" className="cursor-pointer">
+                <Images size={20} weight="duotone" />
+                {eBusy ? "Processing…" : "Choose from gallery"}
+                <FileInput
+                  accept="image/*"
+                  multiple
+                  disabled={eBusy || eShots.length >= 3}
+                  onChange={(e) => {
+                    void pickShots(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+              </ButtonLabel>
+              {eImgError && (
+                <p role="alert" className="mt-2 text-sm font-bold">
+                  {userFacingError(eImgError)}
+                </p>
+              )}
+              {eShots.length > 0 && (
+                <SortableThumbnails
+                  images={eShots}
+                  onReorder={setEShots}
+                  onRemove={(i) => setEShots((prev) => prev.filter((_, j) => j !== i))}
+                />
+              )}
+            </div>
+            <div className="@min-[36rem]/content:col-span-2">
+              <span className="mb-2 block text-xs font-black uppercase">
+                Documentation (optional, markdown supported)
+              </span>
+              <div className="min-w-0 mb-3 flex flex-wrap items-center gap-2 max-w-full">
+                {(["write", "upload", "repository"] as const).map((tab) => (
+                  <Button
+                    key={tab}
+                    variant="outline-flat"
+                    size="small"
+                    type="button"
+                    onClick={() => {
+                      setEDocsPreviewReturnTab(tab);
+                      setEDocsTab(tab);
+                    }}
+                    aria-pressed={eDocsTab === tab}
+                    className="capitalize"
+                  >
+                    {tab === "upload"
+                      ? "Upload .md"
+                      : tab === "repository"
+                        ? "GitHub repository"
+                        : tab}
+                  </Button>
+                ))}
                 <Button
-                  key={tab}
                   variant="outline-flat"
                   size="small"
                   type="button"
                   onClick={() => {
-                    setEDocsPreviewReturnTab(tab);
-                    setEDocsTab(tab);
+                    if (eDocsTab === "preview") setEDocsTab(eDocsPreviewReturnTab);
+                    else {
+                      setEDocsPreviewReturnTab(eDocsTab);
+                      setEDocsTab("preview");
+                    }
                   }}
-                  aria-pressed={eDocsTab === tab}
-                  className="capitalize"
+                  aria-pressed={eDocsTab === "preview"}
+                  className="ml-auto"
                 >
-                  {tab === "upload"
-                    ? "Upload .md"
-                    : tab === "repository"
-                      ? "GitHub repository"
-                      : tab}
+                  {eDocsTab === "preview" ? (
+                    <>
+                      <PencilSimple size={16} weight="bold" /> Edit
+                    </>
+                  ) : (
+                    <>
+                      <Eye size={16} weight="bold" /> Preview
+                    </>
+                  )}
                 </Button>
-              ))}
-              <Button
-                variant="outline-flat"
-                size="small"
-                type="button"
-                onClick={() => {
-                  if (eDocsTab === "preview") setEDocsTab(eDocsPreviewReturnTab);
-                  else {
-                    setEDocsPreviewReturnTab(eDocsTab);
-                    setEDocsTab("preview");
-                  }
-                }}
-                aria-pressed={eDocsTab === "preview"}
-                className="ml-auto"
-              >
-                {eDocsTab === "preview" ? (
-                  <>
-                    <PencilSimple size={16} weight="bold" /> Edit
-                  </>
-                ) : (
-                  <>
-                    <Eye size={16} weight="bold" /> Preview
-                  </>
-                )}
-              </Button>
-            </div>
-            {eDocsTab === "write" && (
-              <MarkdownTextarea
-                className="min-h-24"
-                value={eDocs}
-                onChange={(e) => {
-                  setEDocs(e.target.value);
-                  setEDocsFile(null);
-                }}
-                maxLength={50000}
-                showCharacterCount
-                placeholder={"# My project\n\nWhat it does, how to run it…"}
-              />
-            )}
-            {eDocsTab === "upload" && (
-              <div>
-                <ButtonLabel variant="surface" size="small" className="cursor-pointer">
-                  <BookOpenText size={20} weight="duotone" />
-                  Choose README.md
-                  <FileInput
-                    accept=".md,.markdown,.txt,text/markdown,text/plain"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      e.target.value = "";
-                      if (!file) return;
-                      readMarkdownFile(file)
-                        .then(({ name, text }) => {
-                          setEDocs(text);
-                          setEDocsFile(name);
-                          setEDocsPreviewReturnTab("upload");
-                          setEDocsTab("preview");
-                          setEError(null);
-                        })
-                        .catch((err) =>
-                          setEError(err instanceof Error ? err.message : "Could not read file."),
-                        );
-                    }}
-                  />
-                </ButtonLabel>
-                {eDocsFile && (
-                  <p className="mt-2 wrap-anywhere text-sm font-bold text-muted">
-                    {eDocsFile} · {eDocs.length} chars
-                  </p>
-                )}
               </div>
-            )}
-            {eDocsTab === "repository" && (
-              <div className="rounded-xl border-2 border-outline bg-surface p-4">
-                {!isGitHubRepositoryUrl(eDocsRepoUrl) ? (
-                  <p role="status" className="text-sm font-bold text-body">
-                    Provide your GitHub project repo link first — paste it in the repo link field
-                    above, then come back here to choose Markdown files.
-                  </p>
-                ) : (
-                  <>
-                    <p className="text-sm font-bold text-body">
-                      Choose Markdown files from the public GitHub repository in your repo link.
+              {eDocsTab === "write" && (
+                <MarkdownTextarea
+                  className="min-h-24"
+                  value={eDocs}
+                  onChange={(e) => {
+                    setEDocs(e.target.value);
+                    setEDocsFile(null);
+                  }}
+                  maxLength={50000}
+                  showCharacterCount
+                  placeholder={"# My project\n\nWhat it does, how to run it…"}
+                />
+              )}
+              {eDocsTab === "upload" && (
+                <div>
+                  <ButtonLabel variant="surface" size="small" className="cursor-pointer">
+                    <BookOpenText size={20} weight="duotone" />
+                    Choose README.md
+                    <FileInput
+                      accept=".md,.markdown,.txt,text/markdown,text/plain"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (!file) return;
+                        readMarkdownFile(file)
+                          .then(({ name, text }) => {
+                            setEDocs(text);
+                            setEDocsFile(name);
+                            setEDocsPreviewReturnTab("upload");
+                            setEDocsTab("preview");
+                            setEError(null);
+                          })
+                          .catch((err) =>
+                            setEError(err instanceof Error ? err.message : "Could not read file."),
+                          );
+                      }}
+                    />
+                  </ButtonLabel>
+                  {eDocsFile && (
+                    <p className="mt-2 wrap-anywhere text-sm font-bold text-muted">
+                      {eDocsFile} · {eDocs.length} chars
                     </p>
-                    <Button
-                      variant="secondary"
-                      size="small"
-                      type="button"
-                      onClick={() => void eLoadRepositoryFiles()}
-                      disabled={eRepositoryFilesLoading || eRepositoryFilesImporting}
-                      className="mt-3"
-                    >
-                      {eRepositoryFilesLoading
-                        ? "Loading repository files…"
-                        : "Load Markdown files"}
-                    </Button>
-                    {eRepositoryFilesError && (
-                      <p role="alert" className="mt-3 text-sm font-bold text-foreground">
-                        {userFacingError(eRepositoryFilesError)}
+                  )}
+                </div>
+              )}
+              {eDocsTab === "repository" && (
+                <div className="rounded-xl border-2 border-outline bg-surface p-4">
+                  {!isGitHubRepositoryUrl(eDocsRepoUrl) ? (
+                    <p role="status" className="text-sm font-bold text-body">
+                      Provide your GitHub project repo link first — paste it in the repo link field
+                      above, then come back here to choose Markdown files.
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-sm font-bold text-body">
+                        Choose Markdown files from the public GitHub repository in your repo link.
                       </p>
-                    )}
-                    {eRepositoryFiles.length > 0 && (
-                      <>
-                        <div className="min-w-0 mt-4 flex flex-wrap items-center justify-between gap-3 max-w-full">
-                          <p className="text-sm font-black">
-                            {eSelectedRepositoryFiles.length} of {eRepositoryFiles.length} selected
-                          </p>
-                          <label className="min-w-0 flex items-center gap-2 text-sm font-black max-w-full">
-                            <Checkbox
-                              checked={eSelectedRepositoryFiles.length === eRepositoryFiles.length}
-                              onChange={(event) =>
-                                setESelectedRepositoryFiles(
-                                  event.target.checked ? eRepositoryFiles : [],
-                                )
-                              }
-                            />
-                            Select all
-                          </label>
-                        </div>
-                        <div className="mt-2 max-h-64 space-y-1 overflow-y-auto rounded-xl border-2 border-divider p-2">
-                          {eRepositoryFiles.map((path) => (
-                            <label
-                              key={path}
-                              className="min-w-0 flex items-start gap-2 rounded-lg px-2 py-1.5 text-sm font-bold hover:bg-background max-w-full"
-                            >
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        type="button"
+                        onClick={() => void eLoadRepositoryFiles()}
+                        disabled={eRepositoryFilesLoading || eRepositoryFilesImporting}
+                        className="mt-3"
+                      >
+                        {eRepositoryFilesLoading
+                          ? "Loading repository files…"
+                          : "Load Markdown files"}
+                      </Button>
+                      {eRepositoryFilesError && (
+                        <p role="alert" className="mt-3 text-sm font-bold text-foreground">
+                          {userFacingError(eRepositoryFilesError)}
+                        </p>
+                      )}
+                      {eRepositoryFiles.length > 0 && (
+                        <>
+                          <div className="min-w-0 mt-4 flex flex-wrap items-center justify-between gap-3 max-w-full">
+                            <p className="text-sm font-black">
+                              {eSelectedRepositoryFiles.length} of {eRepositoryFiles.length}{" "}
+                              selected
+                            </p>
+                            <label className="min-w-0 flex items-center gap-2 text-sm font-black max-w-full">
                               <Checkbox
-                                checked={eSelectedRepositoryFiles.includes(path)}
+                                checked={
+                                  eSelectedRepositoryFiles.length === eRepositoryFiles.length
+                                }
                                 onChange={(event) =>
-                                  setESelectedRepositoryFiles((selected) =>
-                                    event.target.checked
-                                      ? [...selected, path]
-                                      : selected.filter((item) => item !== path),
+                                  setESelectedRepositoryFiles(
+                                    event.target.checked ? eRepositoryFiles : [],
                                   )
                                 }
-                                className="mt-1 shrink-0"
                               />
-                              <span className="min-w-0 wrap-anywhere">{path}</span>
+                              Select all
                             </label>
-                          ))}
-                        </div>
-                        <Button
-                          size="small"
-                          type="button"
-                          onClick={() => void eImportRepositoryFiles()}
-                          disabled={!eSelectedRepositoryFiles.length || eRepositoryFilesImporting}
-                          className="mt-3"
-                        >
-                          {eRepositoryFilesImporting
-                            ? "Importing selected files…"
-                            : `Use ${eSelectedRepositoryFiles.length} selected file${eSelectedRepositoryFiles.length === 1 ? "" : "s"}`}
-                        </Button>
-                        <p className="mt-2 text-xs font-bold text-muted">
-                          Selected files are combined into project documentation (50,000-character
-                          limit).
-                        </p>
-                      </>
-                    )}
-                  </>
-                )}
-              </div>
+                          </div>
+                          <div className="mt-2 max-h-64 space-y-1 overflow-y-auto rounded-xl border-2 border-divider p-2">
+                            {eRepositoryFiles.map((path) => (
+                              <label
+                                key={path}
+                                className="min-w-0 flex items-start gap-2 rounded-lg px-2 py-1.5 text-sm font-bold hover:bg-background max-w-full"
+                              >
+                                <Checkbox
+                                  checked={eSelectedRepositoryFiles.includes(path)}
+                                  onChange={(event) =>
+                                    setESelectedRepositoryFiles((selected) =>
+                                      event.target.checked
+                                        ? [...selected, path]
+                                        : selected.filter((item) => item !== path),
+                                    )
+                                  }
+                                  className="mt-1 shrink-0"
+                                />
+                                <span className="min-w-0 wrap-anywhere">{path}</span>
+                              </label>
+                            ))}
+                          </div>
+                          <Button
+                            size="small"
+                            type="button"
+                            onClick={() => void eImportRepositoryFiles()}
+                            disabled={!eSelectedRepositoryFiles.length || eRepositoryFilesImporting}
+                            className="mt-3"
+                          >
+                            {eRepositoryFilesImporting
+                              ? "Importing selected files…"
+                              : `Use ${eSelectedRepositoryFiles.length} selected file${eSelectedRepositoryFiles.length === 1 ? "" : "s"}`}
+                          </Button>
+                          <p className="mt-2 text-xs font-bold text-muted">
+                            Selected files are combined into project documentation (50,000-character
+                            limit).
+                          </p>
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+              {eDocsTab === "preview" && (
+                <div className="rounded-2xl border-[3px] border-outline bg-surface p-4">
+                  {eDocs.trim() ? (
+                    <PagedMarkdown text={eDocs} fadeTo="var(--color-surface)" />
+                  ) : (
+                    <p className="text-sm font-bold text-muted">
+                      Nothing to preview yet — write some markdown or upload a README.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+            {eError && (
+              <p role="alert" className="text-sm font-bold @min-[36rem]/content:col-span-2">
+                {userFacingError(eError)}
+              </p>
             )}
-            {eDocsTab === "preview" && (
-              <div className="rounded-2xl border-[3px] border-outline bg-surface p-4">
-                {eDocs.trim() ? (
-                  <PagedMarkdown text={eDocs} fadeTo="var(--color-surface)" />
-                ) : (
-                  <p className="text-sm font-bold text-muted">
-                    Nothing to preview yet — write some markdown or upload a README.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-          {eError && (
-            <p role="alert" className="text-sm font-bold @min-[36rem]/content:col-span-2">
-              {userFacingError(eError)}
-            </p>
-          )}
-          <div className="min-w-0 flex flex-wrap gap-3 @min-[36rem]/content:col-span-2 max-w-full">
-            <Button type="submit" disabled={eSaving || eBusy}>
-              {eSaving ? "Saving…" : publishingUpdate ? "Publish update" : "Save changes"}
-            </Button>
-            <Button
-              variant="surface"
-              type="button"
-              onClick={() => {
-                setEditing(false);
-                setEError(null);
-                setConfirmDelete(false);
-              }}
-            >
-              Cancel
-            </Button>
-            {!confirmDelete && (
+            <div className="min-w-0 flex flex-wrap gap-3 @min-[36rem]/content:col-span-2 max-w-full">
+              <Button type="submit" disabled={eSaving || eBusy}>
+                {eSaving ? "Saving…" : publishingUpdate ? "Publish update" : "Save changes"}
+              </Button>
               <Button
                 variant="surface"
-                size="small"
                 type="button"
-                onClick={() => {
-                  setDeleteError(null);
-                  setConfirmDelete(true);
-                }}
-                className="ml-auto text-danger"
+                onClick={closeEditor}
+                disabled={eSaving || eBusy}
               >
-                <Trash size={18} weight="bold" /> Delete project
+                Cancel
               </Button>
-            )}
-          </div>
-        </form>
+              {!confirmDelete && (
+                <Button
+                  variant="surface"
+                  size="small"
+                  type="button"
+                  onClick={() => {
+                    setEditing(false);
+                    setDeleteError(null);
+                    setConfirmDelete(true);
+                  }}
+                  disabled={eSaving || eBusy}
+                  className="ml-auto text-danger"
+                >
+                  <Trash size={18} weight="bold" /> Delete project
+                </Button>
+              )}
+            </div>
+          </form>
+        </Modal>
       )}
 
       {isOwner && confirmDelete && (

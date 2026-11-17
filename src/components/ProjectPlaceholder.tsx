@@ -5,6 +5,8 @@ type Props = {
   letterClassName?: string;
   artworkScale?: number;
   textColor?: string;
+  monogram?: string;
+  as?: "div" | "span";
 };
 
 /** Shared artwork for project covers without an uploaded thumbnail. */
@@ -15,9 +17,11 @@ export default function ProjectPlaceholder({
   letterClassName = "text-4xl",
   artworkScale = 1,
   textColor,
+  monogram,
+  as: Tag = "div",
 }: Props) {
   return (
-    <div
+    <Tag
       data-project-placeholder
       style={{
         backgroundColor: `var(--color-${color})`,
@@ -33,8 +37,8 @@ export default function ProjectPlaceholder({
         className={`rotate-[-4deg] font-black ${letterClassName}`}
         style={artworkScale === 1 ? undefined : { fontSize: 36 * artworkScale }}
       >
-        {title.charAt(0)}
+        {monogram ?? title.charAt(0)}
       </span>
-    </div>
+    </Tag>
   );
 }

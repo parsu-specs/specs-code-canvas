@@ -37,37 +37,18 @@ html[data-native-splash] #app-splash svg {
 }
 
 @media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
-  :root {
-    --app-bottom-surface: var(--color-background);
-    background-color: var(--app-bottom-surface);
-  }
-
+  /* Leave the native navigation area transparent to the page beneath it.
+     Reserve space for controls instead of painting a separate bottom strip. */
   @media (width < 64rem) {
-    :root:has([data-app-bottom-nav]),
-    :root[data-startup-store]:has([data-startup-bottom-nav]) {
-      --app-bottom-surface: var(--color-brand-surface);
+    [data-app-bottom-nav],
+    [data-startup-bottom-nav] {
+      bottom: var(--app-bottom-inset);
+      height: 4.5rem;
+      padding-bottom: 0.5rem;
     }
   }
 
-  /* Installed windows must paint the native navigation area with the open sheet,
-     rather than the app tab bar behind its backdrop. Retain this during exit. */
-  :root:has(.sheet-overlay) {
-    --app-bottom-surface: var(--color-panel);
-  }
-
-  /* Paint the system gesture area even on routes without an app navigation bar.
-     This is the reserved inset itself; it adds no second spacer to the layout. */
-  body::after {
-    content: "";
-    position: fixed;
-    inset: auto 0 0;
-    height: var(--app-bottom-inset);
-    background: var(--app-bottom-surface);
-    pointer-events: none;
-    z-index: 51;
-  }
-
-  :root:not(:has([data-app-bottom-nav])) body {
+  :root:not(:has([data-app-bottom-nav], [data-startup-bottom-nav])) body {
     padding-bottom: var(--app-bottom-inset);
   }
 }
@@ -91,23 +72,15 @@ html[data-native-splash] #app-splash svg {
 }
 
 .sheet-overlay {
-  align-items: flex-end;
-  overflow: hidden;
-  padding: max(1rem, env(safe-area-inset-top, 0px)) 0 0;
+  align-items: center;
+  overflow-y: auto;
+  padding: 1.5rem;
   animation: sheet-backdrop-in 220ms ease-out both;
 }
 
 .sheet-overlay > :first-child {
   min-width: 0;
-  max-height: min(90dvh, calc(100dvh - max(1rem, env(safe-area-inset-top, 0px))));
-  margin-block: 0;
-  padding-bottom: var(--app-bottom-inset);
-  border-bottom: 0;
-  border-radius: 1.5rem 1.5rem 0 0;
-  clip-path: none;
-  /* Extend the surface below the viewport while the sheet settles above its edge. */
-  box-shadow: 0 calc(16px + var(--app-bottom-inset)) 0 var(--color-panel);
-  animation: sheet-slide-in 380ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  max-height: 90dvh;
 }
 
 .sheet-overlay[data-closing="true"] {
@@ -116,16 +89,38 @@ html[data-native-splash] #app-splash svg {
 
 .sheet-overlay[data-closing="true"] > :first-child {
   pointer-events: none;
-  animation: sheet-slide-out 220ms ease-in both;
+}
+
+@media (width < 48rem) {
+  .sheet-overlay {
+    align-items: flex-end;
+    /* Keep focus from scrolling the animated overlay; the sheet body scrolls. */
+    overflow: clip;
+    padding: max(1rem, env(safe-area-inset-top, 0px)) 0 0;
+  }
+
+  .sheet-overlay > :first-child {
+    width: 100%;
+    max-width: none;
+    max-height: min(90dvh, calc(100dvh - max(1rem, env(safe-area-inset-top, 0px))));
+    margin-block: 0;
+    padding-bottom: var(--app-bottom-inset);
+    border-bottom: 0;
+    border-radius: 1.5rem 1.5rem 0 0;
+    clip-path: none;
+    /* Continue the sheet surface beneath the native navigation area. */
+    box-shadow: 0 calc(16px + var(--app-bottom-inset)) 0 var(--color-panel);
+    animation: sheet-slide-in 220ms ease-out both;
+  }
+
+  .sheet-overlay[data-closing="true"] > :first-child {
+    animation: sheet-slide-out 220ms ease-in both;
+  }
 }
 
 @keyframes sheet-slide-in {
   from {
     transform: translateY(100%);
-  }
-  70% {
-    transform: translateY(-1px);
-    animation-timing-function: ease-in-out;
   }
   to {
     transform: translateY(0);

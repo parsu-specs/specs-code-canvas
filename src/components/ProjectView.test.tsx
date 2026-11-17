@@ -59,6 +59,7 @@ afterEach(() => {
 function renderProject(startEditing = true, currentUser: User | null = user, onDeleted = vi.fn()) {
   const container = document.createElement("div");
   document.body.append(container);
+  container.id = "root";
   const root = createRoot(container);
   act(() =>
     root.render(
@@ -90,9 +91,11 @@ function paint() {
 }
 
 it.each([false, true])(
-  "waits for project details before scrolling (reduced motion: %s)",
+  "waits for project details before opening the editor modal (reduced motion: %s)",
   async (reducedMotion) => {
-    vi.stubGlobal("matchMedia", () => ({ matches: reducedMotion }));
+    vi.stubGlobal("matchMedia", (query: string) => ({
+      matches: query === "(prefers-reduced-motion: reduce)" && reducedMotion,
+    }));
     let resolve!: (app: AppItem) => void;
     repo.getApp.mockReturnValue(
       new Promise<AppItem>((done) => {
@@ -104,43 +107,63 @@ it.each([false, true])(
     expect(container.querySelector("form")).toBeNull();
     expect(scroll).not.toHaveBeenCalled();
     await act(async () => resolve(project));
-    const form = container.querySelector<HTMLFormElement>("#edit-project-details")!;
+    const form = document.querySelector<HTMLFormElement>("#edit-project-details")!;
     expect(form).not.toBeNull();
     expect(form.querySelector<HTMLInputElement>('input[placeholder="Project name"]')?.value).toBe(
       project.title,
     );
     paint();
-    expect(scroll).toHaveBeenCalledOnce();
-    expect(scroll.mock.instances[0]).toBe(form);
-    expect(scroll).toHaveBeenCalledWith({
-      behavior: reducedMotion ? "instant" : "smooth",
-      block: "start",
-    });
+    expect(scroll).not.toHaveBeenCalled();
+    expect(document.querySelector('[role="dialog"]')?.contains(form)).toBe(true);
+    expect(container.contains(form)).toBe(false);
+    expect(document.querySelector(".sheet-overlay")).not.toBeNull();
+    expect(document.body.style.overflow).toBe("hidden");
+    expect(container.inert).toBe(true);
     expect(form.contains(document.activeElement)).toBe(true);
   },
 );
 
-it("opens and scrolls the editor from the project page", async () => {
-  repo.getApp.mockResolvedValue(project);
-  const container = renderProject(false);
-  await act(async () => {});
-  paint();
-  expect(scroll).not.toHaveBeenCalled();
-  const edit = Array.from(container.querySelectorAll("button")).find((button) =>
-    button.textContent?.includes("Edit project details"),
-  )!;
-  act(() => edit.click());
-  paint();
-  expect(scroll).toHaveBeenCalledOnce();
-  expect(container.querySelector("#edit-project-details")).not.toBeNull();
-});
+it.each(["Edit project details", "Publish an update"])(
+  "opens %s in the shared responsive modal and restores focus after closing",
+  async (action) => {
+    vi.useFakeTimers();
+    try {
+      repo.getApp.mockResolvedValue(project);
+      const container = renderProject(false);
+      await act(async () => {});
+      const trigger = button(container, action);
+      trigger.focus();
+      act(() => trigger.click());
+      const dialog = document.querySelector<HTMLElement>('[role="dialog"]')!;
+      expect(dialog).not.toBeNull();
+      expect(dialog.querySelector("h2")?.textContent).toBe(action);
+      expect(
+        dialog.querySelector('textarea[placeholder="Describe what is new in this version"]') !==
+          null,
+      ).toBe(action === "Publish an update");
+      expect(dialog.contains(document.activeElement)).toBe(true);
+      expect(scroll).not.toHaveBeenCalled();
+      act(() => button(dialog, "Cancel").click());
+      expect(document.querySelector('.sheet-overlay[data-closing="true"]')).not.toBeNull();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(220);
+      });
+      expect(document.querySelector('[role="dialog"]')).toBeNull();
+      expect(document.body.style.overflow).toBe("");
+      expect(container.inert).toBe(false);
+      expect(document.activeElement).toBe(trigger);
+    } finally {
+      vi.useRealTimers();
+    }
+  },
+);
 
 it("does not open another developer's editor from an edit request", async () => {
   repo.getApp.mockResolvedValue(project);
   const container = renderProject(true, { ...user, id: "other" });
   await act(async () => {});
   paint();
-  expect(container.querySelector("#edit-project-details")).toBeNull();
+  expect(document.querySelector("#edit-project-details")).toBeNull();
   expect(scroll).not.toHaveBeenCalled();
 });
 

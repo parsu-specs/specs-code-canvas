@@ -52,7 +52,7 @@ export default function Modal({
   useEffect(() => {
     if (!confirmingClose) return;
     previousConfirmationFocus.current = document.activeElement as HTMLElement | null;
-    keepEditingRef.current?.focus();
+    keepEditingRef.current?.focus({ preventScroll: true });
     return () => {
       if (previousConfirmationFocus.current?.isConnected)
         previousConfirmationFocus.current.focus({ preventScroll: true });
@@ -73,7 +73,11 @@ export default function Modal({
           'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]',
         ) ?? [],
       ).filter((element) => element.getClientRects().length > 0);
-    (panel?.querySelector<HTMLElement>('input:not([type="file"])') ?? panel)?.focus();
+    // Focusing a moving input can scroll the sheet and open the mobile keyboard.
+    const initialFocus = window.matchMedia?.("(width < 48rem)").matches
+      ? panel
+      : (panel?.querySelector<HTMLElement>('input:not([type="file"])') ?? panel);
+    initialFocus?.focus({ preventScroll: true });
 
     const onKey = (event: KeyboardEvent) => {
       // Portaled controls manage their own focus and Escape dismissal.

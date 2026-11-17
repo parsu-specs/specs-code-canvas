@@ -47,7 +47,37 @@ export function LoadingRegion({
   );
 }
 
-export function AppCardsSkeleton({ count = 6 }: { count?: number }) {
+export function AppCardsSkeleton({
+  count = 6,
+  layout = "grid",
+}: {
+  count?: number;
+  layout?: "grid" | "list";
+}) {
+  if (layout === "list") {
+    return (
+      <LoadingRegion label="Loading projects">
+        <div className="mx-auto grid w-full min-w-0 max-w-3xl gap-3">
+          {Array.from({ length: count }, (_, index) => (
+            <div key={index} className="toon-card min-w-0 bg-panel p-3 sm:p-4">
+              <div className="flex min-w-0 items-start gap-3">
+                <SkeletonBlock className="size-14 shrink-0 rounded-xl sm:size-16" />
+                <div className="min-w-0 flex-1 space-y-1">
+                  <SkeletonBlock className="h-3 w-1/3" />
+                  <SkeletonBlock className="h-5 w-2/3" />
+                  <SkeletonBlock className="h-3 w-1/2" />
+                </div>
+              </div>
+              <div className="mt-1 flex items-center justify-between gap-2">
+                <SkeletonBlock className="h-3 w-16" />
+                <SkeletonBlock className="size-11 shrink-0 rounded-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </LoadingRegion>
+    );
+  }
   return (
     <LoadingRegion label="Loading projects">
       <div className="discovery-grid min-w-0 max-w-full">
@@ -154,24 +184,21 @@ export function DeveloperCardsSkeleton({ layout = "grid" }: { layout?: "grid" | 
         className={
           layout === "grid"
             ? "grid gap-4 grid-cols-[repeat(auto-fit,minmax(min(100%,18rem),1fr))]"
-            : "space-y-1"
+            : "space-y-3"
         }
       >
         {Array.from({ length: 6 }, (_, index) => (
-          <div
-            key={index}
-            className={`min-w-0 rounded-xl border-[3px] border-transparent ${layout === "grid" ? "p-4" : "grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 px-3 py-2 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_auto]"}`}
-          >
-            <div
-              className={`flex min-w-0 items-center gap-3 ${layout === "list" ? "col-span-2 sm:col-span-1" : ""}`}
-            >
-              <SkeletonBlock
-                className={layout === "grid" ? "size-14 rounded-full" : "size-8 rounded-full"}
-              />
+          <div key={index} className="toon-card min-w-0 bg-surface p-4 sm:p-5">
+            <div className="flex min-w-0 items-center gap-3">
+              <SkeletonBlock className="size-11 rounded-full sm:size-14" />
               <SkeletonBlock className="h-6 w-1/2" />
             </div>
-            <SkeletonBlock className={layout === "grid" ? "mt-2 h-5 w-3/4" : "h-4 w-3/4"} />
-            <SkeletonBlock className={layout === "grid" ? "mt-3 h-4 w-1/2" : "h-4 w-24"} />
+            {layout === "grid" && (
+              <>
+                <SkeletonBlock className="mt-3 h-5 w-3/4" />
+                <SkeletonBlock className="mt-4 h-4 w-1/2" />
+              </>
+            )}
           </div>
         ))}
       </div>

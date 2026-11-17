@@ -3,7 +3,7 @@ import { useSheetPresence } from "./useSheetPresence";
 import { RowsSkeleton } from "./Skeleton";
 import { CloseButton } from "./CloseButton";
 import { Button } from "./Button";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Heart } from "@phosphor-icons/react";
 import Avatar from "./Avatar";
@@ -36,6 +36,7 @@ export default function VotersDialog({
   const reaction = "like";
   const [open, setOpen] = useState(false);
   const sheet = useSheetPresence(open);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const [voters, setVoters] = useState<Profile[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +78,7 @@ export default function VotersDialog({
     };
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus({ preventScroll: true });
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
@@ -149,7 +151,7 @@ export default function VotersDialog({
                   type="button"
                   onClick={() => setOpen(false)}
                   aria-label="Close likes"
-                  autoFocus
+                  ref={closeButtonRef}
                 />
               </div>
               <div className="modal-grid min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">

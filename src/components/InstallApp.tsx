@@ -1,10 +1,18 @@
 import { useState, useSyncExternalStore } from "react";
 import { DownloadSimple } from "@phosphor-icons/react";
 import { Button } from "./Button";
+import PwaThemeUpdatePrompt from "./PwaThemeUpdatePrompt";
+import {
+  markPwaThemeUpdateRead,
+  pwaThemeUpdateSnapshot,
+  subscribePwaThemeUpdate,
+} from "../utils/pwaThemeUpdate";
 import { installApp, installState, subscribeInstall } from "../utils/pwa";
 
 export default function InstallApp() {
   const state = useSyncExternalStore(subscribeInstall, installState, () => "manual");
+  const update = useSyncExternalStore(subscribePwaThemeUpdate, pwaThemeUpdateSnapshot, () => null);
+  const [showUpdate, setShowUpdate] = useState(false);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
   const apple =
@@ -21,6 +29,28 @@ export default function InstallApp() {
           ? "CodeCanvas is running as an installed app."
           : "Keep CodeCanvas on your home screen or desktop and open it in its own window."}
       </p>
+      {state === "installed" && (
+        <div className="mt-4 border-t-2 border-dashed border-divider/60 pt-4">
+          <p className="font-black">{update ? "Theme updated" : "App appearance"}</p>
+          <p className="mt-1 text-sm font-bold text-muted">
+            {update
+              ? "Your new theme is active. Update the installed app icon and launch appearance to match."
+              : "See how to refresh the installed app icon and launch appearance after changing themes."}
+          </p>
+          <Button
+            type="button"
+            size="small"
+            className="mt-3"
+            onClick={() => {
+              markPwaThemeUpdateRead();
+              setShowUpdate(true);
+            }}
+          >
+            How to update
+          </Button>
+        </div>
+      )}
+      {showUpdate && <PwaThemeUpdatePrompt onClose={() => setShowUpdate(false)} />}
       {state === "available" ? (
         <Button
           type="button"

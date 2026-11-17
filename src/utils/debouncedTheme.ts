@@ -59,7 +59,7 @@ export function createDebouncedTheme(
       timer = setTimeout(() => {
         ready = true;
         void flush();
-      }, 5_000);
+      }, 500);
       return promise;
     },
     pending(): ThemePatch {

@@ -123,3 +123,25 @@ it("dismisses without an animation delay for reduced motion", async () => {
   await act(async () => close());
   expect(onClose).toHaveBeenCalledOnce();
 });
+
+it.each([false, true])("focuses without scrolling during entry (mobile: %s)", async (mobile) => {
+  vi.stubGlobal("matchMedia", (query: string) => ({
+    matches: query === "(width < 48rem)" && mobile,
+  }));
+  const focus = vi.spyOn(HTMLElement.prototype, "focus");
+  try {
+    await act(async () =>
+      root.render(
+        <Modal id="project" title="Project" onClose={() => {}}>
+          <input aria-label="Project name" />
+        </Modal>,
+      ),
+    );
+    const target = document.querySelector(mobile ? '[role="dialog"]' : "input");
+    expect(document.activeElement).toBe(target);
+    expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+    expect(focus.mock.instances[0]).toBe(target);
+  } finally {
+    focus.mockRestore();
+  }
+});

@@ -51,7 +51,7 @@ export default function Dropdown(props: DropdownProps) {
 
   function close(restoreFocus = false) {
     setPanel(null);
-    if (restoreFocus) buttonRef.current?.focus();
+    if (restoreFocus) buttonRef.current?.focus({ preventScroll: true });
   }
 
   function show() {
@@ -77,7 +77,7 @@ export default function Dropdown(props: DropdownProps) {
     const initial =
       list?.querySelector<HTMLElement>('[aria-selected="true"], input:checked') ??
       list?.querySelector<HTMLElement>("button, input");
-    (initial ?? list)?.focus();
+    (initial ?? list)?.focus({ preventScroll: true });
     const onPointer = (event: PointerEvent) => {
       if (
         !(

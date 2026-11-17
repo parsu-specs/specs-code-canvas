@@ -14,8 +14,14 @@ export default function handler(request, response) {
   const requestedTheme = new URL(request.url ?? "/", "https://codecanvas.invalid").searchParams.get(
     "theme",
   );
-  const preference = requestedTheme ?? cookie;
-  const theme = Object.hasOwn(themes, preference ?? "") ? preference : "candy-light";
+  // Desktop updaters may revisit the manifest URL saved by an earlier update.
+  // Prefer this browser's latest selection over a theme pinned in that URL.
+  // Cookie-less WebAPK requests still use the explicit theme.
+  const theme = Object.hasOwn(themes, cookie ?? "")
+    ? cookie
+    : Object.hasOwn(themes, requestedTheme ?? "")
+      ? requestedTheme
+      : "candy-light";
   const colors = themes[theme];
   const icon = (name) => `/pwa/themes/${theme}/${name}.png?v=3`;
   response.setHeader("Content-Type", "application/manifest+json; charset=utf-8");

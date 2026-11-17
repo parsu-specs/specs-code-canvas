@@ -2,7 +2,15 @@
 import { afterEach, expect, it, vi } from "vitest";
 import { applyWindowColor, readPwaColors, initializePwaBranding } from "./pwaBranding";
 
+import { dismissPwaThemeUpdate, pwaThemeUpdateSnapshot } from "./pwaThemeUpdate";
+const install = vi.hoisted(() => ({ state: "manual" }));
+vi.mock("./pwa", () => ({ installState: () => install.state }));
+let stopBranding = () => {};
+
 afterEach(() => {
+  stopBranding();
+  dismissPwaThemeUpdate();
+  install.state = "manual";
   vi.unstubAllGlobals();
   document.head.innerHTML = "";
   delete document.documentElement.dataset.palette;
@@ -14,7 +22,7 @@ it("publishes the device preference and network artwork before requesting a mani
   vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "#6558bd" }));
   document.head.innerHTML =
     '<link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/pwa/icon-180.png"><link rel="apple-touch-startup-image" href="/pwa/splash-1170-2532.png">';
-  initializePwaBranding();
+  stopBranding = initializePwaBranding();
   const original = document.querySelector('link[rel="manifest"]');
   expect(document.cookie).toContain("cc_pwa_theme=candy-light");
   document.documentElement.dataset.palette = "forest";
@@ -62,5 +70,24 @@ it("uses the resolved primary color for window chrome as palettes change", () =>
   applyWindowColor(readPwaColors());
   expect(document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.content).toBe(
     "#c2a5f5",
+  );
+});
+
+it("records installed theme changes after syncing branding, but ignores startup and duplicate events", () => {
+  install.state = "installed";
+  vi.stubGlobal("getComputedStyle", () => ({ getPropertyValue: () => "#6558bd" }));
+  document.head.innerHTML = '<link rel="manifest" href="/manifest.webmanifest">';
+  stopBranding = initializePwaBranding();
+  expect(pwaThemeUpdateSnapshot()).toBeNull();
+  document.documentElement.dataset.palette = "forest";
+  window.dispatchEvent(new Event("cc:appearance-change"));
+  const update = pwaThemeUpdateSnapshot();
+  expect(update?.theme).toBe("forest-light");
+  expect(update?.read).toBe(false);
+  expect(JSON.parse(localStorage.getItem("cc.pwa-theme-update.v1")!)).toEqual(update);
+  window.dispatchEvent(new Event("cc:appearance-change"));
+  expect(pwaThemeUpdateSnapshot()).toBe(update);
+  expect(document.querySelector('link[rel="manifest"]')?.getAttribute("href")).toBe(
+    "/manifest.webmanifest?theme=forest-light",
   );
 });

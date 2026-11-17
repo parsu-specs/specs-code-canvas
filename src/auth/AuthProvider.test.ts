@@ -75,7 +75,7 @@ it("restores and saves account appearance, rolls back failed saves, and isolates
       void auth.updateAppearance("light");
       void auth.updatePalette("ocean");
       auth.updateCachedProfile(profile);
-      await vi.advanceTimersByTimeAsync(4_999);
+      await vi.advanceTimersByTimeAsync(499);
     });
     expect(loadAppearance()).toBe("light");
     expect(auth.profile?.palette).toBe("ocean");
@@ -100,7 +100,7 @@ it("restores and saves account appearance, rolls back failed saves, and isolates
     mocks.updateProfile.mockRejectedValue(new Error("Unavailable"));
     await act(async () => {
       const failure = expect(auth.updateAppearance("system")).rejects.toThrow("Unavailable");
-      await vi.advanceTimersByTimeAsync(5_000);
+      await vi.advanceTimersByTimeAsync(500);
       await failure;
     });
     expect(loadAppearance()).toBe("light");
@@ -148,7 +148,7 @@ it("does not apply an appearance save to a different session", async () => {
     let pending!: Promise<void>;
     await act(async () => {
       pending = auth.updateAppearance("dark");
-      await vi.advanceTimersByTimeAsync(5_000);
+      await vi.advanceTimersByTimeAsync(500);
     });
     await act(async () => notify(null));
     await act(async () => {

@@ -43,7 +43,7 @@ export default function MarkdownFileViewer({
 
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKeyDown);
-    closeButtonRef.current?.focus();
+    closeButtonRef.current?.focus({ preventScroll: true });
 
     return () => {
       document.body.style.overflow = previousOverflow;

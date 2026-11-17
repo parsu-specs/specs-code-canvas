@@ -35,6 +35,7 @@ type AppCardProps = {
   onOpenApp: (appId: string) => void;
   priority?: boolean;
   eager?: boolean;
+  layout?: "grid" | "list";
 };
 
 export default function AppCard({
@@ -52,6 +53,7 @@ export default function AppCard({
   onOpenApp,
   priority = false,
   eager = false,
+  layout = "grid",
 }: AppCardProps) {
   const commentsSheet = useSheetPresence(expanded);
   useEffect(() => {
@@ -83,6 +85,25 @@ export default function AppCard({
   const trophyPlace =
     projectRank === 1 || projectRank === 2 || projectRank === 3 ? projectRank : undefined;
   const pressPos = useRef<{ x: number; y: number } | null>(null);
+  const projectActions = (
+    <span className="min-w-0 ml-auto flex shrink-0 items-center gap-1 max-w-full">
+      <ShareButton app={app} size="compact" iconOnly variant="outline-flat" />
+      {isSafeHttpUrl(app.url) && (
+        <ButtonLink
+          href={app.url as string}
+          target="_blank"
+          rel="noreferrer"
+          variant="icon"
+          size="compact"
+          className="size-8 max-sm:size-11"
+          aria-label={`Open ${app.title} in a new tab`}
+          title={`Open ${app.title} in a new tab`}
+        >
+          <ArrowUpRight size={16} weight="duotone" aria-hidden="true" />
+        </ButtonLink>
+      )}
+    </span>
+  );
 
   // Whole-card open: any press on the card itself opens the project, except
   // presses on inner controls (vote, comments, profiles, voters, links) and
@@ -101,167 +122,209 @@ export default function AppCard({
         pressPos.current = { x: e.clientX, y: e.clientY };
       }}
       onClick={openFromCard}
-      className="app-card toon-card toon-paper bg-panel flex w-full min-w-0 max-w-sm flex-[1_1_18rem] cursor-pointer flex-col p-3"
+      className={`app-card toon-card bg-panel flex w-full min-w-0 cursor-pointer flex-col ${layout === "list" ? "p-3 sm:p-4" : "toon-paper max-w-sm flex-[1_1_18rem] p-3"}`}
     >
-      <Button
-        variant="plain"
-        onClick={() => onOpenApp(app.id)}
-        aria-label={`Open ${app.title} details`}
-        className="block w-full shrink-0"
-      >
-        {app.screenshots?.[0] ? (
-          <span className="relative block h-36 w-full overflow-hidden rounded-xl border-[3px] border-outline bg-inverse">
-            <ProjectImage
-              src={app.screenshots[0]}
-              alt={`${app.title} thumbnail`}
-              loading={priority || eager ? "eager" : "lazy"}
-              fetchPriority={priority ? "high" : "auto"}
-              decoding="async"
-              className="relative h-full w-full object-cover"
+      {layout === "grid" && (
+        <Button
+          variant="plain"
+          onClick={() => onOpenApp(app.id)}
+          aria-label={`Open ${app.title} details`}
+          className="block w-full shrink-0"
+        >
+          {app.screenshots?.[0] ? (
+            <span className="relative block h-36 w-full overflow-hidden rounded-xl border-[3px] border-outline bg-inverse">
+              <ProjectImage
+                src={app.screenshots[0]}
+                alt={`${app.title} thumbnail`}
+                loading={priority || eager ? "eager" : "lazy"}
+                fetchPriority={priority ? "high" : "auto"}
+                decoding="async"
+                className="relative h-full w-full object-cover"
+              />
+            </span>
+          ) : (
+            <ProjectPlaceholder
+              title={app.title}
+              color={app.color}
+              className="h-36 rounded-xl border-[3px] border-outline"
             />
-          </span>
-        ) : (
-          <ProjectPlaceholder
-            title={app.title}
-            color={app.color}
-            className="h-36 rounded-xl border-[3px] border-outline"
-          />
-        )}
-      </Button>
+          )}
+        </Button>
+      )}
       <div className="min-h-0 min-w-0 flex flex-col max-w-full">
-        <div className="min-w-0 mt-2 flex shrink-0 flex-col items-start max-w-full">
-          <div className="flex w-full min-w-0 items-center justify-between">
-            <span
-              className="min-w-0 wrap-anywhere text-[10px] font-black uppercase text-primary"
-              title={[app.category, app.stage && PROJECT_STAGE_LABELS[app.stage]]
-                .filter(Boolean)
-                .join(" · ")}
+        <div
+          className={
+            layout === "list"
+              ? "grid min-w-0 grid-cols-[3.5rem_minmax(0,1fr)] items-start gap-x-3 gap-y-1 sm:grid-cols-[4rem_minmax(0,1fr)_auto]"
+              : "flex min-w-0 items-start gap-3"
+          }
+        >
+          {layout === "list" && (
+            <Button
+              variant="plain"
+              onClick={() => onOpenApp(app.id)}
+              aria-label={`Open ${app.title} details`}
+              className="shrink-0 rounded-xl"
             >
-              {app.category}
-              {app.stage && <> · {PROJECT_STAGE_LABELS[app.stage]}</>}
-            </span>
-            {app.createdAt && (
-              <div className="max-w-[60%] shrink-0 text-right">
-                <PostTimestamp createdAt={app.createdAt} subject="project" />
-              </div>
-            )}
-          </div>
-          <div className="flex w-full min-w-0 items-center justify-between gap-2">
-            <div className="flex min-w-0 flex-1 items-center gap-1">
-              <ProjectIcon icon={app.icon} className="mr-1 size-9" />
-              <h3
-                className="min-w-0 w-fit max-w-full line-clamp-2 wrap-anywhere pr-[0.2em] text-lg font-black"
-                title={app.title}
-              >
-                {app.title}
-              </h3>
-              {projectRank !== undefined &&
-                (trophyPlace !== undefined ? (
-                  <TrophyMark minimal place={trophyPlace} size={24} />
-                ) : (
-                  <ButtonChip className="ml-2 shrink-0 whitespace-nowrap" tone="muted">
-                    #{projectRank} App
-                  </ButtonChip>
-                ))}
-            </div>
-            {app.version && (
-              <p className="max-w-[40%] shrink-0 text-right text-xs font-bold text-muted wrap-anywhere">
-                {app.version}
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="mt-1 shrink-0 text-xs leading-5">
-          <div className="flex min-w-0 items-center gap-1 text-muted">
-            <UserIcon
-              size={15}
-              weight="duotone"
-              className="shrink-0 text-muted"
-              aria-hidden="true"
-            />
-            <span className="truncate" title={creatorName}>
-              {creatorProfile ? (
-                <Button
-                  variant="text"
-                  size="compact"
-                  onClick={() => onOpenProfile(creatorProfile.id)}
-                  className="text-left text-muted"
-                  aria-label={`View ${creatorName}'s profile`}
-                >
-                  {creatorName}
-                </Button>
-              ) : (
-                <span>{creatorName}</span>
+              <ProjectIcon
+                icon={app.icon}
+                fallback={app.title}
+                color={app.color}
+                className="size-14 text-lg sm:size-16 sm:text-xl"
+              />
+            </Button>
+          )}
+          <div className="min-w-0 flex-1">
+            <div
+              className={`min-w-0 flex shrink-0 flex-col items-start max-w-full ${layout === "grid" ? "mt-2" : ""}`}
+            >
+              {layout === "grid" && (
+                <div className="flex w-full min-w-0 items-center justify-between">
+                  {layout === "grid" && (
+                    <span
+                      className="min-w-0 wrap-anywhere text-[10px] leading-4 font-black uppercase text-primary"
+                      title={[app.category, app.stage && PROJECT_STAGE_LABELS[app.stage]]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    >
+                      {app.category}
+                      {app.stage && <> · {PROJECT_STAGE_LABELS[app.stage]}</>}
+                    </span>
+                  )}
+                  {app.createdAt && (
+                    <div className="ml-auto max-w-[60%] shrink-0 text-right">
+                      <PostTimestamp createdAt={app.createdAt} subject="project" />
+                    </div>
+                  )}
+                </div>
               )}
-            </span>
-            {collaborators.length > 0 && (
-              <Button
-                variant="text"
-                size="compact"
-                className="shrink-0 text-muted"
-                onClick={() => onOpenApp(app.id)}
-                title={collaborators.map((profile) => profile.name).join(", ")}
-                aria-label={`View ${collaborators.length} collaborators for ${app.title}`}
-              >
-                +{collaborators.length}
-              </Button>
-            )}
+              <div className="flex w-full min-w-0 items-center justify-between gap-2">
+                <div
+                  className={`flex min-w-0 flex-1 items-center gap-1 ${layout === "list" ? "flex-wrap" : ""}`}
+                >
+                  {layout === "grid" && (
+                    <ProjectIcon
+                      icon={app.icon}
+                      fallback={app.title}
+                      color={app.color}
+                      className="mr-1 size-9 text-xs"
+                    />
+                  )}
+                  <h3
+                    className={`min-w-0 w-fit max-w-full line-clamp-2 wrap-anywhere pr-[0.2em] font-black ${layout === "list" ? "text-base leading-tight" : "text-lg"}`}
+                    title={app.title}
+                  >
+                    {app.title}
+                  </h3>
+                  {projectRank !== undefined &&
+                    (trophyPlace !== undefined ? (
+                      <TrophyMark minimal place={trophyPlace} size={layout === "list" ? 18 : 24} />
+                    ) : (
+                      <ButtonChip className="ml-2 shrink-0 whitespace-nowrap" tone="muted">
+                        #{projectRank}
+                        {layout === "grid" ? " App" : ""}
+                      </ButtonChip>
+                    ))}
+                </div>
+                {layout === "grid" && app.version && (
+                  <p className="max-w-[40%] shrink-0 text-right text-xs font-bold text-muted wrap-anywhere">
+                    {app.version}
+                  </p>
+                )}
+              </div>
+            </div>
+            <div
+              className={`shrink-0 text-xs ${layout === "list" ? "leading-4" : "mt-1 leading-5"}`}
+            >
+              <div className="flex min-w-0 items-center gap-1 text-muted">
+                <UserIcon
+                  size={15}
+                  weight="duotone"
+                  className="shrink-0 text-muted"
+                  aria-hidden="true"
+                />
+                <span className="truncate" title={creatorName}>
+                  {creatorProfile ? (
+                    <Button
+                      variant="text"
+                      size="compact"
+                      onClick={() => onOpenProfile(creatorProfile.id)}
+                      className="text-left text-muted"
+                      aria-label={`View ${creatorName}'s profile`}
+                    >
+                      {creatorName}
+                    </Button>
+                  ) : (
+                    <span>{creatorName}</span>
+                  )}
+                </span>
+                {collaborators.length > 0 && (
+                  <Button
+                    variant="text"
+                    size="compact"
+                    className="shrink-0 text-muted"
+                    onClick={() => onOpenApp(app.id)}
+                    title={collaborators.map((profile) => profile.name).join(", ")}
+                    aria-label={`View ${collaborators.length} collaborators for ${app.title}`}
+                  >
+                    +{collaborators.length}
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
+          {layout === "list" && (
+            <div className="col-span-2 flex min-w-0 items-center justify-between gap-2 sm:col-span-1 sm:flex-col sm:items-end sm:gap-1">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted">
+                {app.createdAt && <PostTimestamp createdAt={app.createdAt} subject="project" />}
+                {app.version && <span className="max-w-full wrap-anywhere">{app.version}</span>}
+              </div>
+              {projectActions}
+            </div>
+          )}
         </div>
-        <p className="my-2 h-10 line-clamp-2 shrink-0 text-xs text-left text-pretty leading-5 text-muted/75">
-          <MentionText
-            text={app.description}
-            mentions={app.mentions ?? []}
-            profiles={[...profiles.values()]}
-            onOpenProfile={onOpenProfile}
-          />
-        </p>
-        <div className="min-w-0 flex min-h-8 shrink-0 flex-wrap items-center gap-2 border-t-2 border-dashed border-divider pt-2.5 max-w-full">
-          <span className="min-w-0 flex items-center gap-2 max-w-full">
-            <Button
-              variant="vote"
-              onClick={() => onVote(app.id)}
-              aria-pressed={voted}
-              aria-label={voted ? "Unlike project" : "Like project"}
-            >
-              <Heart size={20} weight={voted ? "fill" : "duotone"} />
-            </Button>
-            <VotersDialog
-              appId={app.id}
-              appTitle={app.title}
-              totalVotes={app.votes}
-              onOpenProfile={onOpenProfile}
-            />
-            <Button
-              variant="vote"
-              onClick={() => onToggle(app.id)}
-              aria-expanded={expanded}
-              aria-haspopup="dialog"
-              aria-controls={panelId}
-            >
-              <ChatCircleDots size={20} weight={expanded ? "fill" : "duotone"} />
-              <span className="translate-y-[1.5px] text-xs">{app.comments}</span>
-              <span className="sr-only">Show comments</span>
-            </Button>
-          </span>
-          <span className="min-w-0 ml-auto flex items-center gap-1 max-w-full">
-            <ShareButton app={app} size="compact" iconOnly variant="outline-flat" />
-            {isSafeHttpUrl(app.url) && (
-              <ButtonLink
-                href={app.url as string}
-                target="_blank"
-                rel="noreferrer"
-                variant="icon"
-                size="compact"
-                className="size-8 max-sm:size-11"
-                aria-label={`Open ${app.title} in a new tab`}
-                title={`Open ${app.title} in a new tab`}
-              >
-                <ArrowUpRight size={16} weight="duotone" aria-hidden="true" />
-              </ButtonLink>
-            )}
-          </span>
-        </div>
+        {layout === "grid" && (
+          <>
+            <p className="my-2 h-10 line-clamp-2 shrink-0 text-xs text-left text-pretty leading-5 text-muted/75">
+              <MentionText
+                text={app.description}
+                mentions={app.mentions ?? []}
+                profiles={[...profiles.values()]}
+                onOpenProfile={onOpenProfile}
+              />
+            </p>
+            <div className="min-w-0 flex min-h-8 shrink-0 flex-wrap items-center gap-2 border-t-2 border-dashed border-divider pt-2.5 max-w-full">
+              <span className="min-w-0 flex items-center gap-2 max-w-full">
+                <Button
+                  variant="vote"
+                  onClick={() => onVote(app.id)}
+                  aria-pressed={voted}
+                  aria-label={voted ? "Unlike project" : "Like project"}
+                >
+                  <Heart size={20} weight={voted ? "fill" : "duotone"} />
+                </Button>
+                <VotersDialog
+                  appId={app.id}
+                  appTitle={app.title}
+                  totalVotes={app.votes}
+                  onOpenProfile={onOpenProfile}
+                />
+                <Button
+                  variant="vote"
+                  onClick={() => onToggle(app.id)}
+                  aria-expanded={expanded}
+                  aria-haspopup="dialog"
+                  aria-controls={panelId}
+                >
+                  <ChatCircleDots size={20} weight={expanded ? "fill" : "duotone"} />
+                  <span className="translate-y-[1.5px] text-xs">{app.comments}</span>
+                  <span className="sr-only">Show comments</span>
+                </Button>
+              </span>
+              {projectActions}
+            </div>
+          </>
+        )}
 
         {commentsSheet.present &&
           createPortal(
