@@ -40,7 +40,7 @@ export function startupShell() {
       "div",
       {
         className:
-          "px-4 pb-24 pt-[calc(var(--spacing-header)+1.5rem)] sm:px-8 sm:pt-[calc(var(--spacing-header)+2rem)] lg:ml-sidebar lg:p-10 lg:pt-[calc(var(--spacing-header)+2.5rem)]",
+          "px-4 pb-[calc(5.75rem+var(--app-bottom-inset))] pt-[calc(var(--spacing-header)+1.5rem)] sm:px-8 sm:pb-[calc(6.25rem+var(--app-bottom-inset))] sm:pt-[calc(var(--spacing-header)+2rem)] lg:ml-sidebar lg:p-10 lg:pt-[calc(var(--spacing-header)+2.5rem)]",
       },
       el(
         "div",

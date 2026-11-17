@@ -1,5 +1,7 @@
 # CodeCanvas application architecture and agent notes
 
+- Bottom navigation insets: Below lg, anchor the app tab bar and both loading placeholders at bottom zero with height `4.5rem + --app-bottom-inset` and bottom padding `0.5rem + --app-bottom-inset`. Clip the safe inset out of the bar's painting so native navigation sees the page, including with Halloween artwork enabled. Use safe left/right padding in landscape and matching safe bottom content spacing in the live and loading layouts. Never substitute a fixed device inset; native system transparency remains browser/OS controlled.
+
 - Scrollbar visibility: Hide all scrollbar chrome and reserved gutters by default without changing overflow or scroll input. Settings > Experimental > Show scrollbars restores existing scrollbar styles. Keep this in `src/experiments/scrollbars`, initialize before React, persist per device under `cc.experimental.scrollbars.v1`, synchronize across tabs, and apply in memory when storage is unavailable. CSS hides scrollbars even before initialization.
 
 - Feed project linking: Remove attachments with the labeled X beside the linked project in the composer, restoring focus to the link button. The picker only selects projects; omit a no-project option. Use the shared Modal fixedHeight mode (40rem capped at 90dvh), with stationary filters/search and an independently scrolling results area so filtering and loading do not resize the dialog.

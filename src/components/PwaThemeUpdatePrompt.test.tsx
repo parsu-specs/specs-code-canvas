@@ -4,6 +4,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import InstallApp from "./InstallApp";
 import NotificationBell from "./NotificationBell";
+import type { NotificationItem } from "../data/types";
 import { dismissPwaThemeUpdate, notifyPwaThemeUpdate } from "../utils/pwaThemeUpdate";
 
 const install = vi.hoisted(() => ({ state: "installed" }));
@@ -54,14 +55,14 @@ afterEach(() => {
 });
 const button = (text: string) =>
   Array.from(document.querySelectorAll("button")).find((item) => item.textContent?.includes(text))!;
-function render() {
+function render(items: NotificationItem[] = []) {
   act(() =>
     root.render(
       <>
         <InstallApp />
         <NotificationBell
-          items={[]}
-          unreadIds={new Set()}
+          items={items}
+          unreadIds={new Set(items.map((item) => item.id))}
           arrivalAt={{}}
           loading={false}
           open
@@ -72,11 +73,11 @@ function render() {
   );
 }
 
-it("shares the theme update between Settings and the bell, and marks it read from Settings", () => {
+it("keeps theme updates in Settings without adding a bell notification", () => {
   render();
   expect(document.querySelector('[aria-label="Notifications, 1 unread"]')).toBeNull();
   act(() => notifyPwaThemeUpdate("forest-dark"));
-  expect(document.querySelector('[aria-label="Notifications, 1 unread"]')).not.toBeNull();
+  expect(document.querySelector('[aria-label="Notifications, 1 unread"]')).toBeNull();
   expect(container.textContent).toContain("Theme updated");
   act(() => button("How to update").click());
   expect(document.querySelector('[role="dialog"]')?.textContent).toContain("Review app update");
@@ -85,27 +86,25 @@ it("shares the theme update between Settings and the bell, and marks it read fro
   act(() => button("Got it").click());
   act(() => vi.advanceTimersByTime(220));
   expect(document.querySelector('[role="dialog"]')).toBeNull();
-  expect(container.textContent).toContain("Update app appearance");
+  expect(container.textContent).not.toContain("Update app appearance");
 });
 
-it("opens instructions from the bell without navigating to a feed or project", () => {
-  render();
+it("keeps bell read/delete actions independent of the Settings theme notice", () => {
+  render([
+    {
+      id: "feed-1",
+      kind: "update",
+      title: "Community update",
+      body: "A new post",
+      createdAt: "2026-11-17",
+    },
+  ]);
   act(() => notifyPwaThemeUpdate("forest-dark"));
-  act(() => button("Update app appearance").click());
-  expect(document.querySelector('[role="dialog"]')).not.toBeNull();
-  expect(callbacks.onOpenChange).toHaveBeenCalledWith(false);
-  expect(callbacks.onOpenFeed).not.toHaveBeenCalled();
-  expect(callbacks.onOpenApp).not.toHaveBeenCalled();
-});
-
-it("supports mark-all-read and delete-all for the app update", () => {
-  render();
-  act(() => notifyPwaThemeUpdate("forest-dark"));
+  expect(document.querySelector('[aria-label="Notifications, 1 unread"]')).not.toBeNull();
   act(() => button("Mark all read").click());
-  expect(document.querySelector('[aria-label="Notifications, 1 unread"]')).toBeNull();
   expect(callbacks.onMarkAllRead).toHaveBeenCalledOnce();
   act(() => button("Delete all").click());
-  expect(container.textContent).not.toContain("Theme updated");
+  expect(container.textContent).toContain("Theme updated");
   expect(container.textContent).not.toContain("Update app appearance");
   expect(callbacks.onDeleteAll).toHaveBeenCalledOnce();
 });
@@ -131,4 +130,21 @@ it("waits for the theme save before offering a navigation to check the latest ic
   vi.stubGlobal("location", { reload });
   act(() => button("Check for app update").click());
   expect(reload).toHaveBeenCalledOnce();
+});
+
+it("shows Android WebAPK instructions without the desktop update menu or reload action", () => {
+  vi.stubGlobal("navigator", {
+    userAgent: "Mozilla/5.0 (Linux; Android 16) Chrome/144.0.0.0 Mobile Safari/537.36",
+    platform: "Linux armv8l",
+    maxTouchPoints: 5,
+  });
+  render();
+  act(() => notifyPwaThemeUpdate("forest-dark"));
+  act(() => button("How to update").click());
+  const dialog = document.querySelector('[role="dialog"]')!;
+  expect(dialog.textContent).toContain("immediate prompt is not guaranteed");
+  expect(dialog.textContent).toContain("chrome://webapks");
+  expect(dialog.textContent).not.toContain("Review app update");
+  expect(dialog.textContent).not.toContain("Windows shortcut");
+  expect(button("Check for app update")).toBeUndefined();
 });

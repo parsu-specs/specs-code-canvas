@@ -36,18 +36,22 @@ html[data-native-splash] #app-splash svg {
   --app-bottom-inset: env(safe-area-inset-bottom, 0px);
 }
 
-@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
-  /* Leave the native navigation area transparent to the page beneath it.
-     Reserve space for controls instead of painting a separate bottom strip. */
-  @media (width < 64rem) {
-    [data-app-bottom-nav],
-    [data-startup-bottom-nav] {
-      bottom: var(--app-bottom-inset);
-      height: 4.5rem;
-      padding-bottom: 0.5rem;
-    }
+@media (width < 64rem) {
+  [data-app-bottom-nav],
+  [data-startup-bottom-nav] {
+    /* Keep the bar at the viewport edge and reserve the live system inset
+       inside it. Clip all painting (including seasonal artwork) out of the
+       inset so the page remains visible behind native navigation. */
+    bottom: 0;
+    height: calc(4.5rem + var(--app-bottom-inset));
+    padding-bottom: calc(0.5rem + var(--app-bottom-inset));
+    padding-left: max(0.5rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.5rem, env(safe-area-inset-right, 0px));
+    clip-path: inset(0 0 var(--app-bottom-inset));
   }
+}
 
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
   :root:not(:has([data-app-bottom-nav], [data-startup-bottom-nav])) body {
     padding-bottom: var(--app-bottom-inset);
   }

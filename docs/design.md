@@ -1,5 +1,7 @@
 Design decisions
 
+- Bottom navigation safe area: Keep the mobile tab bar anchored to the viewport bottom, with the live safe inset added to its height and inner bottom padding. Leave that inset transparent to the page by clipping the bar background and decorations above it. Reserve safe left/right padding in landscape and the same bottom content clearance during loading. Native system navigation transparency remains browser/OS controlled.
+
 - Scrollbar visibility: Hide all scrollbar chrome and reserved gutters by default without changing overflow or scroll input. Settings > Experimental > Show scrollbars restores existing scrollbar styles. Keep this in `src/experiments/scrollbars`, initialize before React, persist per device under `cc.experimental.scrollbars.v1`, synchronize across tabs, and apply in memory when storage is unavailable. CSS hides scrollbars even before initialization.
 
 - Feed project linking: Remove attachments with the labeled X beside the linked project in the composer, restoring focus to the link button. The picker only selects projects; omit a no-project option. Use the shared Modal fixedHeight mode (40rem capped at 90dvh), with stationary filters/search and an independently scrolling results area so filtering and loading do not resize the dialog.
