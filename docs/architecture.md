@@ -26,8 +26,9 @@ soundEffects/   Bundled notification and vote audio
 
 | Route                                  | Behavior                                                                  |
 | -------------------------------------- | ------------------------------------------------------------------------- |
-| `/`                                    | Public Home for both visitors and signed-in users                         |
-| `/landing`, `/home`                    | Compatibility aliases normalized to `/`                                   |
+| `/`                                    | Redirects to `/discover` when signed in, otherwise `/home`                 |
+| `/home`                                | Public Home for both visitors and signed-in users                         |
+| `/landing`                             | Compatibility alias normalized to `/home`                                |
 | `/about`                               | Public team information inside the shared PublicSite shell                |
 | `/signin`                              | Email/password, Google, signup, recovery; signed-in users go to Discover  |
 | `/discover`                            | Search/filter projects and submit projects                                |

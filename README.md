@@ -24,7 +24,7 @@ npm run dev
 
 Open http://localhost:3000. The default `local` backend stores demo accounts and data in this browser. Create an account with email/password; Google sign-in requires configuration. See [setup](docs/setup.md) for backend-specific instructions.
 
-Home (`/`) and About (`/about`) are public. Sign in to browse Discover, developer profiles, Feed (`/feeds`), the leaderboard, and Settings. Shared project and developer links return to their destination after sign-in.
+Home (`/home`) and About (`/about`) are public. Sign in to browse Discover, developer profiles, Feed (`/feeds`), the leaderboard, and Settings. Shared project and developer links return to their destination after sign-in.
 
 ## Commands
 

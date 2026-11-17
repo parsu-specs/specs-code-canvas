@@ -43,9 +43,22 @@ describe("opening shared links", () => {
       loading: false,
     } as ReturnType<typeof useAuth>);
     await act(async () => root.render(<Main />));
-    expect(window.location.pathname).toBe(signedIn ? "/discover" : "/");
+    expect(window.location.pathname).toBe(signedIn ? "/discover" : "/home");
     expect(window.location.search).toBe("?source=bookmark");
     expect(container.textContent).toContain(signedIn ? "Store" : "Home");
+  });
+
+  it.each([false, true])("keeps Home accessible with signedIn=%s", async (signedIn) => {
+    window.history.replaceState({}, "", "/home?source=navigation");
+    vi.mocked(useAuth).mockReturnValue({
+      user: signedIn ? { id: "viewer", name: "Viewer", email: "viewer@example.com" } : null,
+      loading: false,
+    } as ReturnType<typeof useAuth>);
+    await act(async () => root.render(<Main />));
+    expect(window.location.pathname).toBe("/home");
+    expect(window.location.search).toBe("?source=navigation");
+    expect(container.textContent).toContain("Home");
+    expect(container.textContent).not.toContain("Store");
   });
 
   it("uses a cached viewer only for the loading shell until the session is restored", async () => {

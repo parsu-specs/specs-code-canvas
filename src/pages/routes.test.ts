@@ -11,7 +11,7 @@ import {
 describe("routes", () => {
   it("normalizes trailing slashes and the root path", () => {
     expect(normalizePathname(`${ROUTES.discover}///`)).toBe(ROUTES.discover);
-    expect(normalizePathname("///")).toBe(ROUTES.home);
+    expect(normalizePathname("///")).toBe("/");
   });
 
   it("builds encoded application and developer paths", () => {
@@ -26,11 +26,16 @@ describe("routes", () => {
     expect(isProtectedRoute("/community")).toBe(true);
     expect(isProtectedRoute(ROUTES.home)).toBe(false);
   });
-  it.each(["/", "/home", "/landing", "/landing/"])(
-    "opens %s as Home for visitors and Discover for signed-in users",
+  it.each(["/", "///"])("resolves %s according to the session", (path) => {
+    expect(resolveRoute(path, false)).toBe(ROUTES.home);
+    expect(resolveRoute(path, true)).toBe(ROUTES.discover);
+  });
+
+  it.each(["/home", "/home/", "/landing", "/landing/"])(
+    "keeps %s public for visitors and signed-in users",
     (path) => {
       expect(resolveRoute(path, false)).toBe(ROUTES.home);
-      expect(resolveRoute(path, true)).toBe(ROUTES.discover);
+      expect(resolveRoute(path, true)).toBe("/home");
     },
   );
 

@@ -91,7 +91,7 @@ Maintained documentation now lives under `docs/` with an index and linked root R
 
 Use 320px, 375px, 768px, 1024px, and 1440px viewports. Browser validation is separate from automated build/type/test checks.
 
-1. Visit public Home (`/`) and About, Login, Discover, Developers, profile, project detail, Feed (`/feeds`), leaderboard, and Settings. Check legacy `/landing` and `/feed` normalization and return to shared project/profile links after sign-in.
+1. Visit public Home (`/home`) and About, Login, Discover, Developers, profile, project detail, Feed (`/feeds`), leaderboard, and Settings. Check legacy `/landing` and `/feed` normalization and return to shared project/profile links after sign-in.
 2. Check one-column mobile cards, container-based column changes, long project/profile names and URLs, and wrapped actions without clipped controls.
 3. Open project submission/editing, add screenshots, and inspect Markdown previews and two-column form transitions.
 4. Confirm mobile top/bottom bars clear content; confirm sidebar/breadcrumb alignment at 1024px.

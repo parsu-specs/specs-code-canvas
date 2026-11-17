@@ -24,7 +24,7 @@ const PublicSite = lazyPage(() => import("./PublicSite"));
 
 /** Download the likely route while fonts and the verified session are loading. */
 export function preloadInitialPage() {
-  const path = currentPath();
+  const path = resolveRoute(currentPath(), Boolean(activeViewerId()));
   const page =
     path === ROUTES.home || path === ROUTES.about ? PublicSite : activeViewerId() ? Store : Login;
   // Rendering still goes through Suspense/ErrorBoundary if a download fails.
@@ -35,7 +35,7 @@ function PageLoader({ store = false }: { store?: boolean }) {
   const [delay] = useState(() =>
     document.querySelector("[data-startup-shell]") && performance.now() > 180 ? 0 : 180,
   );
-  const path = currentPath();
+  const path = resolveRoute(currentPath(), Boolean(activeViewerId()));
   const view =
     path.startsWith("/apps/") || path.startsWith("/discover/")
       ? "project"
@@ -177,7 +177,9 @@ export default function Main({ fontsReady = true }: { fontsReady?: boolean }) {
   }, [loading, path, user]);
 
   if (loading || !fontsReady)
-    return <PageLoader store={isProtectedRoute(path) && Boolean(activeViewerId())} />;
+    return (
+      <PageLoader store={Boolean(activeViewerId()) && isProtectedRoute(resolveRoute(path, true))} />
+    );
 
   const normalizedPath = resolveRoute(path, Boolean(user));
 

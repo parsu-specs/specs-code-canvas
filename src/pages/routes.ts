@@ -1,7 +1,7 @@
 import type { MouseEvent } from "react";
 
 export const ROUTES = {
-  home: "/",
+  home: "/home",
   about: "/about",
   signin: "/signin",
   discover: "/discover",
@@ -22,8 +22,8 @@ export function developerProfilePath(username: string) {
 }
 
 export function normalizePathname(pathname: string) {
-  const clean = pathname.replace(/\/+$/g, "") || ROUTES.home;
-  if (clean === "/landing" || clean === "/home") return ROUTES.home;
+  const clean = pathname.replace(/\/+$/g, "") || "/";
+  if (clean === "/landing") return ROUTES.home;
   if (["/feed", "/community", "/milestones"].includes(clean)) return ROUTES.feeds;
   return clean;
 }
@@ -31,7 +31,8 @@ export function normalizePathname(pathname: string) {
 /** Resolve canonical URLs and choose the entry page for the current session. */
 export function resolveRoute(pathname: string, signedIn: boolean) {
   const path = normalizePathname(pathname);
-  if (signedIn && (path === ROUTES.home || path === ROUTES.signin)) return ROUTES.discover;
+  if (path === "/") return signedIn ? ROUTES.discover : ROUTES.home;
+  if (signedIn && path === ROUTES.signin) return ROUTES.discover;
   if (!signedIn && isProtectedRoute(path)) return ROUTES.signin;
   return path;
 }

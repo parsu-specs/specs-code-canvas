@@ -1,11 +1,11 @@
-﻿# Incident runbook — CodeCanvas
+# Incident runbook — CodeCanvas
 
 This repository contains the frontend, backend adapters, Supabase SQL, and Vercel routing/security headers. Confirm deployment names, dashboard access, backups, and incident contacts in the team's private operations directory before release. No admin application or `admin_audit`/`admins` schema is supplied here.
 
 ## Roll back a frontend release
 
 1. In the hosting project's deployment history, restore the last known-good deployment. `npm run build` produces `dist/`; `vercel.json` rewrites direct route requests to the app entry point.
-2. Verify `/` and `/about` while signed out, then sign in and open `/discover`, `/feeds`, a shared project link, and a shared developer link. Test direct URL loads as well as in-app navigation.
+2. Verify `/home` and `/about` while signed out and signed in. Confirm `/` redirects visitors to `/home` and signed-in users to `/discover`, then open `/feeds`, a shared project link, and a shared developer link. Test direct URL loads as well as in-app navigation.
 3. A frontend rollback does not undo database migrations or Storage changes. Inspect migration dependencies before choosing a forward fix or database restore; do not assume every SQL file can safely be replayed in any order.
 
 Backend selection and public provider variables are built into the frontend. Rebuild/redeploy after changing environment configuration. Check the CSP when changing provider or custom API origins.
