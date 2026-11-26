@@ -7,6 +7,8 @@ Product positioning updated on 2026-11-13. Technical descriptions were reviewed 
 | Document                                    | Use it for                                              |
 | ------------------------------------------- | ------------------------------------------------------- |
 | [Product and branding](branding.md)         | Positioning, supported creations, and SPECS attribution |
+| [Privacy policy](privacy-policy.md)         | Data handled by the app and privacy requests            |
+| [Terms and conditions](terms-conditions.md) | Rules for using and publishing on CodeCanvas            |
 | [Setup](setup.md)                           | Install, configure, and run locally                     |
 | [Architecture](architecture.md)             | Understand routes, features, and data flow              |
 | [Backends](backends.md)                     | Configure Supabase or implement the HTTP contract       |

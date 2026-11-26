@@ -22,7 +22,7 @@ export function useSheetPresence<T>(value: T | null | false | undefined) {
 }
 
 /** Shared Modal callers unmount on close, so defer that callback until the exit ends. */
-export function useSheetClose(onClose: () => void, centered: boolean) {
+export function useSheetClose(onClose: () => void) {
   const [closing, setClosing] = useState(false);
   const callback = useRef(onClose);
   callback.current = onClose;
@@ -34,8 +34,7 @@ export function useSheetClose(onClose: () => void, centered: boolean) {
   return {
     closing,
     close: () => {
-      if (centered || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches)
-        callback.current();
+      if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) callback.current();
       else setClosing(true);
     },
   };

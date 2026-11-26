@@ -35,7 +35,7 @@ export default function Modal({
   const panelRef = useRef<HTMLDivElement>(null);
   const [confirmingClose, setConfirmingClose] = useState(false);
   const centered = confirmation || confirmingClose;
-  const { closing, close } = useSheetClose(onClose, centered || exiting !== undefined);
+  const { closing, close } = useSheetClose(onClose);
   const keepEditingRef = useRef<HTMLButtonElement>(null);
   const previousConfirmationFocus = useRef<HTMLElement | null>(null);
   const requestClose = () => {
@@ -120,7 +120,7 @@ export default function Modal({
   return createPortal(
     <div
       data-closing={closing || exiting || undefined}
-      className={`fixed inset-0 z-80 flex justify-center bg-inverse/80 ${centered ? "items-center p-3 sm:p-6" : "sheet-overlay"}`}
+      className={`modal-overlay fixed inset-0 z-80 flex justify-center bg-inverse/80 ${!centered ? "sheet-overlay" : "items-center p-3 sm:p-6"}`}
     >
       <div
         ref={panelRef}
@@ -167,7 +167,7 @@ export default function Modal({
               >
                 Keep editing
               </Button>
-              <Button variant="danger" onClick={onClose}>
+              <Button variant="danger" onClick={close}>
                 Close
               </Button>
             </div>

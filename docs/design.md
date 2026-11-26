@@ -4,6 +4,8 @@ Design decisions
 
 - Scrollbar visibility: Hide all scrollbar chrome and reserved gutters by default without changing overflow or scroll input. Settings > Experimental > Show scrollbars restores existing scrollbar styles. Keep this in `src/experiments/scrollbars`, initialize before React, persist per device under `cc.experimental.scrollbars.v1`, synchronize across tabs, and apply in memory when storage is unavailable. CSS hides scrollbars even before initialization.
 
+- Legal documents: Keep Privacy policy and Terms and conditions accessible from the public footer. Display their maintained Markdown in the shared modal with the app Markdown renderer; keep the header and close behavior consistent with other dialogs.
+
 - Feed project linking: Remove attachments with the labeled X beside the linked project in the composer, restoring focus to the link button. The picker only selects projects; omit a no-project option. Use the shared Modal fixedHeight mode (40rem capped at 90dvh), with stationary filters/search and an independently scrolling results area so filtering and loading do not resize the dialog.
 
 - Modal surfaces: Use the palette-aware `bg-primary` with `text-primary-foreground` for modal headers and cream `bg-panel` for modal content and shells. Add the shared `modal-grid` utility to content areas for the same 36px paper grid as the page, using palette-aware paper-line colors without the red notebook margin; keep headers solid. Apply the same split to feedback, likes, Markdown viewer, centered selection, sign-out, and publishing dialogs. Preserve existing borders, scroll behavior, focus, dismissal, and dark-palette tokens.

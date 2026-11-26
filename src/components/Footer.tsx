@@ -1,4 +1,5 @@
 import { ButtonLink } from "./Button";
+import LegalDocuments from "./LegalDocuments";
 import Brand from "./Brand";
 import { useAuth } from "../auth/authContext";
 import { APP_INFO, CONTACT_EMAIL, ORGANIZATION } from "../data/team";
@@ -68,7 +69,10 @@ export default function Footer() {
           <span>
             CodeCanvas · An initiative by {ORGANIZATION.name} ({ORGANIZATION.shortName})
           </span>
-          <span>A home for what you build.</span>
+          <div className="flex flex-wrap items-center gap-4">
+            <span>A home for what you build.</span>
+            <LegalDocuments size="xs" />
+          </div>
         </div>
       </div>
     </footer>

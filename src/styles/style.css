@@ -73,6 +73,23 @@ html[data-native-splash] #app-splash svg {
   background-size: 36px 36px;
 }
 
+.modal-overlay:not(.sheet-overlay) {
+  animation: sheet-backdrop-in 220ms ease-out both;
+}
+
+.modal-overlay:not(.sheet-overlay) > :first-child {
+  animation: modal-panel-in 220ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.modal-overlay:not(.sheet-overlay)[data-closing="true"] {
+  animation: sheet-backdrop-out 220ms ease-in both;
+}
+
+.modal-overlay:not(.sheet-overlay)[data-closing="true"] > :first-child {
+  animation: modal-panel-out 220ms cubic-bezier(0.4, 0, 1, 1) both;
+  pointer-events: none;
+}
+
 .sheet-overlay {
   align-items: center;
   overflow-y: auto;
@@ -85,11 +102,16 @@ html[data-native-splash] #app-splash svg {
   max-height: 90dvh;
 }
 
+.sheet-overlay > :first-child {
+  animation: modal-panel-in 220ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
 .sheet-overlay[data-closing="true"] {
   animation: sheet-backdrop-out 220ms ease-in both;
 }
 
 .sheet-overlay[data-closing="true"] > :first-child {
+  animation: modal-panel-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
   pointer-events: none;
 }
 
@@ -112,11 +134,31 @@ html[data-native-splash] #app-splash svg {
     clip-path: none;
     /* Continue the sheet surface beneath the native navigation area. */
     box-shadow: 0 calc(16px + var(--app-bottom-inset)) 0 var(--color-panel);
-    animation: sheet-slide-in 220ms ease-out both;
+  }
+
+  .sheet-overlay > :first-child {
+    animation: sheet-slide-in 220ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
   }
 
   .sheet-overlay[data-closing="true"] > :first-child {
-    animation: sheet-slide-out 220ms ease-in both;
+    animation: sheet-slide-out 220ms cubic-bezier(0.4, 0, 1, 1) both;
+  }
+}
+
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.975);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes modal-panel-out {
+  to {
+    opacity: 0;
+    transform: translateY(0.4rem) scale(0.985);
   }
 }
 
@@ -147,6 +189,10 @@ html[data-native-splash] #app-splash svg {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .modal-overlay > :first-child,
+  .modal-overlay[data-closing="true"],
+  .modal-overlay[data-closing="true"] > :first-child,
   .sheet-overlay,
   .sheet-overlay > :first-child,
   .sheet-overlay[data-closing="true"],

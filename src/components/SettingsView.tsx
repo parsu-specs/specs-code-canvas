@@ -6,11 +6,14 @@ import {
   Eye,
   EyeSlash,
   Flask,
+  Headset,
   LockKey,
   Palette,
   UserCircle,
 } from "@phosphor-icons/react";
-import { Button } from "./Button";
+import { Button, ButtonLink } from "./Button";
+import LegalDocuments from "./LegalDocuments";
+import { CONTACT_EMAIL } from "../data/team";
 import Input, { Textarea } from "./Input";
 import AppearanceControl from "./AppearanceControl";
 import SoundControl from "./SoundControl";
@@ -359,6 +362,26 @@ export default function SettingsView({
       </section>
       <SoundControl />
       <InstallApp />
+      <section className="toon-card toon-paper bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
+        <div className="min-w-0 flex items-center gap-2 max-w-full">
+          <Headset size={22} weight="duotone" aria-hidden="true" />
+          <h2 className="text-2xl font-black">Customer support and legal</h2>
+        </div>
+        <p className="mt-2 text-sm font-bold text-muted">
+          Get in touch with the CodeCanvas team or review the policies for using the service.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-4">
+          <ButtonLink
+            variant="secondary"
+            size="small"
+            href={`mailto:${CONTACT_EMAIL}`}
+            className="no-underline"
+          >
+            Contact support
+          </ButtonLink>
+          <LegalDocuments />
+        </div>
+      </section>
       <section className="toon-card toon-paper bg-panel p-6 pt-10 sm:p-8 sm:pt-12">
         <div className="min-w-0 flex items-center gap-2 max-w-full">
           <Flask size={22} weight="duotone" aria-hidden="true" />

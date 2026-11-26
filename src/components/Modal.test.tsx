@@ -52,7 +52,7 @@ it("keeps a sheet mounted and scroll locked until its slide-down finishes", asyn
   expect(container.inert).toBe(false);
 });
 
-it("keeps confirmations centered and dismisses them immediately", async () => {
+it("animates centered confirmations out before dismissing them", async () => {
   const onClose = vi.fn();
   await act(async () =>
     root.render(
@@ -64,6 +64,11 @@ it("keeps confirmations centered and dismisses them immediately", async () => {
   expect(document.querySelector('[role="alertdialog"]')).not.toBeNull();
   expect(document.querySelector(".sheet-overlay")).toBeNull();
   await act(async () => close());
+  expect(
+    document.querySelector('.modal-overlay[data-closing="true"] [role="alertdialog"]'),
+  ).not.toBeNull();
+  expect(onClose).not.toHaveBeenCalled();
+  await act(async () => vi.advanceTimersByTimeAsync(SHEET_EXIT_MS));
   expect(onClose).toHaveBeenCalledOnce();
 });
 

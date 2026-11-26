@@ -5,7 +5,7 @@ import { useSheetClose } from "./useSheetPresence";
 
 export default function PwaThemeUpdatePrompt({ onClose }: { onClose: () => void }) {
   const { appearanceSaving } = useAuth();
-  const { closing, close } = useSheetClose(onClose, false);
+  const { closing, close } = useSheetClose(onClose);
   const android = /Android/.test(navigator.userAgent);
   const edgeOnWindows = /Edg\//.test(navigator.userAgent) && /Windows/.test(navigator.userAgent);
   const apple =
