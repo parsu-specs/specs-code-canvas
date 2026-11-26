@@ -34,6 +34,7 @@ import {
   type AppInput,
   type AppUpdate,
   type ListAppsParams,
+  type ProjectReviewSubmission,
   type User,
 } from "../types";
 import { getSupabase } from "./client";
@@ -362,6 +363,49 @@ function toFeedPostRow(row: Record<string, unknown>): FeedPostRow {
 
 export function createSupabaseAppRepo(): AppRepo {
   return {
+    async listOwnProjectSubmissions(): Promise<ProjectReviewSubmission[]> {
+      const uid = await authUid();
+      if (!uid) return [];
+      const { data, error } = await getSupabase()
+        .from("project_submissions")
+        .select("id,app_id,submission_type,status,payload,feedback,submitted_at")
+        .eq("submitter_id", uid)
+        .in("status", ["pending", "changes_requested"])
+        .order("submitted_at", { ascending: false });
+      if (error) throw new Error(error.message);
+      return (data ?? []).map((row) => ({
+        id: row.id,
+        appId: row.app_id,
+        type: row.submission_type,
+        title: String(row.payload?.title ?? "Untitled project"),
+        status: row.status,
+        submittedAt: row.submitted_at,
+        feedback: row.feedback || undefined,
+      }));
+    },
+
+    async cancelProjectSubmission(submissionId: string): Promise<void> {
+      const supabase = getSupabase();
+      const uid = await authUid();
+      if (!uid) throw new Error("Sign in to cancel a submission.");
+      const { data: submission, error: loadError } = await supabase
+        .from("project_submissions")
+        .select("payload")
+        .eq("id", submissionId)
+        .eq("submitter_id", uid)
+        .maybeSingle();
+      if (loadError || !submission) throw new Error(loadError?.message ?? "Submission not found.");
+      const { error } = await supabase.rpc("cancel_project_submission", {
+        p_submission_id: submissionId,
+      });
+      if (error) throw new Error(error.message);
+      const screenshots = Array.isArray(submission.payload?.screenshots)
+        ? (submission.payload.screenshots as string[])
+        : [];
+      const { cleanupProjectImages } = await import("./projectImages");
+      await cleanupProjectImages(screenshots, [], uid).catch(() => undefined);
+    },
+
     async listApps(params: ListAppsParams = {}) {
       const { query = "", category = "All", limit = 100, offset = 0, userId } = params;
       // Clamp caller-supplied paging: an unbounded limit would dump the table.
@@ -419,6 +463,24 @@ export function createSupabaseAppRepo(): AppRepo {
         })),
       });
       const uid = userId || (await authUid());
+      if (uid && row.creator_id === uid) {
+        try {
+          const { data: review } = await supabase
+            .from("project_submissions")
+            .select("status,feedback")
+            .eq("app_id", id)
+            .eq("submitter_id", uid)
+            .order("submitted_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (review) {
+            row.review_status = review.status as AppRow["review_status"];
+            row.review_feedback = review.feedback || undefined;
+          }
+        } catch {
+          // Review status is supplemental; keep the published project readable if its migration is unavailable.
+        }
+      }
       const [votes, counts] = await Promise.all([
         viewerVotes([row.id], uid),
         commentCounts([row.id]),
@@ -453,34 +515,34 @@ export function createSupabaseAppRepo(): AppRepo {
       }
       const { withStoredProjectImages } = await import("./projectImages");
       return withStoredProjectImages(screenshots, uid, async (storedScreenshots) => {
-        const { data, error } = await getSupabase()
-          .from("apps")
-          .insert({
-            id: newId(),
-            stage: input.stage || null,
-            version: input.version?.trim() || null,
-            title,
-            description,
-            mentions: captureMentions(
-              description,
-              await createSupabaseProfileRepo().listProfiles(),
-            ),
-            creator: author.name,
-            creator_id: uid,
-            category: input.category,
-            votes: 0,
-            color: COLORS[Math.floor(Math.random() * COLORS.length)],
-            url: url || null,
-            repo_url: repoUrl || null,
-            screenshots: storedScreenshots,
-            icon: input.icon || null,
-            docs: docs || null,
-            collaborators: (input.collaborators ?? []).filter(Boolean).slice(0, 10),
-          })
-          .select()
-          .single();
-        if (error || !data) throw new Error(error?.message ?? "Could not publish project.");
-        return toApp(toAppRow(data as Record<string, unknown>), 0);
+        const appId = newId();
+        const payload = {
+          id: appId,
+          stage: input.stage || null,
+          version: input.version?.trim() || null,
+          title,
+          description,
+          creator: author.name,
+          category: input.category,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
+          url: url || null,
+          repo_url: repoUrl || null,
+          screenshots: storedScreenshots,
+          icon: input.icon || null,
+          docs: docs || null,
+          collaborators: (input.collaborators ?? []).filter(Boolean).slice(0, 10),
+        };
+        const { error } = await getSupabase().from("project_submissions").insert({
+          app_id: appId,
+          submitter_id: uid,
+          submission_type: "new",
+          payload,
+        });
+        if (error) throw new Error(error.message || "Could not submit project for review.");
+        return toApp(
+          toAppRow({ ...payload, creator_id: uid, votes: 0, created_at: new Date().toISOString() }),
+          0,
+        );
       });
     },
 
@@ -533,6 +595,30 @@ export function createSupabaseAppRepo(): AppRepo {
         screenshots,
         author.id,
         async (images) => {
+          if (patch.publication) {
+            const payload = {
+              title,
+              description,
+              category: patch.category ?? current.category,
+              url: url || null,
+              repo_url: repoUrl || null,
+              screenshots: images,
+              docs: docs || null,
+              collaborators,
+              icon: current.icon || null,
+              stage: patch.stage ?? current.stage ?? null,
+              version: patch.version?.trim(),
+              publication_notes: patch.publication.notes.trim(),
+            };
+            const { error } = await supabase.from("project_submissions").insert({
+              app_id: appId,
+              submitter_id: author.id,
+              submission_type: "update",
+              payload,
+            });
+            if (error) throw new Error(error.message || "Could not submit update for review.");
+            return images;
+          }
           let request = supabase
             .from("apps")
             .update({

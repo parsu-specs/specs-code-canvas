@@ -517,6 +517,10 @@ export default function ProjectView({
       });
       setApp(updated);
       setEditing(false);
+      if (publishingUpdate && import.meta.env.VITE_DATA_SOURCE === "supabase")
+        flashVoteNotice(
+          "Update submitted for admin review. The current published version remains live until approval.",
+        );
       onChanged();
       // Re-arm newly added tags so the tagged developers notify as new —
       // including re-adds after a removal (their stored snapshot may predate
@@ -602,6 +606,19 @@ export default function ProjectView({
               {app.stage && <> · {PROJECT_STAGE_LABELS[app.stage]}</>}
             </p>
           </div>
+          {isOwner && app.reviewStatus && app.reviewStatus !== "approved" && (
+            <div
+              role="status"
+              className="mt-4 rounded-xl border-2 border-divider bg-surface p-3 text-sm font-bold"
+            >
+              {app.reviewStatus === "pending"
+                ? "Your latest submission is awaiting admin review. The currently published version remains live."
+                : "The reviewer requested changes to your latest submission."}
+              {app.reviewFeedback && (
+                <p className="mt-2 whitespace-pre-wrap text-muted">{app.reviewFeedback}</p>
+              )}
+            </div>
+          )}
           <div className="mt-4 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
             <ProjectIcon icon={app.icon} className="size-14" />
             <h2 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-black leading-tight @min-[36rem]/content:text-4xl">

@@ -1039,7 +1039,11 @@ export default function useStoreController() {
     await signout();
   };
   const [confirmSignOut, setConfirmSignOut] = useState(false);
-  const [publishBonus, setPublishBonus] = useState<{ id: string; title: string } | null>(null);
+  const [publishBonus, setPublishBonus] = useState<{
+    id: string;
+    title: string;
+    pendingReview: boolean;
+  } | null>(null);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
@@ -1348,19 +1352,20 @@ export default function useStoreController() {
         },
         user,
       );
-      setApps((items) => [created, ...items]);
-      setFullApps((items) => [created, ...items]);
-      // Arm the tag for every tagged developer (except me): their next load
-      // notifies as new, even across remove → re-add edit cycles.
-      for (const id of created.collaborators ?? []) {
-        if (id !== user.id) bumpCollabTag(id, created.id);
+
+      const pendingReview = import.meta.env.VITE_DATA_SOURCE === "supabase";
+      if (!pendingReview) {
+        setApps((items) => [created, ...items]);
+        setFullApps((items) => [created, ...items]);
+        for (const id of created.collaborators ?? []) {
+          if (id !== user.id) bumpCollabTag(id, created.id);
+        }
       }
       resetForm();
       setShowForm(false);
       setCategory("All");
       setQuery("");
-      // Celebrate the publish: +20 developer-board points (see rankDevelopers).
-      setPublishBonus({ id: created.id, title: created.title });
+      setPublishBonus({ id: created.id, title: created.title, pendingReview });
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Could not publish project.");
     } finally {

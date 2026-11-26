@@ -270,7 +270,9 @@ export default function Store() {
           <div
             role="dialog"
             aria-modal="true"
-            aria-label="Project published"
+            aria-label={
+              displayedBonus.pendingReview ? "Project submitted for review" : "Project published"
+            }
             data-closing={bonusSheet.closing || undefined}
             onClick={() => setPublishBonus(null)}
             className="sheet-overlay fixed inset-0 z-100 flex justify-center bg-inverse/80"
@@ -281,11 +283,15 @@ export default function Store() {
             >
               <div className="border-b-[3px] border-outline bg-primary text-primary-foreground p-6">
                 <Trophy size={40} weight="duotone" className="mx-auto" />
-                <h2 className="mt-3 text-xl font-black">Project published!</h2>
+                <h2 className="mt-3 text-xl font-black">
+                  {displayedBonus.pendingReview ? "Submitted for review" : "Project published!"}
+                </h2>
               </div>
               <div className="modal-grid bg-panel p-6">
                 <p className="mt-1 text-sm font-bold text-muted">
-                  {displayedBonus.title} is live — plus 20 pts on the developer leaderboard.
+                  {displayedBonus.pendingReview
+                    ? `${displayedBonus.title} is awaiting admin review. It will appear in the store after approval.`
+                    : `${displayedBonus.title} is live — plus 20 pts on the developer leaderboard.`}
                 </p>
                 <div className="min-w-0 mt-5 flex justify-center gap-3 max-w-full">
                   <Button
@@ -296,16 +302,18 @@ export default function Store() {
                   >
                     Keep exploring
                   </Button>
-                  <Button
-                    variant="secondary"
-                    size="small"
-                    onClick={() => {
-                      openApp(displayedBonus.id);
-                      setPublishBonus(null);
-                    }}
-                  >
-                    View project
-                  </Button>
+                  {!displayedBonus.pendingReview && (
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      onClick={() => {
+                        openApp(displayedBonus.id);
+                        setPublishBonus(null);
+                      }}
+                    >
+                      View project
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

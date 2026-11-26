@@ -8,6 +8,7 @@ import type {
   ListAppsParams,
   FeedPost,
   Profile,
+  ProjectReviewSubmission,
   User,
 } from "./types";
 
@@ -65,6 +66,10 @@ export type AppRepo = {
   getApp(id: string, userId?: string): Promise<AppItem>;
   createApp(input: AppInput, author: User): Promise<AppItem>;
   updateApp(appId: string, author: User, patch: AppUpdate): Promise<AppItem>;
+  /** Pending submissions are exposed only for the signed-in submitter. */
+  listOwnProjectSubmissions?(): Promise<ProjectReviewSubmission[]>;
+  /** Cancel a submission only while it is pending or changes-requested. */
+  cancelProjectSubmission?(submissionId: string): Promise<void>;
   deleteApp(appId: string, author: User): Promise<void>;
   toggleVote(appId: string, userId: string): Promise<VoteResult>;
   /** Idempotently persist the final desired vote after the UI debounce. */

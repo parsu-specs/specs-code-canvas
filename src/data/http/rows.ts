@@ -33,6 +33,8 @@ export type AppRow = {
   version?: string;
   versions?: AppItem["versions"];
   last_published_at?: string;
+  review_status?: AppItem["reviewStatus"];
+  review_feedback?: string;
   mentions?: Mention[];
   id: string;
   title: string;
@@ -102,6 +104,8 @@ export function toApp(row: AppRow, commentsCount?: number): AppItem {
     version: row.version || undefined,
     versions: row.versions,
     lastPublishedAt: row.last_published_at,
+    reviewStatus: row.review_status,
+    reviewFeedback: row.review_feedback,
     id: row.id,
     title: row.title,
     description: row.description,

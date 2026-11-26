@@ -31,7 +31,7 @@ import DisplayNameInput from "./DisplayNameInput";
 import { useDisplayNameConfirmation } from "./useDisplayNameConfirmation";
 import { NotFoundError } from "../data/repositories";
 import { ROUTES, developerProfilePath, normalizePathname } from "../pages/routes";
-import type { AppItem, Profile, User } from "../data/types";
+import type { AppItem, Profile, ProjectReviewSubmission, User } from "../data/types";
 
 type RankSummary = {
   rank: number;
@@ -76,6 +76,9 @@ export default function ProfileView({
   );
   const [profile, setProfile] = useState<Profile | null>(initialProfile);
   const [apps, setApps] = useState<AppItem[]>([]);
+  const [reviewSubmissions, setReviewSubmissions] = useState<ProjectReviewSubmission[]>([]);
+  const [cancelingSubmission, setCancelingSubmission] = useState<string | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [voteError, setVoteError] = useState<string | null>(null);
   useEffect(
@@ -134,7 +137,12 @@ export default function ProfileView({
         if (currentUser && p.id !== currentUser.id) {
           await repo.ensureUserProfile(currentUser).catch(() => undefined);
         }
-        const all = await getAppRepo().listApps({ limit: 200, userId: currentUser?.id });
+        const appRepo = getAppRepo();
+        const all = await appRepo.listApps({ limit: 200, userId: currentUser?.id });
+        const ownReviews =
+          p.id === currentUser?.id
+            ? await (appRepo.listOwnProjectSubmissions?.() ?? Promise.resolve([]))
+            : [];
         if (cancelled) return;
         if (normalizePathname(window.location.pathname).startsWith(`${ROUTES.developers}/`)) {
           window.history.replaceState({}, "", developerProfilePath(p.name));
@@ -153,6 +161,7 @@ export default function ProfileView({
             )
             .map((app) => debouncedVotes.project(app, currentUser?.id)),
         );
+        setReviewSubmissions(ownReviews);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : "Could not load profile.");
       } finally {
@@ -163,6 +172,22 @@ export default function ProfileView({
       cancelled = true;
     };
   }, [profileId, profileName, currentUser]);
+
+  const cancelReview = async (submission: ProjectReviewSubmission) => {
+    const cancel = getAppRepo().cancelProjectSubmission;
+    if (!cancel || cancelingSubmission) return;
+    if (!window.confirm(`Cancel the submission “${submission.title}”?`)) return;
+    setCancelingSubmission(submission.id);
+    setReviewError(null);
+    try {
+      await cancel.call(getAppRepo(), submission.id);
+      setReviewSubmissions((items) => items.filter((item) => item.id !== submission.id));
+    } catch (cause) {
+      setReviewError(cause instanceof Error ? cause.message : "Could not cancel this submission.");
+    } finally {
+      setCancelingSubmission(null);
+    }
+  };
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -381,6 +406,55 @@ export default function ProfileView({
           </form>
         )}
       </div>
+
+      {isSelf && reviewSubmissions.length > 0 && (
+        <section
+          aria-label="Projects under review"
+          className="mt-8 rounded-2xl border-[3px] border-outline bg-surface p-4 sm:p-5"
+        >
+          <div className="mb-4">
+            <p className="text-xs font-black uppercase text-primary">Pending approval / review</p>
+            <h3 className="mt-1 text-xl font-black">Projects under review</h3>
+          </div>
+          {reviewError && (
+            <p role="alert" className="mb-3 text-sm font-bold text-danger">
+              {userFacingError(reviewError)}
+            </p>
+          )}
+          <ul className="grid gap-3">
+            {reviewSubmissions.map((submission) => (
+              <li
+                key={submission.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-divider bg-panel p-3"
+              >
+                <div className="min-w-0">
+                  <p className="break-words font-black">{submission.title}</p>
+                  <p className="text-xs font-bold text-muted">
+                    {submission.type === "new" ? "New project" : "Project update"} ·{" "}
+                    {submission.status === "pending"
+                      ? "Awaiting admin review"
+                      : "Changes requested"}{" "}
+                    · Submitted {new Date(submission.submittedAt).toLocaleDateString()}
+                  </p>
+                  {submission.feedback && (
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-muted">
+                      Reviewer feedback: {submission.feedback}
+                    </p>
+                  )}
+                </div>
+                <Button
+                  variant="surface"
+                  size="small"
+                  disabled={cancelingSubmission !== null}
+                  onClick={() => void cancelReview(submission)}
+                >
+                  {cancelingSubmission === submission.id ? "Cancelling…" : "Cancel submission"}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <div className="mb-5 mt-8 flex flex-wrap items-center justify-between gap-4 border-t-2 border-dashed border-divider pt-6">
         <div>

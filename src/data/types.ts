@@ -41,12 +41,24 @@ export type ProjectVersion = {
   snapshot: Pick<AppItem, "title" | "description" | "screenshots" | "docs" | "url" | "repoUrl">;
 };
 
+export type ProjectReviewSubmission = {
+  id: string;
+  appId: string;
+  type: "new" | "update";
+  title: string;
+  status: "pending" | "changes_requested";
+  submittedAt: string;
+  feedback?: string;
+};
+
 export type AppItem = {
   icon?: string;
   stage?: ProjectStage;
   version?: string;
   versions?: ProjectVersion[];
   lastPublishedAt?: string;
+  reviewStatus?: "pending" | "changes_requested" | "approved";
+  reviewFeedback?: string;
   mentions?: Mention[];
   id: string;
   title: string;
