@@ -547,8 +547,9 @@ export function createSupabaseAppRepo(): AppRepo {
     },
 
     async updateApp(appId: string, author: User, patch: AppUpdate) {
-      validateVersion(patch.stage, patch.version, patch.publication?.notes);
-      if (patch.publication && (!patch.stage || !patch.version?.trim()))
+      const publication = patch.publication;
+      validateVersion(patch.stage, patch.version, publication?.notes);
+      if (publication && (!patch.stage || !patch.version?.trim()))
         throw new Error("Choose a stage and version for this update.");
       const supabase = getSupabase();
       const { data: existing, error: fetchError } = await supabase
@@ -558,7 +559,7 @@ export function createSupabaseAppRepo(): AppRepo {
         .single();
       if (fetchError || !existing) throw new NotFoundError("Project not found.");
       const current = toAppRow(existing as Record<string, unknown>);
-      if (!patch.publication && patch.version !== undefined && patch.version !== current.version)
+      if (!publication && patch.version !== undefined && patch.version !== current.version)
         throw new Error("Publish an update to change the version.");
       const owned = current.creator_id
         ? current.creator_id === author.id
@@ -595,7 +596,7 @@ export function createSupabaseAppRepo(): AppRepo {
         screenshots,
         author.id,
         async (images) => {
-          if (patch.publication) {
+          if (publication) {
             const payload = {
               title,
               description,
@@ -608,7 +609,7 @@ export function createSupabaseAppRepo(): AppRepo {
               icon: current.icon || null,
               stage: patch.stage ?? current.stage ?? null,
               version: patch.version?.trim(),
-              publication_notes: patch.publication.notes.trim(),
+              publication_notes: publication.notes.trim(),
             };
             const { error } = await supabase.from("project_submissions").insert({
               app_id: appId,
@@ -623,13 +624,7 @@ export function createSupabaseAppRepo(): AppRepo {
             .from("apps")
             .update({
               stage: patch.stage ?? current.stage ?? null,
-              ...(patch.publication
-                ? {
-                    version: patch.version?.trim(),
-                    publication_id: crypto.randomUUID(),
-                    publication_notes: patch.publication.notes.trim(),
-                  }
-                : {}),
+
               title,
               description,
               url: url || null,
@@ -645,15 +640,9 @@ export function createSupabaseAppRepo(): AppRepo {
               collaborators,
             })
             .eq("id", appId);
-          if (patch.publication)
-            request = patch.publication.expectedPublication
-              ? request.eq("last_published_at", patch.publication.expectedPublication)
-              : request.is("last_published_at", null);
+
           const { data, error } = await request.select().single();
-          if (patch.publication && error?.code === "PGRST116")
-            throw new Error("This project changed. Reload before publishing an update.");
-          if (patch.publication && error?.code === "23505")
-            throw new Error("This version already exists. Choose a new version.");
+
           if (error || !data) throw new Error(error?.message ?? "Could not save changes.");
           return images;
         },

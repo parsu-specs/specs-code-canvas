@@ -35,7 +35,7 @@ export default function Modal({
   const panelRef = useRef<HTMLDivElement>(null);
   const [confirmingClose, setConfirmingClose] = useState(false);
   const centered = confirmation || confirmingClose;
-  const { closing, close } = useSheetClose(onClose);
+  const { closing, close } = useSheetClose(onClose, exiting !== undefined);
   const keepEditingRef = useRef<HTMLButtonElement>(null);
   const previousConfirmationFocus = useRef<HTMLElement | null>(null);
   const requestClose = () => {

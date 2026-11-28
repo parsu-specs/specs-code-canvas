@@ -18,7 +18,10 @@ Vite selects the backend through `@data-backend` at build time, keeping unused S
 1. Create the Supabase project. Run `supabase/schema.sql` in the SQL editor.
    Existing databases need `supabase/migrations/20261117000100_profile_appearance.sql`
    to sync light/dark/system appearance across devices. Accounts without a saved
-   appearance retain their device preference until they choose a mode.
+   appearance retain their device preference until they choose a mode. For
+   project submissions (including submitter cancellation), also apply
+   `supabase/migrations/20261126000100_project_reviews.sql` to existing databases;
+   fresh databases must run this migration after `schema.sql`.
 2. Auth: Authentication → Providers → enable **Google** with your Google Cloud
    OAuth client ID + secret, and add `http://localhost:3000/discover` (plus the
    production URL later) under URL Configuration → Redirect URLs.

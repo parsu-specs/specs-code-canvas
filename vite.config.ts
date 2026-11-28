@@ -5,6 +5,11 @@ import { storePreload } from "./build/storePreload.ts";
 
 export default defineConfig(({ mode }) => ({
   resolve: { alias: dataBackendAlias(mode) },
+  build: {
+    // The HEIC decoder is a single, optional dynamic-import chunk (~3.2 MB).
+    // Keep warning on unexpectedly larger chunks while accepting that decoder.
+    chunkSizeWarningLimit: 3500,
+  },
   plugins: [
     react(),
     storePreload(

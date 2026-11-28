@@ -230,7 +230,6 @@ export default function ProjectView({
       voteNoticeTimer.current = null;
     }, 6000);
   };
-  const deleteConfirmationRef = useRef<HTMLElement>(null);
 
   // Restore a server-side vote pause after a page refresh: the pause lives
   // in the database (vote_timeouts), so it must reappear without waiting for
@@ -334,10 +333,7 @@ export default function ProjectView({
     (app.creatorId ? app.creatorId === currentUser.id : app.creator === currentUser.name);
 
   const editSheet = useSheetPresence(editing && isOwner);
-  useScrollToForm(
-    confirmDelete && !editSheet.present && !loading && !error && !!app,
-    deleteConfirmationRef,
-  );
+
   const closeEditor = () => {
     if (eSaving || eBusy) return;
     setEditing(false);
@@ -816,7 +812,7 @@ export default function ProjectView({
             id="edit-project-details"
             aria-label={publishingUpdate ? "Publish an update" : "Edit project details"}
             onSubmit={(e) => void saveEdit(e)}
-            className="grid min-w-0 w-full max-w-full grid-cols-[minmax(0,1fr)] gap-5 [&>*]:min-w-0 [&>*]:max-w-full @min-[36rem]/content:grid-cols-2"
+            className="grid min-w-0 w-full max-w-full grid-cols-[minmax(0,1fr)] gap-5 *:min-w-0 *:max-w-full @min-[36rem]/content:grid-cols-2"
           >
             <ProjectStageFields
               stage={eStage}
@@ -1200,41 +1196,29 @@ export default function ProjectView({
         </Modal>
       )}
 
-      {isOwner && confirmDelete && (
-        <section
-          ref={deleteConfirmationRef}
-          role="alert"
-          aria-label="Confirm project deletion"
-          className="mt-6 flex min-w-0 scroll-mt-[calc(var(--spacing-header)+1.5rem)] flex-wrap items-center gap-3 rounded-2xl border-[3px] border-outline bg-surface p-4"
+      {isOwner && confirmDelete && app && (
+        <Modal
+          id="confirm-project-deletion"
+          title="Delete project?"
+          description={`Delete “${app.title}” forever? Its screenshots, docs, and feedback go with it. This cannot be undone.`}
+          confirmation
+          onClose={() => setConfirmDelete(false)}
+          closeDisabled={deleting}
         >
-          <p className="w-full text-sm font-black">
-            Delete “{app.title}” forever? Its screenshots, docs, and feedback go with it. This
-            cannot be undone.
-          </p>
           {deleteError && (
-            <p role="alert" className="w-full text-sm font-bold text-danger">
+            <p role="alert" className="mb-3 text-sm font-bold text-danger">
               {userFacingError(deleteError)}
             </p>
           )}
-          <Button
-            variant="danger"
-            size="small"
-            type="button"
-            onClick={() => void deleteProject()}
-            disabled={deleting}
-          >
-            <Trash size={16} weight="bold" /> {deleting ? "Deleting…" : "Yes, delete it"}
-          </Button>
-          <Button
-            variant="secondary"
-            size="small"
-            type="button"
-            onClick={() => setConfirmDelete(false)}
-            disabled={deleting}
-          >
-            Keep it
-          </Button>
-        </section>
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button variant="secondary" onClick={() => setConfirmDelete(false)} disabled={deleting}>
+              Keep it
+            </Button>
+            <Button variant="danger" onClick={() => void deleteProject()} disabled={deleting}>
+              <Trash size={16} weight="bold" /> {deleting ? "Deleting…" : "Yes, delete it"}
+            </Button>
+          </div>
+        </Modal>
       )}
 
       {lightbox !== null && (

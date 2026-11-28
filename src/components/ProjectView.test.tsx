@@ -168,7 +168,7 @@ it("does not open another developer's editor from an edit request", async () => 
 });
 
 function button(container: HTMLElement, text: string) {
-  return Array.from(container.querySelectorAll("button")).find((item) =>
+  return Array.from(document.querySelectorAll("button")).find((item) =>
     item.textContent?.includes(text),
   )!;
 }
@@ -179,10 +179,10 @@ it("requires confirmation and allows keeping an owned project without opening th
   await act(async () => {});
   act(() => button(container, "Delete project").click());
   expect(container.querySelector("form")).toBeNull();
-  expect(container.querySelector('[aria-label="Confirm project deletion"]')).not.toBeNull();
+  expect(document.querySelector('[role="alertdialog"]')).not.toBeNull();
   expect(repo.deleteApp).not.toHaveBeenCalled();
   act(() => button(container, "Keep it").click());
-  expect(container.querySelector('[aria-label="Confirm project deletion"]')).toBeNull();
+  expect(document.querySelector('[role="alertdialog"]')).toBeNull();
   expect(repo.deleteApp).not.toHaveBeenCalled();
 });
 
@@ -222,7 +222,7 @@ it("keeps the project and shows an error when deletion fails", async () => {
   await act(async () => {});
   act(() => button(container, "Delete project").click());
   await act(async () => button(container, "Yes, delete it").click());
-  expect(container.textContent).toContain("Could not delete project.");
+  expect(document.body.textContent).toContain("Could not delete project.");
   expect(button(container, "Yes, delete it").disabled).toBe(false);
   expect(onDeleted).not.toHaveBeenCalled();
 });

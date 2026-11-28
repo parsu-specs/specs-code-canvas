@@ -22,6 +22,7 @@ import ProfilePhotoPicker from "./ProfilePhotoPicker";
 import { useSheetPresence } from "./useSheetPresence";
 import TrophyMark from "./TrophyMark";
 import { Button } from "./Button";
+import Modal from "./Modal";
 import { useAuth } from "../auth/authContext";
 import { getAppRepo, getProfileRepo } from "../data/factory";
 import { useScrollToForm } from "../utils/scroll";
@@ -78,6 +79,9 @@ export default function ProfileView({
   const [apps, setApps] = useState<AppItem[]>([]);
   const [reviewSubmissions, setReviewSubmissions] = useState<ProjectReviewSubmission[]>([]);
   const [cancelingSubmission, setCancelingSubmission] = useState<string | null>(null);
+  const [submissionToCancel, setSubmissionToCancel] = useState<ProjectReviewSubmission | null>(
+    null,
+  );
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [voteError, setVoteError] = useState<string | null>(null);
@@ -176,7 +180,7 @@ export default function ProfileView({
   const cancelReview = async (submission: ProjectReviewSubmission) => {
     const cancel = getAppRepo().cancelProjectSubmission;
     if (!cancel || cancelingSubmission) return;
-    if (!window.confirm(`Cancel the submission “${submission.title}”?`)) return;
+    setSubmissionToCancel(null);
     setCancelingSubmission(submission.id);
     setReviewError(null);
     try {
@@ -252,6 +256,24 @@ export default function ProfileView({
 
   return (
     <div className="@container/content min-w-0 max-w-full wrap-anywhere motion-safe:animate-content-in">
+      {submissionToCancel && (
+        <Modal
+          id="cancel-submission-confirmation"
+          title="Cancel submission?"
+          description={`Cancel the submission “${submissionToCancel.title}”?`}
+          confirmation
+          onClose={() => setSubmissionToCancel(null)}
+        >
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button variant="secondary" onClick={() => setSubmissionToCancel(null)}>
+              Keep submission
+            </Button>
+            <Button variant="danger" onClick={() => void cancelReview(submissionToCancel)}>
+              Cancel submission
+            </Button>
+          </div>
+        </Modal>
+      )}
       <Button variant="surface" size="small" onClick={onBack}>
         <ArrowLeft size={18} weight="bold" /> Back to developers
       </Button>
@@ -289,10 +311,10 @@ export default function ProfileView({
                 <TrophyMark minimal place={trophies.get(profile.id) as 1 | 2 | 3} size={32} />
               )}
             </h2>
-            <p className="mt-1 break-words font-bold text-muted">@{profile.name}</p>
+            <p className="mt-1 wrap-break-word font-bold text-muted">@{profile.name}</p>
             <p className="mt-1 font-bold text-muted">{accountRole(profile.role)}</p>
             {profile.bio && (
-              <p className="mt-3 max-w-2xl break-words leading-7 text-body">{profile.bio}</p>
+              <p className="mt-3 max-w-2xl wrap-break-word leading-7 text-body">{profile.bio}</p>
             )}
             {!loading && !error && (
               <div className="min-w-0 mt-4 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-black sm:justify-start max-w-full">
@@ -428,7 +450,7 @@ export default function ProfileView({
                 className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 border-divider bg-panel p-3"
               >
                 <div className="min-w-0">
-                  <p className="break-words font-black">{submission.title}</p>
+                  <p className="wrap-break-word font-black">{submission.title}</p>
                   <p className="text-xs font-bold text-muted">
                     {submission.type === "new" ? "New project" : "Project update"} ·{" "}
                     {submission.status === "pending"
@@ -446,7 +468,7 @@ export default function ProfileView({
                   variant="surface"
                   size="small"
                   disabled={cancelingSubmission !== null}
-                  onClick={() => void cancelReview(submission)}
+                  onClick={() => setSubmissionToCancel(submission)}
                 >
                   {cancelingSubmission === submission.id ? "Cancelling…" : "Cancel submission"}
                 </Button>
